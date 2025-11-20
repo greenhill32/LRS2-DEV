@@ -41,15 +41,22 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 350px;
+
+        /* Increased height to support dropdown */
+        min-height: 420px;
+
         background: #1c1c1c;
         box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         padding: 20px 30px;
-        transform: translateY(-100%);
+
+        /* FIX: push completely off-screen */
+        transform: translateY(calc(-100% - 40px));
+
         transition: transform 0.8s ease;
         z-index: 999;
         color: #fff;
     }
+
     .panel-visible { transform: translateY(0); }
 
     .panel-title {
@@ -185,9 +192,10 @@
     }
 </style>
 <!-- END A4 -->
-
 <!-- START A5 -->
 <style>
+
+    /* BASE ENTRY CARD */
     .entry {
         padding: 15px;
         margin-bottom: 14px;
@@ -197,71 +205,44 @@
         position: relative;
         font-size: 18px;
         color: #e6e6e6;
+        transition: 0.3s;
     }
 
-    .green  { border-left-color: #46d369; }
-    .amber  { border-left-color: #ffb300; }
-    .red    { border-left-color: #ff5252; }
-    .red2   { border-left-color: #d32f2f; }
+    /* NORMAL COLOURS */
+    .green { border-left-color: #22c55e; }
+    .amber { border-left-color: #f59e0b; }
+    .red { border-left-color: #ef4444; }
+    .red2 { border-left-color: #7f1d1d; }
 
-    .entry-top { display: flex; justify-content: space-between; }
+    /* EXPORT SUPER HIGHLIGHT MODE */
+    .export-card {
+        border-left-color: #1b8cff !important;     /* big blue bar */
+        background: linear-gradient(90deg,
+                    rgba(27,140,255,0.20),
+                    rgba(27,140,255,0.05)) !important;
+        box-shadow: 0 0 22px rgba(27,140,255,0.55),
+                    0 0 10px rgba(27,140,255,0.35) !important;
+        animation: exportPulse 1.8s infinite ease-in-out;
+    }
 
-    .entry-top strong {
-        font-size: 20px;
-        font-weight: bold;
+    @keyframes exportPulse {
+        0%   { box-shadow: 0 0 14px rgba(27,140,255,0.45); }
+        50%  { box-shadow: 0 0 28px rgba(27,140,255,0.85); }
+        100% { box-shadow: 0 0 14px rgba(27,140,255,0.45); }
+    }
+
+    /* EXPORT BADGE */
+    .export-banner {
+        display: inline-block;
+        background: #1b8cff;
         color: #fff;
-    }
-
-    /* STATUS BLOCK */
-    .status-block {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        font-size: 30px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        opacity: 0.85;
-        transition: opacity 0.15s;
-    }
-    .status-block:hover { opacity: 1; }
-
-    .notes-text {
-        margin-top: 4px;
-        font-size: 15px;
-        opacity: 0.85;
-        cursor: pointer;
-    }
-
-    .notes-input {
-        width: 100%;
-        font-size: 15px;
-        margin-top: 4px;
-        padding: 4px;
-        background:#333;
-        border: 1px solid #555;
-        border-radius:4px;
-        color:#fff;
-    }
-
-    .entry-actions {
-        margin-top: 10px;
-        display: flex;
-        gap: 8px;
-    }
-
-    .action-btn {
-        padding: 6px 10px;
-        font-size: 14px;
-        border: none;
+        padding: 3px 10px;
+        font-size: 13px;
+        font-weight: bold;
         border-radius: 6px;
-        cursor: pointer;
-        color: white;
+        margin-bottom: 8px;
     }
 
-    .notify-btn   { background: #1b4cd4; }
-    .complete-btn { background: #444; }
 </style>
 <!-- END A5 -->
 
@@ -273,11 +254,27 @@
 <!-- END SECTION A -->
 
 <!-- START SECTION B -->
-
 <!-- START B1 -->
 <div id="panel" class="slide-panel">
 
     <div class="panel-title">Add New Lorry</div>
+
+    <!-- NEW: Expected Loads Dropdown -->
+    <label style="color:#ccc; margin-top:10px;">Expected Loads</label>
+    <select id="prebookSelect"
+        onchange="applyPrebook()"
+        style="
+            width:100%;
+            padding:12px;
+            background:#2a2a2a;
+            color:#fff;
+            border:1px solid #444;
+            border-radius:8px;
+            font-size:16px;
+            margin-bottom:12px;
+        ">
+        <option value="">-- Select Pre-Booked Load --</option>
+    </select>
 
     <div class="form-row">
         <input type="text" id="poInput" placeholder="PO / Reference Number">
@@ -303,6 +300,7 @@
     <div id="submitBtn" class="submit-btn" onclick="submitVehicle()">Submit</div>
 </div>
 <!-- END B1 -->
+
 
 
 <!-- START B2 -->
@@ -453,13 +451,52 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 </script>
 <!-- END C2 -->
 
-
 <!-- START C3 -->
 <script>
 let submitting = false;
+let prebookCache = [];     // store loaded prebookings
+let prebookExportFlag = false; // used later for export highlighting
 
 function togglePanel() {
     document.getElementById("panel").classList.toggle("panel-visible");
+    loadPrebooks();  // load when panel is opened
+}
+
+async function loadPrebooks() {
+    const sel = document.getElementById("prebookSelect");
+    sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
+
+    const { data, error } = await db
+        .from("prebookings")
+        .select("*")
+        .eq("consumed", false)
+        .order("expected_date", { ascending: true })
+        .order("expected_time", { ascending: true });
+
+    if (error || !data) return;
+
+    prebookCache = data;
+
+    data.forEach(p => {
+        const label = `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}${p.is_export ? " — EXPORT" : ""}`;
+        sel.innerHTML += `<option value="${p.id}">${label}</option>`;
+    });
+}
+
+function applyPrebook() {
+    const id = document.getElementById("prebookSelect").value;
+    if (!id) return;
+
+    const pb = prebookCache.find(x => x.id === id);
+    if (!pb) return;
+
+    // Fill UI
+    document.getElementById("poInput").value = pb.po_ref || "";
+    document.getElementById("regInput").value = pb.registration || "";
+    document.getElementById("notesInput").value = pb.notes || "";
+
+    // store classification result
+    prebookExportFlag = pb.is_export === true;
 }
 
 async function submitVehicle() {
@@ -476,9 +513,14 @@ async function submitVehicle() {
     let notes = document.getElementById("notesInput").value.trim();
     let quoted = parseInt(document.getElementById("quotedInput").value);
 
-    // Clean + standardise
     reg = reg.replace(/\s+/g, "").toUpperCase();
-    if (!reg) { alert("Registration required"); submitting=false; btn.style.pointerEvents="auto"; btn.style.opacity="1"; return; }
+    if (!reg) {
+        alert("Registration required");
+        submitting = false;
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = "1";
+        return;
+    }
 
     const opId = localStorage.getItem("operator_id");
     if (!opId) { window.location.href = "login.html"; return; }
@@ -486,7 +528,7 @@ async function submitVehicle() {
     const now = new Date().toISOString();
     const due = new Date(Date.now() + quoted * 60000).toISOString();
 
-    // Attempt insert
+    // Insert new vehicle
     const { data, error } = await db.from("vehicles").insert({
         registration: reg,
         po_ref: po,
@@ -496,46 +538,51 @@ async function submitVehicle() {
         due_time: due,
         status: "waiting",
         check_in_time: now,
-        operator_id: opId
+        operator_id: opId,
+        classification: prebookExportFlag ? "export" : "normal"
     }).select();
 
-    // Handle failure
     if (error) {
-        // Detect duplicate reg from unique index
-        if (error.message && error.message.includes("unique_active_registration")) {
-            alert(`Vehicle ${reg} is already booked in.\n\nIt must be released before rebooking.`);
-        } else {
-            alert("Error: " + error.message);
-        }
-
+        alert("Error: " + error.message);
         submitting = false;
         btn.style.pointerEvents = "auto";
         btn.style.opacity = "1";
         return;
     }
 
-    // Log check-in
+    const vehicleId = data[0]?.id;
+
+    // Log action
     await db.from("actions_log").insert({
-        vehicle_id: data[0].id,
+        vehicle_id: vehicleId,
         operator_id: opId,
         action: "check_in",
         details: {}
     });
 
-    // Refresh UI
+    // MARK PREBOOK AS CONSUMED (optional for later)
+    const selected = document.getElementById("prebookSelect").value;
+    if (selected) {
+        await db
+            .from("prebookings")
+            .update({ consumed: true })
+            .eq("id", selected);
+    }
+
     loadQueue();
     loadStats();
     loadActivity();
 
-    // Reset form
+    // Reset state
     submitting = false;
     btn.style.pointerEvents = "auto";
     btn.style.opacity = "1";
+    prebookExportFlag = false;
+
     togglePanel();
 }
 </script>
 <!-- END C3 -->
-
 
 
 <!-- START C4 -->
@@ -543,17 +590,27 @@ async function submitVehicle() {
 async function loadQueue() {
     const { data } = await db
         .from("vehicles")
-        .select("id, registration, po_ref, pager_number, notes, check_in_time, due_time, quoted_minutes, status")
+        .select(`
+            id,
+            registration,
+            po_ref,
+            pager_number,
+            notes,
+            check_in_time,
+            due_time,
+            quoted_minutes,
+            status,
+            classification
+        `)
         .in("status", ["waiting", "notified"])
         .order("check_in_time", { ascending: true });
 
-    renderQueue(data);
+    // fail-safe: ensure an array is passed
+    renderQueue(data || []);
 }
 </script>
 <!-- END C4 -->
-
-
-<!--// START CHUNK C5 — Render Queue -->
+<!-- START C5 -->
 <script>
 function renderQueue(list) {
     const container = document.querySelector(".queue-container");
@@ -565,12 +622,13 @@ function renderQueue(list) {
         </div>
     `;
 
-    if (list.length === 0) {
+    if (!list || list.length === 0) {
         container.innerHTML += `<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>`;
         return;
     }
 
     list.forEach(v => {
+
         const checkIn = new Date(v.check_in_time);
         const due = new Date(v.due_time);
         const now = new Date();
@@ -583,35 +641,43 @@ function renderQueue(list) {
         if (overdue >= 30) colour = "red";
         if (overdue >= 180) colour = "red2";
 
-        const pulseClass = overdue >= 120 ? "pulse-2hr" : "";
+        const isExport = v.classification === "export";
+        const cardClass = isExport ? "export-card" : colour;
+
         const dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
 
         container.innerHTML += `
-            <div class="entry ${colour} ${pulseClass}">
-                
-                <!-- CLICKABLE HEADER -->
-                <div class="entry-top"
-                     onclick="openModalEditor('${v.id}')"
-                     style="cursor:pointer;">
-                     
+            <div class="entry ${cardClass}">
+
+                <div class="entry-top" onclick="openModalEditor('${v.id}')">
+
                     <div>
+
+                        ${isExport ? `
+                            <div class="export-banner">EXPORT LOAD</div>
+                        ` : ""}
+
                         <strong>${v.registration}</strong><br>
                         <span>${v.po_ref || "No PO"}</span><br>
+
                         <span style="font-size:11px;opacity:0.7;">Due at ${dueText}</span>
                         <div class="pager-badge">Pager #${v.pager_number || "-"}</div>
 
-                        <div id="notes-${v.id}" 
+                        <div id="notes-${v.id}"
                              class="notes-text"
                              onclick="event.stopPropagation(); enableNotesEdit('${v.id}', \`${v.notes || ''}\`)">
                             ${v.notes ? v.notes : "<i>Click to add notes</i>"}
                         </div>
+
                     </div>
 
                     <div style="text-align:right;">
                         <div>
                             ${v.status === "notified"
                                 ? "<strong style='color:#1b4cd4;'>Notified</strong>"
-                                : (overdue > 0 ? overdue+" mins overdue" : "On time")}
+                                : (overdue > 0
+                                    ? overdue+" mins overdue"
+                                    : "On time")}
                         </div>
                         <div style="font-size:12px;opacity:0.7;">
                             In: ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
@@ -620,7 +686,6 @@ function renderQueue(list) {
 
                 </div>
 
-                <!-- BUTTONS (not part of the clickable area) -->
                 <div class="entry-actions">
                     <button class="action-btn notify-btn" onclick="notifyVehicle('${v.id}')">Notify</button>
                     <button class="action-btn complete-btn" onclick="completeVehicle('${v.id}')">Complete</button>
@@ -632,9 +697,7 @@ function renderQueue(list) {
     });
 }
 </script>
-<!--// END CHUNK C5 — Render Queue -->
-
-
+<!-- END C5 -->
 
 <!-- START C6 -->
 <script>

@@ -1,0 +1,116 @@
+<!-- START CHUNK PB — Full prebooking.html (DEV fixed v2) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pre-Book Lorry</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body { margin:0; background:#101010; color:#e6e6e6; font-family:Arial,sans-serif; padding:30px; }
+    h1 { text-align:center; color:#1b8cff; margin-bottom:25px; font-size:32px; }
+    .box { max-width:520px; margin:auto; background:#1c1c1c; padding:30px; border-radius:14px; border:1px solid #303030; box-shadow:0 0 12px rgba(0,0,0,0.3); }
+    label { display:block; margin-top:18px; margin-bottom:6px; color:#bbb; font-size:15px; }
+    input,textarea { width:100%; padding:12px; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:#fff; font-size:16px; }
+    textarea { height:90px; }
+    .row { display:flex; gap:12px; }
+    .submit-btn { width:100%; padding:14px; margin-top:25px; background:#1b8cff; color:white; border:none; border-radius:10px; font-size:18px; cursor:pointer; font-weight:bold; }
+    .msg { text-align:center; margin-top:20px; color:#46d369; font-size:16px; display:none; }
+    .err { text-align:center; margin-top:20px; color:#ff5252; font-size:16px; display:none; }
+</style>
+</head>
+
+<body>
+
+<h1>Pre-Book Incoming Lorry</h1>
+
+<div class="box">
+    <label>PO / Reference (required)</label>
+    <input id="poInput" type="text">
+
+    <label>Registration (optional)</label>
+    <input id="regInput" type="text">
+
+    <div class="row">
+        <div style="flex:1;">
+            <label>Expected Date</label>
+            <input id="dateInput" type="date">
+        </div>
+        <div style="flex:1;">
+            <label>Expected Time</label>
+            <input id="timeInput" type="time">
+        </div>
+    </div>
+
+    <label>Notes (optional)</label>
+    <textarea id="notesInput"></textarea>
+
+    <div class="row" style="margin-top:18px; align-items:center;">
+        <input type="checkbox" id="exportCheck">
+        <label for="exportCheck" style="margin:0;">EXPORT load?</label>
+    </div>
+
+    <button class="submit-btn" onclick="submitPrebooking()">Save Pre-Booking</button>
+
+    <div id="msg" class="msg">Pre-booking saved.</div>
+    <div id="err" class="err">ERROR: Could not save. Check console.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db = supabase.createClient(
+    "https://gtixdparpjdpyhhubsfz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+
+async function submitPrebooking() {
+    document.getElementById("msg").style.display = "none";
+    document.getElementById("err").style.display = "none";
+
+    const po = document.getElementById("poInput").value.trim();
+    if (!po) { alert("PO / Reference is required"); return; }
+
+    let reg = document.getElementById("regInput").value.trim()
+        .replace(/\s+/g,"").toUpperCase();
+
+    const date = document.getElementById("dateInput").value || null;
+    const time = document.getElementById("timeInput").value || null;
+    const notes = document.getElementById("notesInput").value.trim() || null;
+    const is_export = document.getElementById("exportCheck").checked;
+
+    const { error } = await db
+        .from("prebookings")
+        .insert({
+            po_ref: po,
+            registration: reg || null,
+            expected_date: date,
+            expected_time: time,
+            notes: notes,
+            is_export: is_export,
+            consumed: false
+        });
+
+    if (error) {
+        console.error(error);
+        document.getElementById("err").style.display = "block";
+        return;
+    }
+
+    document.getElementById("msg").style.display = "block";
+
+    document.getElementById("poInput").value = "";
+    document.getElementById("regInput").value = "";
+    document.getElementById("dateInput").value = "";
+    document.getElementById("timeInput").value = "";
+    document.getElementById("notesInput").value = "";
+    document.getElementById("exportCheck").checked = false;
+
+    setTimeout(() => {
+        document.getElementById("msg").style.display = "none";
+    }, 3000);
+}
+</script>
+
+</body>
+</html>
+<!-- END CHUNK PB — Full prebooking.html (DEV fixed v2) -->
