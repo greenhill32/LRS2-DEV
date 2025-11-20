@@ -756,30 +756,22 @@ async function undoVehicle(id) {
 
 <!-- END SECTION C -->
 
-<!-- START SECTION D -->
-
+<!-- START D1 — Load Activity -->
 <script>
 async function loadActivity() {
-    const panel = document.querySelector(".activity-panel");
-    panel.innerHTML = `<h3 style="color:#fff;">Recent Activity</h3>
-                       <hr style="border-color:#444;">`;
-
-    const { data, error } = await db
+    const { data } = await db
         .from("actions_log")
         .select(`
             timestamp,
             action,
-            details,
             operators (name),
             vehicles (registration, po_ref)
         `)
         .order("timestamp", { ascending: false })
-        .limit(20);
+        .limit(10);
 
-    if (error) {
-        panel.innerHTML += `<div style="color:#888;">Error loading activity: ${error.message}</div>`;
-        return;
-    }
+    const panel = document.querySelector(".activity-panel");
+    panel.innerHTML = `<h3 style="color:#fff;">Recent Activity</h3><hr style="border-color:#444;">`;
 
     if (!data || data.length === 0) {
         panel.innerHTML += `<div style="color:#888;">No recent actions</div>`;
@@ -787,25 +779,22 @@ async function loadActivity() {
     }
 
     data.forEach(a => {
-        const t = new Date(a.timestamp)
-            .toLocaleTimeString("en-GB",{ hour:"2-digit", minute:"2-digit" });
-
+        const t = new Date(a.timestamp).toLocaleTimeString("en-GB");
         const who = a.operators?.name || "unknown";
-        const reg = a.vehicles?.registration || "–";
-        const po  = a.vehicles?.po_ref || "";
+        const reg = a.vehicles?.registration || "?";
+        const po = a.vehicles?.po_ref || "";
 
-        // normalise wording 
         let label = a.action;
-        if (label === "check_in") label = "checked in";
-        if (label === "notified") label = "notified";
-        if (label === "completed") label = "completed";
-        if (label === "undo") label = "undo";
-        if (label === "modal_edit") label = "edited";
+
+        // NORMALISE UI TEXT
+        if (a.action === "completed") label = "completed";
+        if (a.action === "notified")  label = "notified";
+        if (a.action === "undo")      label = "undo";
 
         panel.innerHTML += `
-            <div style="margin-bottom:14px; color:#ddd;">
+            <div style="margin-bottom:12px; color:#ddd;">
                 <strong style="font-size:18px;">${reg}</strong>
-                <span style="opacity:0.6; font-size:14px;">${po ? "(" + po + ")" : ""}</span><br>
+                <span style="opacity:0.6; font-size:14px;">(${po})</span><br>
                 <span style="opacity:0.7; font-size:14px;">
                     ${label} by ${who} — ${t}
                 </span>
@@ -814,8 +803,7 @@ async function loadActivity() {
     });
 }
 </script>
-
-
+<!-- END D1 — Load Activity -->
 
 
 <!-- START D2 -->
