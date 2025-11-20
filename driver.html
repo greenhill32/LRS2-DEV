@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vehicle Status</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body {
+        margin: 0;
+        background: #f2f4f8;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: #1b4cd4;
+    }
+    .sub {
+        font-size: 16px;
+        opacity: 0.7;
+        margin-bottom: 20px;
+    }
+
+    /* LANGUAGE CHOOSER */
+    .lang-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .tile {
+        padding: 10px 18px;
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        cursor: pointer;
+        user-select: none;
+        border: 2px solid transparent;
+        font-size: 16px;
+    }
+
+    .tile:hover {
+        border-color: #1b4cd4;
+    }
+
+    .tile.active {
+        border-color: #1b4cd4;
+        font-weight: bold;
+    }
+
+    /* MAIN CARD */
+    .card {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        margin-bottom: 18px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        text-align: left;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .reg {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .label {
+        font-size: 15px;
+        color: #666;
+        margin-bottom: 2px;
+        margin-top: 12px;
+    }
+
+    /* STATUS COLOURS */
+    .status {
+        font-size: 22px;
+        font-weight: bold;
+        margin-top: 6px;
+    }
+    .waiting { color: #d97706; }  /* amber */
+    .loading { color: #1b4cd4; }  /* blue  */
+    .ready   { color: #16a34a; }  /* green */
+
+    .note {
+        margin-top: 12px;
+        font-size: 15px;
+        opacity: 0.85;
+    }
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="title" class="title">Vehicle Status</div>
+<div id="subtitle" class="sub">Updates refresh every few seconds</div>
+
+<!-- LANGUAGE TILES -->
+<div class="lang-row" id="langRow">
+    <div class="tile active" data-lang="en">🇬🇧 English</div>
+    <div class="tile" data-lang="pl">🇵🇱 Polski</div>
+    <div class="tile" data-lang="ro">🇷🇴 Română</div>
+    <div class="tile" data-lang="uk">🇺🇦 Українська</div>
+    <div class="tile" data-lang="cs">🇨🇿 Čeština</div>
+</div>
+
+<!-- VEHICLE CARD -->
+<div class="card">
+    <div id="reg" class="reg"></div>
+
+    <div id="poLabel" class="label"></div>
+    <div id="poValue"></div>
+
+    <div id="pagerLabel" class="label"></div>
+    <div id="pagerValue"></div>
+
+    <div id="statusLabel" class="label"></div>
+    <div id="statusValue" class="status waiting"></div>
+
+    <div id="noteText" class="note"></div>
+</div>
+
+
+<!-- SUPABASE LIVE DATA VERSION -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db = supabase.createClient(
+  "https://splcucorowqjxeeseolq.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbGN1Y29yb3dxanhlZXNlb2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTExMjUsImV4cCI6MjA3ODYyNzEyNX0.R-Fm04UtBOr9OBWHnS1fhk6SnfSm7f3ZrFrQdzO1Q4Y"
+);
+
+// TRANSLATIONS
+const T = {
+    en: {
+        title: "Vehicle Status",
+        subtitle: "Updates refresh every few seconds",
+        po: "PO / Reference",
+        pager: "Pager Number",
+        status: "Current Status",
+        waiting: "Waiting in lorry park",
+        loading: "Proceed to loading area",
+        ready: "Proceed to gatehouse",
+        note: "Please remain in your cab unless instructed."
+    },
+    pl: { 
+        title: "Status Twojego Pojazdu",
+        subtitle: "Aktualizacje co kilka sekund",
+        po: "PO / Numer referencyjny",
+        pager: "Numer pagera",
+        status: "Aktualny status",
+        waiting: "Czekaj na parkingu",
+        loading: "Kieruj się do strefy załadunku",
+        ready: "Podejdź do bramy",
+        note: "Pozostań w kabinie, chyba że otrzymasz inne instrukcje."
+    },
+    ro: {
+        title: "Starea Vehiculului",
+        subtitle: "Actualizare automată",
+        po: "PO / Referință",
+        pager: "Număr pager",
+        status: "Stare curentă",
+        waiting: "Așteptați în parcarea pentru camioane",
+        loading: "Mergeți spre zona de încărcare",
+        ready: "Mergeți la poartă",
+        note: "Rămâneți în cabină până la noi instrucțiuni."
+    },
+    uk: {
+        title: "Статус Вашого ТЗ",
+        subtitle: "Оновлюється автоматично",
+        po: "PO / Номер",
+        pager: "Номер пейджера",
+        status: "Поточний статус",
+        waiting: "Чекайте на парковці для вантажівок",
+        loading: "Прямуйте до зони завантаження",
+        ready: "Пройдіть до воріт",
+        note: "Залишайтесь у кабіні, якщо не вказано інше."
+    },
+    cs: {
+        title: "Stav Vašeho Vozidla",
+        subtitle: "Pravidelně aktualizováno",
+        po: "PO / Reference",
+        pager: "Číslo pageru",
+        status: "Aktuální stav",
+        waiting: "Čekejte na parkovišti",
+        loading: "Přejděte do nakládací zóny",
+        ready: "Přejděte k bráně",
+        note: "Zůstaňte v kabině, pokud není řečeno jinak."
+    }
+};
+
+let currentLang = "en";
+let currentStatus = "waiting";
+
+// LOAD LIVE DATA
+async function loadVehicle() {
+    const params = new URLSearchParams(window.location.search);
+    const vehicleId = params.get("vehicle");
+    if (!vehicleId) return;
+
+    const { data, error } = await db
+        .from("vehicles")
+        .select("*")
+        .eq("id", vehicleId)
+        .single();
+
+    if (!data) return;
+
+    document.querySelector(".reg").textContent = data.registration;
+    document.getElementById("poValue").textContent = data.po_ref || "-";
+    document.getElementById("pagerValue").textContent = data.pager_number || "-";
+
+    currentStatus = data.status; // waiting / notified / released
+    setLang(currentLang);
+}
+
+// APPLY LANGUAGE
+function setLang(lang) {
+    const L = T[lang];
+    currentLang = lang;
+
+    document.getElementById("title").textContent = L.title;
+    document.getElementById("subtitle").textContent = L.subtitle;
+
+    document.getElementById("poLabel").textContent = L.po;
+    document.getElementById("pagerLabel").textContent = L.pager;
+    document.getElementById("statusLabel").textContent = L.status;
+
+    const st = document.getElementById("statusValue");
+
+    if (currentStatus === "waiting")
+        st.textContent = L.waiting;
+
+    if (currentStatus === "notified")
+        st.textContent = L.loading;
+
+    if (currentStatus === "released")
+        st.textContent = L.ready;
+}
+
+// LANGUAGE TILE CLICK
+document.querySelectorAll(".tile").forEach(tile => {
+    tile.addEventListener("click", () => {
+        setLang(tile.dataset.lang);
+    });
+});
+
+// RUN
+loadVehicle();
+setInterval(loadVehicle, 8000);
+setLang("en");
+</script>
+
+
+</body>
+</html>
