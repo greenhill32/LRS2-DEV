@@ -794,7 +794,7 @@ async function loadActivity() {
         const reg = a.vehicles?.registration || "–";
         const po  = a.vehicles?.po_ref || "";
 
-        // normalise wording
+        // normalise wording 
         let label = a.action;
         if (label === "check_in") label = "checked in";
         if (label === "notified") label = "notified";
