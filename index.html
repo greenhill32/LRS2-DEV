@@ -755,44 +755,61 @@ async function undoVehicle(id) {
 
 
 <!-- END SECTION C -->
-<!-- START D1 — Load Activity (fixed) -->
+<!-- START D1 — Load Activity (400-safe version) -->
 <script>
 async function loadActivity() {
-    const { data, error } = await db
-        .from("actions_log")
-        .select(`
-            timestamp,
-            action,
-            operators (name),
-            vehicles (registration, po_ref)
-        `)
-        .order("timestamp", { ascending: false })
-        .limit(20);
-
     const panel = document.querySelector(".activity-panel");
     panel.innerHTML = `<h3 style="color:#fff;">Recent Activity</h3><hr style="border-color:#444;">`;
 
+    // Step 1 — get raw log rows only
+    const { data: logs, error } = await db
+        .from("actions_log")
+        .select("timestamp, action, operator_id, vehicle_id")
+        .order("timestamp", { ascending: false })
+        .limit(20);
+
     if (error) {
-        panel.innerHTML += `<div style="color:#f55;">Error loading activity</div>`;
+        panel.innerHTML += `<div style="color:#f55;">Failed to load activity</div>`;
         return;
     }
 
-    if (!data || data.length === 0) {
+    if (!logs || logs.length === 0) {
         panel.innerHTML += `<div style="color:#888;">No recent actions</div>`;
         return;
     }
 
-    data.forEach(a => {
+    // Step 2 — lookup operator + vehicle names
+    for (const a of logs) {
+        let name = "unknown";
+        let reg = "unknown";
+        let po  = "";
+
+        if (a.operator_id) {
+            const { data: op } = await db
+                .from("operators")
+                .select("name")
+                .eq("id", a.operator_id)
+                .single();
+
+            if (op) name = op.name;
+        }
+
+        if (a.vehicle_id) {
+            const { data: v } = await db
+                .from("vehicles")
+                .select("registration, po_ref")
+                .eq("id", a.vehicle_id)
+                .single();
+
+            if (v) {
+                reg = v.registration || "unknown";
+                po  = v.po_ref || "";
+            }
+        }
+
         const t = new Date(a.timestamp)
             .toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
 
-        const who = a.operators?.name || "unknown";
-
-        // Vehicle may be null for legacy entries
-        const reg = a.vehicles?.registration || "unknown";
-        const po  = a.vehicles?.po_ref || "";
-
-        // Normalised label
         let label = a.action;
         if (label === "check_in") label = "checked in";
         if (label === "notified") label = "notified";
@@ -805,14 +822,14 @@ async function loadActivity() {
                 <strong style="font-size:18px;">${reg}</strong>
                 <span style="opacity:0.6; font-size:14px;">${po}</span><br>
                 <span style="opacity:0.75; font-size:14px;">
-                    ${label} by ${who} — ${t}
+                    ${label} by ${name} — ${t}
                 </span>
             </div>
         `;
-    });
+    }
 }
 </script>
-<!-- END D1 — Load Activity (fixed) -->
+<!-- END D1 — Load Activity (400-safe version) -->
 
 <!-- START D2 -->
 <script>
