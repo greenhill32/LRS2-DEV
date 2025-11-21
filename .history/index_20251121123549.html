@@ -8,7 +8,7 @@
 <title>Warehouse Pager Dashboard</title>
 <!-- END A1 -->
 
-<!-- START A2 -->
+<!-- START A2 --> 
 <style>
     body {
         margin: 0;
@@ -254,25 +254,32 @@
 <!-- END SECTION A -->
 
 <!-- START SECTION B -->
-<!-- START B1 -->
+
+<!-- START B1 — Add New Lorry Panel (updated with Export toggle) -->
 <div id="panel" class="slide-panel">
 
     <div class="panel-title">Add New Lorry</div>
 
-    <!-- NEW: Expected Loads Dropdown -->
+    <!-- NEW: Manual Export Toggle -->
+    <label style="color:#ccc; margin-top:10px; display:flex; align-items:center; gap:10px;">
+        <input 
+            type="checkbox" 
+            id="manualExport" 
+            style="transform:scale(1.4); accent-color:#1b8cff;">
+        <span style="color:#1b8cff; font-weight:bold;">Mark as EXPORT</span>
+    </label>
+
+    <!-- Expected Loads Dropdown -->
     <label style="color:#ccc; margin-top:10px;">Expected Loads</label>
     <select id="prebookSelect"
         onchange="applyPrebook()"
         style="
-            width:100%;
-            padding:12px;
-            background:#2a2a2a;
-            color:#fff;
+            width:100%; padding:12px;
+            background:#2a2a2a; color:#fff;
             border:1px solid #444;
             border-radius:8px;
             font-size:16px;
-            margin-bottom:12px;
-        ">
+            margin-bottom:12px;">
         <option value="">-- Select Pre-Booked Load --</option>
     </select>
 
@@ -283,7 +290,6 @@
 
     <div class="form-row">
         <input type="number" id="pagerInput" placeholder="Pager Number">
-
         <select id="quotedInput">
             <option value="30">30 mins</option>
             <option value="45">45 mins</option>
@@ -527,7 +533,7 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 </script>
 <!-- END C1 -->
 
-// START C2 — Operator Loader (fixed avatar)
+<!--// START C2 — Operator Loader (fixed avatar)
 <script>
 (async () => {
     const opId = localStorage.getItem("operator_id");
@@ -563,8 +569,7 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 </script>
 // END C2 — Operator Loader (fixed avatar)
 
-<!-- START C3 — submitVehicle (HTML-safe, QR auto-launch) -->
-<script>
+// START C3 — Prebook + Manual Export Logic (updated)
 let submitting = false;
 let prebookCache = [];
 let prebookExportFlag = false;
@@ -576,7 +581,7 @@ function togglePanel() {
 
 async function loadPrebooks() {
     const sel = document.getElementById("prebookSelect");
-    sel.innerHTML = "<option value=''>-- Select Pre-Booked Load --</option>";
+    sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
 
     const { data } = await db
         .from("prebookings")
@@ -588,10 +593,7 @@ async function loadPrebooks() {
     prebookCache = data || [];
 
     prebookCache.forEach(p => {
-        const label =
-            `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
-            (p.is_export ? " — EXPORT" : "");
-
+        const label = `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date} ${p.expected_time?.slice(0,5)}${p.is_export ? " — EXPORT" : ""}`;
         sel.innerHTML += `<option value="${p.id}">${label}</option>`;
     });
 }
@@ -607,6 +609,7 @@ function applyPrebook() {
     document.getElementById("regInput").value = pb.registration || "";
     document.getElementById("notesInput").value = pb.notes || "";
 
+    // Load export flag from prebook
     prebookExportFlag = pb.is_export === true;
 }
 
@@ -618,13 +621,14 @@ async function submitVehicle() {
     btn.style.pointerEvents = "none";
     btn.style.opacity = "0.5";
 
-    let reg = document.getElementById("regInput").value.trim();
+    let reg = document.getElementById("regInput").value.trim().replace(/\s+/g,"").toUpperCase();
     let po = document.getElementById("poInput").value.trim();
     let pager = parseInt(document.getElementById("pagerInput").value);
     let notes = document.getElementById("notesInput").value.trim();
     let quoted = parseInt(document.getElementById("quotedInput").value);
 
-    reg = reg.replace(/\s+/g, "").toUpperCase();
+    const manualExport = document.getElementById("manualExport").checked;
+
     if (!reg) {
         alert("Registration required");
         submitting = false;
@@ -634,30 +638,23 @@ async function submitVehicle() {
     }
 
     const opId = localStorage.getItem("operator_id");
-    if (!opId) {
-        window.location.href = "login.html";
-        return;
-    }
-
     const now = new Date().toISOString();
     const due = new Date(Date.now() + quoted * 60000).toISOString();
 
-    /* insert vehicle */
-    const { data, error } = await db
-        .from("vehicles")
-        .insert({
-            registration: reg,
-            po_ref: po,
-            pager_number: pager,
-            notes: notes,
-            quoted_minutes: quoted,
-            due_time: due,
-            status: "waiting",
-            check_in_time: now,
-            operator_id: opId,
-            classification: prebookExportFlag ? "export" : "normal"
-        })
-        .select();
+    const isExportFinal = manualExport || prebookExportFlag;
+
+    const { data, error } = await db.from("vehicles").insert({
+        registration: reg,
+        po_ref: po,
+        pager_number: pager,
+        notes: notes,
+        quoted_minutes: quoted,
+        due_time: due,
+        status: "waiting",
+        check_in_time: now,
+        operator_id: opId,
+        classification: isExportFinal ? "export" : "normal"
+    }).select();
 
     if (error) {
         alert("Error: " + error.message);
@@ -667,9 +664,8 @@ async function submitVehicle() {
         return;
     }
 
-    const vehicleId = data[0].id;
+    const vehicleId = data[0]?.id;
 
-    /* log action */
     await db.from("actions_log").insert({
         vehicle_id: vehicleId,
         operator_id: opId,
@@ -677,19 +673,11 @@ async function submitVehicle() {
         details: {}
     });
 
-    /* mark prebook consumed */
     const selected = document.getElementById("prebookSelect").value;
     if (selected) {
-        await db
-            .from("prebookings")
-            .update({ consumed: true })
-            .eq("id", selected);
+        await db.from("prebookings").update({ consumed: true }).eq("id", selected);
     }
 
-    /* auto-launch QR screen in new tab */
-    window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-
-    /* refresh dashboard */
     loadQueue();
     loadStats();
     loadActivity();
@@ -701,8 +689,7 @@ async function submitVehicle() {
 
     togglePanel();
 }
-</script>
-<!-- END C3 — submitVehicle (HTML-safe, QR auto-launch) -->
+<!--// END C3 -->
 
 
 <!-- START C4 -->

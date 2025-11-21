@@ -1,3 +1,4 @@
+<!-- START CHUNK S1 — Header + Styles -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,32 +106,214 @@
     }
 </style>
 </head>
-
 <body>
 
 <div class="header">
     Supervisor Dashboard
-    <span style="font-size:16px;color:#fff" id="superName"></span>
+    <span id="superName" style="font-size:16px;color:#fff;"></span>
 </div>
+<!-- END CHUNK S1 — Header + Styles -->
+
+<!-- START CHUNK S6 — Supervisor Search + Dynamic Status Editor -->
+<div style="padding:20px 30px;">
+    <input 
+        id="superSearch"
+        type="text" 
+        placeholder="Search by registration or PO…" 
+        style="
+            width:100%;
+            padding:12px;
+            font-size:18px;
+            border-radius:8px;
+            border:1px solid #333;
+            background:#111;
+            color:#eee;
+        ">
+</div>
+
+<div id="superSearchResults" style="padding:0 30px; margin-bottom:20px;"></div>
+
+<!-- Modal -->
+<div id="superEditOverlay" style="
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.6);
+    display:none; z-index:9999;">
+    
+    <div id="superEditModal" style="
+        background:#1c1c1c;
+        color:#fff;
+        width:420px;
+        margin:80px auto;
+        padding:25px;
+        border-radius:12px;
+        border:1px solid #333;">
+    </div>
+</div>
+
+<script>
+// LIVE SEARCH
+document.getElementById("superSearch").addEventListener("input", async (e) => {
+    const q = e.target.value.trim().toUpperCase();
+    const box = document.getElementById("superSearchResults");
+
+    if (q.length < 2) {
+        box.innerHTML = "";
+        return;
+    }
+
+    let { data: results } = await db
+        .from("vehicles")
+        .select("*")
+        .ilike("registration", `%${q}%`);
+
+    if (!results.length) {
+        const { data: byPO } = await db
+            .from("vehicles")
+            .select("*")
+            .ilike("po_ref", `%${q}%`);
+        results = byPO;
+    }
+
+    if (!results.length) {
+        box.innerHTML = `<div style="color:#888;">No matches</div>`;
+        return;
+    }
+
+    box.innerHTML = results.map(v => `
+        <div onclick="superEditVehicle('${v.id}')"
+            style="
+                padding:12px;
+                margin-bottom:8px;
+                background:#1b1b1b;
+                border:1px solid #333;
+                border-radius:6px;
+                cursor:pointer;">
+            <strong>${v.registration}</strong> (${v.status})<br>
+            PO: ${v.po_ref || "-"} | Pager: ${v.pager_number || "-"}
+        </div>
+    `).join("");
+});
+
+// OPEN MODAL EDITOR
+async function superEditVehicle(id) {
+    const { data: v } = await db
+        .from("vehicles")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    const modal = document.getElementById("superEditModal");
+    const overlay = document.getElementById("superEditOverlay");
+
+    modal.innerHTML = `
+        <h2>Edit ${v.registration}</h2>
+
+        <label>Status</label>
+        <select id="sv-status" style="
+            width:100%; padding:10px; margin-bottom:12px;
+            background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
+        </select>
+
+        <label>PO / Reference</label>
+        <input id="sv-po" value="${v.po_ref || ""}" style="
+            width:100%; padding:10px; margin-bottom:12px;
+            background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
+
+        <label>Pager Number</label>
+        <input id="sv-pager" type="number" value="${v.pager_number || ""}" style="
+            width:100%; padding:10px; margin-bottom:12px;
+            background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
+
+        <label>Notes</label>
+        <textarea id="sv-notes" style="
+            width:100%; height:80px; padding:10px;
+            background:#222; border:1px solid #444; border-radius:6px; color:#fff;
+        ">${v.notes || ""}</textarea>
+
+        <div style="margin-top:18px; text-align:right;">
+            <button onclick="svClose()" style="
+                padding:10px 16px; background:#555; color:white;
+                border:none; border-radius:6px; margin-right:12px;">
+                Cancel
+            </button>
+
+            <button onclick="svSave('${id}')" style="
+                padding:10px 16px; background:#1b8cff; color:white;
+                border:none; border-radius:6px;">
+                Save
+            </button>
+        </div>
+    `;
+
+    overlay.style.display = "block";
+
+    // Load status list dynamically
+    loadStatusOptions("sv-status", v.status);
+}
+
+function svClose() {
+    document.getElementById("superEditOverlay").style.display = "none";
+}
+
+// Dynamic status loader from DB
+async function loadStatusOptions(selectId, current) {
+    const { data: statuses } = await db
+        .from("statuses")
+        .select("name")
+        .order("name");
+
+    const sel = document.getElementById(selectId);
+    sel.innerHTML = "";
+
+    statuses.forEach(s => {
+        sel.innerHTML += `
+            <option value="${s.name}" ${current === s.name ? "selected" : ""}>
+                ${s.name}
+            </option>
+        `;
+    });
+}
+
+// SAVE EDITS
+async function svSave(id) {
+    const status = document.getElementById("sv-status").value;
+    const po = document.getElementById("sv-po").value.trim();
+    const pager = parseInt(document.getElementById("sv-pager").value);
+    const notes = document.getElementById("sv-notes").value.trim();
+    const opId = localStorage.getItem("operator_id");
+    const now = new Date().toISOString();
+
+    await db.from("vehicles").update({
+        status,
+        po_ref: po,
+        pager_number: pager,
+        notes,
+        notify_time: (status==="notified" ? now : null),
+        release_time: (status==="released" ? now : null),
+        operator_id: opId
+    }).eq("id", id);
+
+    await db.from("actions_log").insert({
+        vehicle_id: id,
+        operator_id: opId,
+        action: "supervisor_edit",
+        details: { status, po, pager, notes }
+    });
+
+    svClose();
+}
+</script>
+<!-- END CHUNK S6 — Supervisor Search + Dynamic Status Editor -->
+
+
+<!-- START CHUNK S2 — KPI + Charts + Tables -->
 
 <!-- KPI ROW -->
 <div class="grid-kpi">
-    <div class="kpi">
-        <div class="value" id="kpiLorriesToday">0</div>
-        Lorries Today
-    </div>
-    <div class="kpi">
-        <div class="value" id="kpiReleased">0</div>
-        Completed Today
-    </div>
-    <div class="kpi">
-        <div class="value" id="kpiAvgWait">0 mins</div>
-        Avg Active Wait
-    </div>
-    <div class="kpi">
-        <div class="value" id="kpiOverdue">0</div>
-        Overdue > 1hr
-    </div>
+    <div class="kpi"><div class="value" id="kpiLorriesToday">0</div>Lorries Today</div>
+    <div class="kpi"><div class="value" id="kpiReleased">0</div>Completed Today</div>
+    <div class="kpi"><div class="value" id="kpiAvgWait">0 mins</div>Avg Active Wait</div>
+    <div class="kpi"><div class="value" id="kpiOverdue">0</div>Overdue > 1hr</div>
 </div>
 
 <!-- CHARTS -->
@@ -163,24 +346,26 @@
     </div>
 </div>
 
+<!-- END CHUNK S2 — KPI + Charts + Tables -->
+
+<!-- START CHUNK S3 — Supabase + Access Check -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-/* =============================================================
-   SUPABASE CLIENT
-============================================================= */
 const db = supabase.createClient(
     "https://splcucorowqjxeeseolq.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbGN1Y29yb3dxanhlZXNlb2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTExMjUsImV4cCI6MjA3ODYyNzEyNX0.R-Fm04UtBOr9OBWHnS1fhk6SnfSm7f3ZrFrQdzO1Q4Y"
 );
 
-/* =============================================================
-   SUPERVISOR ACCESS CHECK
-============================================================= */
+// CHECK SUPERVISOR ROLE
 (async () => {
     const opId = localStorage.getItem("operator_id");
-    if (!opId) { window.location.href = "login.html"; return; }
+    if (!opId) {
+        window.location.href = "login.html";
+        return;
+    }
 
     const { data: op } = await db
         .from("operators")
@@ -189,44 +374,41 @@ const db = supabase.createClient(
         .single();
 
     if (!op || op.role !== "supervisor") {
-        alert("Supervisor access only.");
         window.location.href = "index.html";
         return;
     }
 
     document.getElementById("superName").textContent = op.name;
 })();
+</script>
 
-/* =============================================================
-   KPI LOADING
-============================================================= */
+<!-- END CHUNK S3 — Supabase + Access Check -->
+
+<!-- START CHUNK S4 — KPI + Tables + Charts Logic -->
+
+<script>
 async function loadKPIs() {
     const today = new Date().toISOString().slice(0,10);
 
     const { data: inToday } = await db
-        .from("vehicles")
-        .select("id")
+        .from("vehicles").select("id")
         .gte("check_in_time", today);
 
     const { data: releasedToday } = await db
-        .from("vehicles")
-        .select("id")
+        .from("vehicles").select("id")
         .eq("status","released")
         .gte("release_time", today);
 
     const { data: waiting } = await db
-        .from("vehicles")
-        .select("check_in_time")
+        .from("vehicles").select("check_in_time")
         .eq("status","waiting");
 
     const { data: active } = await db
-        .from("vehicles")
-        .select("due_time")
+        .from("vehicles").select("due_time")
         .in("status", ["waiting","notified"]);
 
     let overdue = 0;
     const now = Date.now();
-
     active.forEach(v => {
         const due = new Date(v.due_time).getTime();
         if (now - due > 60*60000) overdue++;
@@ -235,20 +417,16 @@ async function loadKPIs() {
     let avgWait = 0;
     if (waiting.length > 0) {
         const total = waiting.reduce((sum,v) =>
-            sum + (Date.now() - new Date(v.check_in_time)), 0
-        );
+            sum + (Date.now() - new Date(v.check_in_time)), 0);
         avgWait = Math.floor(total / waiting.length / 60000);
     }
 
-    document.getElementById("kpiLorriesToday").textContent = inToday?.length || 0;
-    document.getElementById("kpiReleased").textContent = releasedToday?.length || 0;
+    document.getElementById("kpiLorriesToday").textContent = inToday.length;
+    document.getElementById("kpiReleased").textContent = releasedToday.length;
     document.getElementById("kpiAvgWait").textContent = `${avgWait} mins`;
     document.getElementById("kpiOverdue").textContent = overdue;
 }
 
-/* =============================================================
-   TABLES
-============================================================= */
 async function loadTopWaits() {
     const tbl = document.getElementById("tblWaits");
     tbl.innerHTML = `<tr><th>Reg</th><th>Wait</th><th>PO</th></tr>`;
@@ -256,7 +434,7 @@ async function loadTopWaits() {
     const { data } = await db
         .from("vehicles")
         .select("registration, po_ref, check_in_time")
-        .eq("status","waiting");
+        .eq("status", "waiting");
 
     if (!data.length) {
         tbl.innerHTML += `<tr><td colspan="3">No active waits</td></tr>`;
@@ -287,13 +465,8 @@ async function loadActivity() {
 
     const { data } = await db
         .from("actions_log")
-        .select(`
-            timestamp,
-            action,
-            operators(name),
-            vehicles(registration)
-        `)
-        .order("timestamp", { ascending:false })
+        .select("timestamp, action, operators(name), vehicles(registration)")
+        .order("timestamp", { ascending: false })
         .limit(10);
 
     if (!data.length) {
@@ -302,44 +475,40 @@ async function loadActivity() {
     }
 
     data.forEach(a => {
-        const t = new Date(a.timestamp).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-        const who = a.operators?.name || "unknown";
-        const reg = a.vehicles?.registration || "?";
+        const t = new Date(a.timestamp)
+            .toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
 
         tbl.innerHTML += `
             <tr>
                 <td>${t}</td>
-                <td>${a.action} – ${reg} by ${who}</td>
+                <td>${a.action} – ${a.vehicles?.registration || "?"} by ${a.operators?.name}</td>
             </tr>`;
     });
 }
 
-/* =============================================================
-   CHARTS
-============================================================= */
 let chart1 = null;
 let chartBuckets = null;
 
 async function loadCharts() {
-    // CHECKINS PER HOUR
     const { data: checkins } = await db
         .from("vehicles")
         .select("check_in_time");
 
-    const bucketsHourly = {};
+    const buckets = {};
     checkins.forEach(v => {
-        const h = new Date(v.check_in_time).getHours();
-        bucketsHourly[h] = (bucketsHourly[h] || 0) + 1;
+        const hour = new Date(v.check_in_time).getHours();
+        buckets[hour] = (buckets[hour] || 0) + 1;
     });
 
     if (chart1) chart1.destroy();
+
     chart1 = new Chart(document.getElementById("chartCheckins"), {
         type: "line",
         data: {
-            labels: Object.keys(bucketsHourly),
+            labels: Object.keys(buckets),
             datasets: [{
                 label: "Check-ins",
-                data: Object.values(bucketsHourly),
+                data: Object.values(buckets),
                 borderColor: "#1b8cff",
                 backgroundColor: "transparent",
                 borderWidth: 2
@@ -347,18 +516,17 @@ async function loadCharts() {
         }
     });
 
-    // OVERDUE BUCKETS
     const { data: active } = await db
         .from("vehicles")
         .select("due_time")
         .in("status", ["waiting","notified"]);
 
-    let b0_30 = 0, b30_60 = 0, b60_120 = 0, b120plus = 0;
+    let b0_30=0, b30_60=0, b60_120=0, b120plus=0;
+    const now = Date.now();
 
     active.forEach(v => {
-        const now = Date.now();
         const due = new Date(v.due_time).getTime();
-        let minutes = Math.floor((now - due) / 60000);
+        const minutes = Math.floor((now - due) / 60000);
 
         if (minutes < 0) { b0_30++; return; }
         if (minutes < 30) b0_30++;
@@ -372,35 +540,27 @@ async function loadCharts() {
     const colours = ["#46d369","#ffb300","#ff6f3c","#d32f2f"];
 
     if (chartBuckets) chartBuckets.destroy();
+
     chartBuckets = new Chart(document.getElementById("chartOverdueBuckets"), {
         type: "bar",
-        data: {
-            labels,
-            datasets: [{
-                label: "Active Vehicles",
-                data: values,
-                backgroundColor: colours
-            }]
-        },
-        options: {
-            scales: { y: { beginAtZero: true } }
-        }
+        data: { labels, datasets: [{ data: values, backgroundColor: colours }] },
+        options: { scales:{ y:{ beginAtZero:true } } }
     });
 }
 
-/* =============================================================
-   AUTO REFRESH (30 SECONDS)
-============================================================= */
 function runAll() {
     loadKPIs();
     loadTopWaits();
     loadActivity();
     loadCharts();
 }
-
 runAll();
 setInterval(runAll, 30000);
 </script>
 
+<!-- END CHUNK S4 — KPI + Tables + Charts Logic --><!-- START CHUNK S5 — Closing HTML -->
 </body>
 </html>
+<!-- END CHUNK S5 — Closing HTML -->
+
+
