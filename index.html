@@ -761,41 +761,54 @@ async function submitVehicle() {
 <!-- END C3 -->
 <!-- START C4 -->
 <script>
-let queueRendering = false;   // global render lock
+/*
+===============================================================
+ C4 — Debounced loadQueue()
+---------------------------------------------------------------
+ Prevents overlapping renders caused by:
+  • autoRefresh()
+  • window.onload
+  • button actions (notify, complete, undo)
+  • notes edit
+  • modal save
+Only ONE renderQueue() will run within 100ms.
+===============================================================
+*/
 
-async function loadQueue() {
+let queueTimeout = null;
 
-    // Prevent overlapping calls that cause duplicates
-    if (queueRendering) return;
-    queueRendering = true;
+function loadQueue() {
 
-    const { data } = await db
-        .from("vehicles")
-        .select(`
-            id,
-            registration,
-            po_ref,
-            pager_number,
-            notes,
-            check_in_time,
-            due_time,
-            quoted_minutes,
-            status,
-            classification
-        `)
-        .in("status", ["waiting", "notified"])
-        .order("check_in_time", { ascending: true });
+    // Cancel any pending call
+    clearTimeout(queueTimeout);
 
-    // Safe fallback array
-    const list = data || [];
+    // Schedule a fresh call
+    queueTimeout = setTimeout(async () => {
 
-    renderQueue(list);
+        const { data } = await db
+            .from("vehicles")
+            .select(`
+                id,
+                registration,
+                po_ref,
+                pager_number,
+                notes,
+                check_in_time,
+                due_time,
+                quoted_minutes,
+                status,
+                classification
+            `)
+            .in("status", ["waiting", "notified"])
+            .order("check_in_time", { ascending: true });
 
-    // render finished → release lock
-    queueRendering = false;
+        renderQueue(data || []);
+
+    }, 100); // debounce window (100ms)
 }
 </script>
 <!-- END C4 -->
+
 <!-- START C5 -->
 <script>
 function renderQueue(list) {
