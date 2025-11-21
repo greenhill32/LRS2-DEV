@@ -562,40 +562,72 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 })();
 </script>
 <!--// END C2 — Operator Loader (fixed avatar)-->
-
-<!-- START C3 — submitVehicle (HTML-safe, QR auto-launch) -->
+<!-- START C3 -->
 <script>
-let submitting = false;
-let prebookCache = [];
-let prebookExportFlag = false;
+/*
+===============================================================
+ C3 — PREBOOKINGS + ADD VEHICLE FLOW
+---------------------------------------------------------------
+ Handles:
+  • Loading prebooked loads into the dropdown
+  • Auto-filling the Add Lorry panel when a prebook is selected
+  • Flagging export loads (classification)
+  • Submitting a new vehicle into `vehicles` table
+  • Marking prebooking as consumed
+===============================================================
+*/
 
+let submitting = false;          // prevents double-click spam
+let prebookCache = [];           // store the loaded prebooking rows
+let prebookExportFlag = false;   // used to tag the vehicle as EXPORT
+
+/* =============================================================
+   Toggle Add Panel + Load Prebookings
+   Called when clicking “Add Vehicle”
+============================================================= */
 function togglePanel() {
     document.getElementById("panel").classList.toggle("panel-visible");
+
+    // Load prebooks only when panel opens (efficiency)
     loadPrebooks();
 }
 
+/* =============================================================
+   Load Prebookings from Supabase
+   Only rows where consumed=false are shown
+============================================================= */
 async function loadPrebooks() {
-    const sel = document.getElementById("prebookSelect");
-    sel.innerHTML = "<option value=''>-- Select Pre-Booked Load --</option>";
 
-    const { data } = await db
+    const sel = document.getElementById("prebookSelect");
+    sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
+
+    const { data, error } = await db
         .from("prebookings")
         .select("*")
         .eq("consumed", false)
         .order("expected_date", { ascending: true })
         .order("expected_time", { ascending: true });
 
-    prebookCache = data || [];
+    // If error OR no data → silently skip (dropdown stays empty)
+    if (error || !data) return;
 
-    prebookCache.forEach(p => {
+    // Cache for fast lookup when selecting
+    prebookCache = data;
+
+    // Build dropdown items
+    data.forEach(p => {
         const label =
-            `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
-            (p.is_export ? " — EXPORT" : "");
+            `${p.po_ref} — ${p.registration || "No Reg"} — ` +
+            `${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
+            `${p.is_export ? " — EXPORT" : ""}`;
 
         sel.innerHTML += `<option value="${p.id}">${label}</option>`;
     });
 }
 
+/* =============================================================
+   Apply selected prebooking → auto-fill the form
+============================================================= */
 function applyPrebook() {
     const id = document.getElementById("prebookSelect").value;
     if (!id) return;
@@ -603,14 +635,27 @@ function applyPrebook() {
     const pb = prebookCache.find(x => x.id === id);
     if (!pb) return;
 
+    // Pre-fill UI fields
     document.getElementById("poInput").value = pb.po_ref || "";
     document.getElementById("regInput").value = pb.registration || "";
     document.getElementById("notesInput").value = pb.notes || "";
 
+    // Store export classification (used during insert)
     prebookExportFlag = pb.is_export === true;
 }
 
+/* =============================================================
+   Submit new vehicle into Supabase
+   Includes:
+    • Status = waiting
+    • check_in_time + due_time
+    • Classification (export / normal)
+    • Insert audit log (check_in)
+    • Mark prebooking consumed (if used)
+============================================================= */
 async function submitVehicle() {
+
+    // Prevent double submissions
     if (submitting) return;
     submitting = true;
 
@@ -618,13 +663,16 @@ async function submitVehicle() {
     btn.style.pointerEvents = "none";
     btn.style.opacity = "0.5";
 
-    let reg = document.getElementById("regInput").value.trim();
-    let po = document.getElementById("poInput").value.trim();
+    // Collect inputs
+    let reg   = document.getElementById("regInput").value.trim();
+    let po    = document.getElementById("poInput").value.trim();
     let pager = parseInt(document.getElementById("pagerInput").value);
     let notes = document.getElementById("notesInput").value.trim();
     let quoted = parseInt(document.getElementById("quotedInput").value);
 
+    // Normalise number plate (uppercase + remove spaces)
     reg = reg.replace(/\s+/g, "").toUpperCase();
+
     if (!reg) {
         alert("Registration required");
         submitting = false;
@@ -633,31 +681,34 @@ async function submitVehicle() {
         return;
     }
 
+    // Operator ID from login
     const opId = localStorage.getItem("operator_id");
     if (!opId) {
         window.location.href = "login.html";
         return;
     }
 
+    // Build timestamps
     const now = new Date().toISOString();
     const due = new Date(Date.now() + quoted * 60000).toISOString();
 
-    /* insert vehicle */
-    const { data, error } = await db
-        .from("vehicles")
-        .insert({
-            registration: reg,
-            po_ref: po,
-            pager_number: pager,
-            notes: notes,
-            quoted_minutes: quoted,
-            due_time: due,
-            status: "waiting",
-            check_in_time: now,
-            operator_id: opId,
-            classification: prebookExportFlag ? "export" : "normal"
-        })
-        .select();
+    /* ---------------------------------------------------------
+       Insert into VEHICLES table
+    --------------------------------------------------------- */
+    const { data, error } = await db.from("vehicles").insert({
+        registration: reg,
+        po_ref: po,
+        pager_number: pager,
+        notes: notes,
+        quoted_minutes: quoted,
+        due_time: due,
+        status: "waiting",
+        check_in_time: now,
+        operator_id: opId,
+
+        // new classification field
+        classification: prebookExportFlag ? "export" : "normal"
+    }).select();
 
     if (error) {
         alert("Error: " + error.message);
@@ -667,9 +718,11 @@ async function submitVehicle() {
         return;
     }
 
-    const vehicleId = data[0].id;
+    const vehicleId = data[0]?.id;
 
-    /* log action */
+    /* ---------------------------------------------------------
+       Insert CHECK-IN audit log entry
+    --------------------------------------------------------- */
     await db.from("actions_log").insert({
         vehicle_id: vehicleId,
         operator_id: opId,
@@ -677,7 +730,9 @@ async function submitVehicle() {
         details: {}
     });
 
-    /* mark prebook consumed */
+    /* ---------------------------------------------------------
+       Mark prebooking consumed
+    --------------------------------------------------------- */
     const selected = document.getElementById("prebookSelect").value;
     if (selected) {
         await db
@@ -686,23 +741,24 @@ async function submitVehicle() {
             .eq("id", selected);
     }
 
-    /* auto-launch QR screen in new tab */
-    window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-
-    /* refresh dashboard */
+    /* ---------------------------------------------------------
+       Refresh UI
+    --------------------------------------------------------- */
     loadQueue();
     loadStats();
     loadActivity();
 
+    // Reset state
     submitting = false;
     btn.style.pointerEvents = "auto";
     btn.style.opacity = "1";
     prebookExportFlag = false;
 
+    // Close form
     togglePanel();
 }
 </script>
-<!-- END C3 — submitVehicle (HTML-safe, QR auto-launch) -->
+<!-- END C3 -->
 
 
 <!-- START C4 -->
