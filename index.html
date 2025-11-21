@@ -259,7 +259,7 @@
 
     <div class="panel-title">Add New Lorry</div>
 
-    <!-- NEW: Expected Loads Dropdown -->
+    <!-- Expected Loads Dropdown -->
     <label style="color:#ccc; margin-top:10px;">Expected Loads</label>
     <select id="prebookSelect"
         onchange="applyPrebook()"
@@ -293,6 +293,14 @@
         </select>
     </div>
 
+    <!-- NEW EXPORT CHECKBOX (added as requested) -->
+    <div class="form-row">
+        <label style="display:flex; align-items:center; gap:10px; color:#fff; cursor:pointer;">
+            <input type="checkbox" id="exportCheckbox" style="width:auto; cursor:pointer;">
+            <span style="font-size:16px;">Mark as EXPORT load</span>
+        </label>
+    </div>
+
     <div class="form-row">
         <textarea id="notesInput" placeholder="Notes"></textarea>
     </div>
@@ -300,7 +308,6 @@
     <div id="submitBtn" class="submit-btn" onclick="submitVehicle()">Submit</div>
 </div>
 <!-- END B1 -->
-
 
 <!-- START B2 -->
 <div id="header" class="header">
@@ -564,70 +571,48 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 <!--// END C2 — Operator Loader (fixed avatar)-->
 <!-- START C3 -->
 <script>
-/*
-===============================================================
- C3 — PREBOOKINGS + ADD VEHICLE FLOW
----------------------------------------------------------------
- Handles:
-  • Loading prebooked loads into the dropdown
-  • Auto-filling the Add Lorry panel when a prebook is selected
-  • Flagging export loads (classification)
-  • Submitting a new vehicle into `vehicles` table
-  • Marking prebooking as consumed
-===============================================================
-*/
+let submitting = false;
+let prebookCache = [];
+let prebookExportFlag = false;
 
-let submitting = false;          // prevents double-click spam
-let prebookCache = [];           // store the loaded prebooking rows
-let prebookExportFlag = false;   // used to tag the vehicle as EXPORT
-
-/* =============================================================
-   Toggle Add Panel + Load Prebookings
-   Called when clicking “Add Vehicle”
-============================================================= */
 function togglePanel() {
     document.getElementById("panel").classList.toggle("panel-visible");
-
-    // Load prebooks only when panel opens (efficiency)
     loadPrebooks();
+    
+    // Reset form when closing
+    if (!document.getElementById("panel").classList.contains("panel-visible")) {
+        document.getElementById("poInput").value = "";
+        document.getElementById("regInput").value = "";
+        document.getElementById("pagerInput").value = "";
+        document.getElementById("notesInput").value = "";
+        document.getElementById("prebookSelect").value = "";
+        document.getElementById("exportCheckbox").checked = false;
+        prebookExportFlag = false;
+    }
 }
 
-/* =============================================================
-   Load Prebookings from Supabase
-   Only rows where consumed=false are shown
-============================================================= */
 async function loadPrebooks() {
-
     const sel = document.getElementById("prebookSelect");
-    sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
+    sel.innerHTML = "<option value=''>-- Select Pre-Booked Load --</option>";
 
-    const { data, error } = await db
+    const { data } = await db
         .from("prebookings")
         .select("*")
         .eq("consumed", false)
         .order("expected_date", { ascending: true })
         .order("expected_time", { ascending: true });
 
-    // If error OR no data → silently skip (dropdown stays empty)
-    if (error || !data) return;
+    prebookCache = data || [];
 
-    // Cache for fast lookup when selecting
-    prebookCache = data;
-
-    // Build dropdown items
-    data.forEach(p => {
+    prebookCache.forEach(p => {
         const label =
-            `${p.po_ref} — ${p.registration || "No Reg"} — ` +
-            `${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
-            `${p.is_export ? " — EXPORT" : ""}`;
+            `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
+            (p.is_export ? " — EXPORT" : "");
 
         sel.innerHTML += `<option value="${p.id}">${label}</option>`;
     });
 }
 
-/* =============================================================
-   Apply selected prebooking → auto-fill the form
-============================================================= */
 function applyPrebook() {
     const id = document.getElementById("prebookSelect").value;
     if (!id) return;
@@ -635,27 +620,16 @@ function applyPrebook() {
     const pb = prebookCache.find(x => x.id === id);
     if (!pb) return;
 
-    // Pre-fill UI fields
     document.getElementById("poInput").value = pb.po_ref || "";
     document.getElementById("regInput").value = pb.registration || "";
     document.getElementById("notesInput").value = pb.notes || "";
 
-    // Store export classification (used during insert)
+    // Set export flag and checkbox
     prebookExportFlag = pb.is_export === true;
+    document.getElementById("exportCheckbox").checked = prebookExportFlag;
 }
 
-/* =============================================================
-   Submit new vehicle into Supabase
-   Includes:
-    • Status = waiting
-    • check_in_time + due_time
-    • Classification (export / normal)
-    • Insert audit log (check_in)
-    • Mark prebooking consumed (if used)
-============================================================= */
 async function submitVehicle() {
-
-    // Prevent double submissions
     if (submitting) return;
     submitting = true;
 
@@ -663,16 +637,13 @@ async function submitVehicle() {
     btn.style.pointerEvents = "none";
     btn.style.opacity = "0.5";
 
-    // Collect inputs
-    let reg   = document.getElementById("regInput").value.trim();
-    let po    = document.getElementById("poInput").value.trim();
+    let reg = document.getElementById("regInput").value.trim();
+    let po = document.getElementById("poInput").value.trim();
     let pager = parseInt(document.getElementById("pagerInput").value);
     let notes = document.getElementById("notesInput").value.trim();
     let quoted = parseInt(document.getElementById("quotedInput").value);
 
-    // Normalise number plate (uppercase + remove spaces)
     reg = reg.replace(/\s+/g, "").toUpperCase();
-
     if (!reg) {
         alert("Registration required");
         submitting = false;
@@ -681,34 +652,35 @@ async function submitVehicle() {
         return;
     }
 
-    // Operator ID from login
     const opId = localStorage.getItem("operator_id");
     if (!opId) {
         window.location.href = "login.html";
         return;
     }
 
-    // Build timestamps
     const now = new Date().toISOString();
     const due = new Date(Date.now() + quoted * 60000).toISOString();
 
-    /* ---------------------------------------------------------
-       Insert into VEHICLES table
-    --------------------------------------------------------- */
-    const { data, error } = await db.from("vehicles").insert({
-        registration: reg,
-        po_ref: po,
-        pager_number: pager,
-        notes: notes,
-        quoted_minutes: quoted,
-        due_time: due,
-        status: "waiting",
-        check_in_time: now,
-        operator_id: opId,
+    // Check BOTH prebook flag AND manual checkbox
+    const manualExport = document.getElementById("exportCheckbox").checked;
+    const isExport = prebookExportFlag || manualExport;
 
-        // new classification field
-        classification: prebookExportFlag ? "export" : "normal"
-    }).select();
+    /* insert vehicle */
+    const { data, error } = await db
+        .from("vehicles")
+        .insert({
+            registration: reg,
+            po_ref: po,
+            pager_number: pager,
+            notes: notes,
+            quoted_minutes: quoted,
+            due_time: due,
+            status: "waiting",
+            check_in_time: now,
+            operator_id: opId,
+            classification: isExport ? "export" : "normal"
+        })
+        .select();
 
     if (error) {
         alert("Error: " + error.message);
@@ -718,11 +690,9 @@ async function submitVehicle() {
         return;
     }
 
-    const vehicleId = data[0]?.id;
+    const vehicleId = data[0].id;
 
-    /* ---------------------------------------------------------
-       Insert CHECK-IN audit log entry
-    --------------------------------------------------------- */
+    /* log action */
     await db.from("actions_log").insert({
         vehicle_id: vehicleId,
         operator_id: opId,
@@ -730,9 +700,7 @@ async function submitVehicle() {
         details: {}
     });
 
-    /* ---------------------------------------------------------
-       Mark prebooking consumed
-    --------------------------------------------------------- */
+    /* mark prebook consumed */
     const selected = document.getElementById("prebookSelect").value;
     if (selected) {
         await db
@@ -741,20 +709,16 @@ async function submitVehicle() {
             .eq("id", selected);
     }
 
-    /* ---------------------------------------------------------
-       Refresh UI
-    --------------------------------------------------------- */
+    /* refresh dashboard */
     loadQueue();
     loadStats();
     loadActivity();
 
-    // Reset state
     submitting = false;
     btn.style.pointerEvents = "auto";
     btn.style.opacity = "1";
     prebookExportFlag = false;
 
-    // Close form
     togglePanel();
 }
 </script>
