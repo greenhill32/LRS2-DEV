@@ -761,30 +761,15 @@ async function submitVehicle() {
 <!-- END C3 -->
 <!-- START C4 -->
 <script>
-/*
-===============================================================
- C4 — Debounced loadQueue()
----------------------------------------------------------------
- Prevents overlapping renders caused by:
-  • autoRefresh()
-  • window.onload
-  • button actions (notify, complete, undo)
-  • notes edit
-  • modal save
-Only ONE renderQueue() will run within 100ms.
-===============================================================
-*/
-
-let queueTimeout = null;
+let queueTimeout = null;  // debounce timer
 
 function loadQueue() {
-
-    // Cancel any pending call
+    // Cancel any pending load request
     clearTimeout(queueTimeout);
-
-    // Schedule a fresh call
+    
+    // Schedule new load after 100ms
+    // If loadQueue() is called again within 100ms, this gets cancelled
     queueTimeout = setTimeout(async () => {
-
         const { data } = await db
             .from("vehicles")
             .select(`
@@ -802,13 +787,14 @@ function loadQueue() {
             .in("status", ["waiting", "notified"])
             .order("check_in_time", { ascending: true });
 
-        renderQueue(data || []);
+        // Safe fallback array
+        const list = data || [];
 
-    }, 100); // debounce window (100ms)
+        renderQueue(list);
+    }, 100);
 }
 </script>
 <!-- END C4 -->
-
 <!-- START C5 -->
 <script>
 function renderQueue(list) {
