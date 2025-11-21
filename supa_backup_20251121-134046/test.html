@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Onboarding</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      max-width: 200px;
+      margin: 0 auto;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #002855;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #002855;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: background-color 0.3s;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .btn:hover {
+      background-color: #004080;
+    }
+    .info-box {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #f1f5f9;
+      border-radius: 12px;
+      box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <div class="container">
+    <div class="header">
+      <img src="logo.jpg" alt="DCS Group Logo" class="logo" />
+      <h2 class="text-3xl font-bold mt-4 text-gray-800">Employee Onboarding</h2>
+    </div>
+
+    <form onsubmit="return false;">
+      <div class="form-group">
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" oninput="generateFields()" required />
+      </div>
+      <div class="form-group">
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" oninput="generateFields()" required />
+      </div>
+      <div class="form-group">
+        <label for="samAccountName">SamAccountName:</label>
+        <input type="text" id="samAccountName" name="samAccountName" readonly />
+      </div>
+      <div class="form-group">
+        <label for="emailAddress">Email Address:</label>
+        <input type="email" id="emailAddress" name="emailAddress" readonly />
+      </div>
+      <div class="form-group">
+        <label for="officePhone">Office Phone:</label>
+        <p id="officePhone">+44 1789 208000</p>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required />
+      </div>
+      <div class="form-group">
+        <label for="sageID">Sage ID:</label>
+        <input type="text" id="sageID" name="sageID" required />
+      </div>
+      <div class="form-group">
+        <label for="visionPassword">Vision Password:</label>
+        <input type="password" id="visionPassword" name="visionPassword" required />
+      </div>
+      <div class="form-group">
+        <label for="employeeID">Employee ID:</label>
+        <input type="text" id="employeeID" name="employeeID" required />
+      </div>
+
+      <button type="button" class="btn" onclick="displayEmployeeIDCommand()">Generate PowerShell Commands</button>
+      <button type="button" class="btn" onclick="generateCredentialsFile()">Generate Credentials File</button>
+    </form>
+
+    <div class="info-box">
+      <p><strong>Generated PowerShell Command:</strong></p>
+      <p id="employeeIDCommand" class="text-blue-600 font-mono"></p>
+    </div>
+  </div>
+
+  <script>
+    function generateFields() {
+      const firstName = document.getElementById("firstName").value;
+      const lastName = document.getElementById("lastName").value;
+
+      if (firstName && lastName) {
+        const samAccountName = firstName + lastName;
+        const emailAddress = `${firstName}${lastName}@dcsgroup.com`;
+
+        document.getElementById("samAccountName").value = samAccountName;
+        document.getElementById("emailAddress").value = emailAddress.toLowerCase();
+      }
+    }
+
+    function displayEmployeeIDCommand() {
+      const samAccountName = document.getElementById("samAccountName").value;
+      const emailAddress = document.getElementById("emailAddress").value;
+      const employeeID = document.getElementById("employeeID").value;
+      const officePhone = document.getElementById("officePhone").textContent;
+
+      if (samAccountName && employeeID && officePhone) {
+        document.getElementById("employeeIDCommand").innerHTML = `
+          <span class="text-blue-600 font-mono">Get-ADUser ${samAccountName} | Set-ADUser -EmployeeID "${employeeID}"</span><br>
+          <span class="text-blue-600 font-mono">Get-ADUser ${samAccountName} | Set-ADUser -EmailAddress "${emailAddress}"</span><br>
+          <span class="text-blue-600 font-mono">Get-ADUser ${samAccountName} | Set-ADUser -OfficePhone "${officePhone}"</span><br>
+          <span class="text-blue-600 font-mono">Add-ADGroupMember -Identity "DCS-All Staff" -Members "${samAccountName}"</span>`;
+      } else {
+        document.getElementById("employeeIDCommand").textContent =
+          "Fill in the user details to generate commands.";
+      }
+    }
+
+    function generateCredentialsFile() {
+      const firstName = document.getElementById("firstName").value;
+      const lastName = document.getElementById("lastName").value;
+      const samAccountName = document.getElementById("samAccountName").value;
+      const emailAddress = document.getElementById("emailAddress").value;
+      const password = document.getElementById("password").value;
+      const sageID = document.getElementById("sageID").value;
+      const visionPassword = document.getElementById("visionPassword").value;
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${firstName} ${lastName} - Credentials</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+body { background-color: #f8fafc; }
+.card { background: white; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.1); padding: 2rem; }
+.header h1 { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
+.tag { background-color: #e2e8f0; border-radius: 6px; padding: 4px 10px; font-size: 0.9rem; color: #334155; }
+.grid-cols-2 > div { border-bottom: 1px solid #f1f5f9; padding: 0.5rem 0; }
+</style>
+</head>
+<body>
+<div class="max-w-3xl mx-auto mt-10 card">
+  <div class="header text-center mb-6">
+    <img src="logo.jpg" class="mx-auto w-32 mb-4" alt="DCS Logo">
+    <h1>${firstName} ${lastName} – Access Summary</h1>
+    <p class="text-sm text-gray-500">Generated ${new Date().toLocaleDateString()}</p>
+  </div>
+
+  <div class="bg-slate-50 p-4 rounded-md mb-6">
+    <p><strong>Primary Credentials:</strong></p>
+    <p>Username: <span class="font-mono">${samAccountName}</span></p>
+    <p>Password: <span class="font-mono">${password}</span></p>
+    <p class="text-sm text-gray-500">Linked systems: Windows, Email, Sage X3, Laptop</p>
+  </div>
+
+  <h2 class="text-lg font-semibold mb-2">System Access</h2>
+  <div class="grid grid-cols-2 gap-4">
+    <div><strong>Email</strong><br>${emailAddress}</div>
+    <div><strong>Sage X3</strong><br>ID: ${sageID}</div>
+    <div><strong>DCS Vision</strong><br>${emailAddress}<br><span class="font-mono">${visionPassword}</span></div>
+    <div><strong>Q-Pulse</strong><br>Auto-login (Desktop)</div>
+    <div><strong>Dispatcher</strong><br>Desktop App</div>
+    <div><strong>3CX Phone</strong><br>Not yet assigned</div>
+  </div>
+
+  <div class="mt-8 border-t pt-4 text-center text-sm text-gray-500">
+    <p>Keep this file confidential. Do not share or email unencrypted.</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${firstName}_${lastName}_credentials.html`;
+      a.click();
+    }
+  </script>
+</body>
+</html>
