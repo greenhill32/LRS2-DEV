@@ -759,11 +759,16 @@ async function submitVehicle() {
 }
 </script>
 <!-- END C3 -->
-
-
 <!-- START C4 -->
 <script>
+let queueRendering = false;   // global render lock
+
 async function loadQueue() {
+
+    // Prevent overlapping calls that cause duplicates
+    if (queueRendering) return;
+    queueRendering = true;
+
     const { data } = await db
         .from("vehicles")
         .select(`
@@ -781,117 +786,105 @@ async function loadQueue() {
         .in("status", ["waiting", "notified"])
         .order("check_in_time", { ascending: true });
 
-    // fail-safe: ensure an array is passed
-    renderQueue(data || []);
+    // Safe fallback array
+    const list = data || [];
+
+    renderQueue(list);
+
+    // render finished → release lock
+    queueRendering = false;
 }
 </script>
 <!-- END C4 -->
-
 <!-- START C5 -->
 <script>
 function renderQueue(list) {
     const container = document.querySelector(".queue-container");
 
-    /* FULL RESET to prevent duplicates */
-    container.innerHTML = "";
+    // True reset — no duplicates ever
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
 
-    /* HEADER */
-    container.innerHTML = 
-        '<div class="queue-header">' +
-            '<span>Active Queue</span>' +
-            '<span class="queue-count">' + list.length + ' vehicles active</span>' +
-        '</div>';
+    // Header
+    const header = document.createElement("div");
+    header.className = "queue-header";
+    header.innerHTML =
+        "<span>Active Queue</span>" +
+        "<span class='queue-count'>" + list.length + " vehicles active</span>";
+    container.appendChild(header);
 
     if (!list || list.length === 0) {
-        container.innerHTML += 
-            '<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>';
+        const empty = document.createElement("div");
+        empty.style.cssText = "padding:30px;text-align:center;color:#777;";
+        empty.textContent = "No active vehicles";
+        container.appendChild(empty);
         return;
     }
 
-    list.forEach(function(v) {
+    // Cards
+    list.forEach(function (v) {
+        const checkIn = new Date(v.check_in_time);
+        const due = new Date(v.due_time);
+        const now = new Date();
 
-        /* Compute overdue */
-        var checkIn = new Date(v.check_in_time);
-        var due = new Date(v.due_time);
-        var now = new Date();
-
-        var overdue = Math.floor((now - due) / 60000);
+        let overdue = Math.floor((now - due) / 60000);
         if (overdue < 0) overdue = 0;
 
-        /* Colour logic */
-        var colour = "green";
+        let colour = "green";
         if (now >= due) colour = "amber";
         if (overdue >= 30) colour = "red";
         if (overdue >= 180) colour = "red2";
 
-        /* Export classification (safe version) */
-        var isExport = (v.classification === "export");
-        var cardClass = isExport ? "export-card" : colour;
+        const isExport = v.classification === "export";
+        const cardClass = isExport ? "export-card" : colour;
 
-        var dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+        const entry = document.createElement("div");
+        entry.className = "entry " + cardClass;
 
-        /* Escape notes safely */
-        var notes = v.notes ? v.notes.replace(/</g,"&lt;") : '';
+        const dueText = due.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
 
-        /* Build card HTML (NO nested template literals) */
-        var html = '';
+        entry.innerHTML = `
+            <div class="entry-top" onclick="openModalEditor('${v.id}')">
 
-        html += '<div class="entry ' + cardClass + '">';
-        html += '  <div class="entry-top" onclick="openModalEditor(\'' + v.id + '\')">';
+                ${isExport ? '<div class="export-banner">EXPORT LOAD</div>' : ''}
 
-        html += '    <div>';
+                <strong>${v.registration}</strong><br>
+                <span>${v.po_ref || "No PO"}</span><br>
 
-        if (isExport) {
-            html += '      <div class="export-banner">EXPORT LOAD</div>';
-        }
+                <span style="font-size:11px;opacity:0.7;">Due at ${dueText}</span>
+                <div class="pager-badge">Pager #${v.pager_number || "-"}</div>
 
-        html += '      <strong>' + v.registration + '</strong><br>';
-        html += '      <span>' + (v.po_ref || "No PO") + '</span><br>';
-        html += '      <span style="font-size:11px;opacity:0.7;">Due at ' + dueText + '</span>';
-        html += '      <div class="pager-badge">Pager #' + (v.pager_number || "-") + '</div>';
+                <div id="notes-${v.id}" class="notes-text"
+                     onclick="event.stopPropagation(); enableNotesEdit('${v.id}', '${(v.notes || "").replace(/'/g, "\\'")}')">
+                    ${v.notes ? v.notes : "<i>Click to add notes</i>"}
+                </div>
+            </div>
 
-        html += '      <div id="notes-' + v.id + '" class="notes-text" ' +
-                    'onclick="event.stopPropagation(); enableNotesEdit(\'' + v.id + '\', \'' + notes + '\')">';
+            <div style="text-align:right;">
+                ${
+                    v.status === "notified"
+                    ? "<strong style='color:#1b4cd4;'>Notified</strong>"
+                    : (overdue > 0
+                        ? overdue + " mins overdue"
+                        : "On time")
+                }
+                <div style="font-size:12px;opacity:0.7;">
+                    In: ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+                </div>
+            </div>
 
-        if (v.notes) {
-            html += notes;
-        } else {
-            html += '<i>Click to add notes</i>';
-        }
+            <div class="entry-actions">
+                <button onclick="notifyVehicle('${v.id}')" class="action-btn notify-btn">Notify</button>
+                <button onclick="completeVehicle('${v.id}')" class="action-btn complete-btn">Complete</button>
+                <button onclick="undoVehicle('${v.id}')" class="action-btn" style="background:#777;">Undo</button>
+            </div>
+        `;
 
-        html += '      </div>';
-
-        html += '    </div>';
-
-        /* Right side info */
-        html += '    <div style="text-align:right;">';
-
-        if (v.status === "notified") {
-            html += '      <div><strong style="color:#1b4cd4;">Notified</strong></div>';
-        } else if (overdue > 0) {
-            html += '      <div>' + overdue + ' mins overdue</div>';
-        } else {
-            html += '      <div>On time</div>';
-        }
-
-        html += '      <div style="font-size:12px;opacity:0.7;">In: ' +
-                    checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) +
-                '</div>';
-
-        html += '    </div>'; // end right side
-
-        html += '  </div>'; // end entry top
-
-        /* ACTION BUTTONS */
-        html += '  <div class="entry-actions">';
-        html += '    <button class="action-btn notify-btn" onclick="notifyVehicle(\'' + v.id + '\')">Notify</button>';
-        html += '    <button class="action-btn complete-btn" onclick="completeVehicle(\'' + v.id + '\')">Complete</button>';
-        html += '    <button class="action-btn" style="background:#777;" onclick="undoVehicle(\'' + v.id + '\')">Undo</button>';
-        html += '  </div>';
-
-        html += '</div>'; // end entry
-
-        container.innerHTML += html;
+        container.appendChild(entry);
     });
 }
 </script>
