@@ -787,17 +787,12 @@ async function loadQueue() {
 </script>
 <!-- END C4 -->
 
+
 <!-- START C5 -->
 <script>
 function renderQueue(list) {
     const container = document.querySelector(".queue-container");
 
-    /* ============================================================
-       FULL RESET – removes ALL previous cards to prevent duplicates
-    =============================================================== */
-    container.innerHTML = "";
-
-    // Rebuild queue header
     container.innerHTML = `
         <div class="queue-header">
             <span>Active Queue</span>
@@ -806,18 +801,12 @@ function renderQueue(list) {
     `;
 
     if (!list || list.length === 0) {
-        container.innerHTML += `
-            <div style="padding:30px;text-align:center;color:#777;">
-                No active vehicles
-            </div>`;
+        container.innerHTML += `<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>`;
         return;
     }
 
     list.forEach(v => {
 
-        /* ----------------------------------------------------------
-           Calculate overdue state
-        ----------------------------------------------------------- */
         const checkIn = new Date(v.check_in_time);
         const due = new Date(v.due_time);
         const now = new Date();
@@ -825,35 +814,26 @@ function renderQueue(list) {
         let overdue = Math.floor((now - due) / 60000);
         if (overdue < 0) overdue = 0;
 
-        /* ----------------------------------------------------------
-           Normal colour categories (used unless EXPORT override)
-        ----------------------------------------------------------- */
         let colour = "green";
         if (now >= due) colour = "amber";
         if (overdue >= 30) colour = "red";
         if (overdue >= 180) colour = "red2";
 
-        /* ----------------------------------------------------------
-           Classification logic – does NOT override overdue YET
-           (we will fix this in the next chunk when you’re ready)
-        ----------------------------------------------------------- */
         const isExport = v.classification === "export";
         const cardClass = isExport ? "export-card" : colour;
 
-        const dueText = due.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+        const dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
 
-        /* ----------------------------------------------------------
-           Render card
-        ----------------------------------------------------------- */
         container.innerHTML += `
             <div class="entry ${cardClass}">
+
                 <div class="entry-top" onclick="openModalEditor('${v.id}')">
 
                     <div>
-                        ${isExport ? `<div class="export-banner">EXPORT LOAD</div>` : ""}
+
+                        ${isExport ? `
+                            <div class="export-banner">EXPORT LOAD</div>
+                        ` : ""}
 
                         <strong>${v.registration}</strong><br>
                         <span>${v.po_ref || "No PO"}</span><br>
@@ -866,6 +846,7 @@ function renderQueue(list) {
                              onclick="event.stopPropagation(); enableNotesEdit('${v.id}', \`${v.notes || ''}\`)">
                             ${v.notes ? v.notes : "<i>Click to add notes</i>"}
                         </div>
+
                     </div>
 
                     <div style="text-align:right;">
@@ -873,13 +854,11 @@ function renderQueue(list) {
                             ${v.status === "notified"
                                 ? "<strong style='color:#1b4cd4;'>Notified</strong>"
                                 : (overdue > 0
-                                    ? overdue + " mins overdue"
+                                    ? overdue+" mins overdue"
                                     : "On time")}
                         </div>
                         <div style="font-size:12px;opacity:0.7;">
-                            In: ${checkIn.toLocaleTimeString("en-GB",{
-                                hour:"2-digit",minute:"2-digit"
-                            })}
+                            In: ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
                         </div>
                     </div>
 
@@ -890,6 +869,7 @@ function renderQueue(list) {
                     <button class="action-btn complete-btn" onclick="completeVehicle('${v.id}')">Complete</button>
                     <button class="action-btn" style="background:#777;" onclick="undoVehicle('${v.id}')">Undo</button>
                 </div>
+
             </div>
         `;
     });
