@@ -575,44 +575,58 @@ let submitting = false;
 let prebookCache = [];
 let prebookExportFlag = false;
 
+/* =============================================================
+   Toggle panel open/close + reset checkbox
+============================================================= */
 function togglePanel() {
-    document.getElementById("panel").classList.toggle("panel-visible");
-    loadPrebooks();
-    
-    // Reset form when closing
-    if (!document.getElementById("panel").classList.contains("panel-visible")) {
+    const panel = document.getElementById("panel");
+    panel.classList.toggle("panel-visible");
+
+    if (panel.classList.contains("panel-visible")) {
+        loadPrebooks();
+    } else {
         document.getElementById("poInput").value = "";
         document.getElementById("regInput").value = "";
-        document.getElementById("pagerInput").value = "";
         document.getElementById("notesInput").value = "";
+        document.getElementById("pagerInput").value = "";
         document.getElementById("prebookSelect").value = "";
-        document.getElementById("exportCheckbox").checked = false;
+        document.getElementById("quotedInput").value = "60";
         prebookExportFlag = false;
+        document.getElementById("exportCheckbox").checked = false;
     }
 }
 
+/* =============================================================
+   Load prebookings
+============================================================= */
 async function loadPrebooks() {
     const sel = document.getElementById("prebookSelect");
-    sel.innerHTML = "<option value=''>-- Select Pre-Booked Load --</option>";
+    sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
 
-    const { data } = await db
+    const { data, error } = await db
         .from("prebookings")
         .select("*")
         .eq("consumed", false)
         .order("expected_date", { ascending: true })
         .order("expected_time", { ascending: true });
 
-    prebookCache = data || [];
+    if (error || !data) return;
 
-    prebookCache.forEach(p => {
+    prebookCache = data;
+
+    data.forEach(p => {
         const label =
-            `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
-            (p.is_export ? " — EXPORT" : "");
+            `${p.po_ref} — ${p.registration || "No Reg"} — ` +
+            `${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
+            `${p.is_export ? " — EXPORT" : ""}`;
 
         sel.innerHTML += `<option value="${p.id}">${label}</option>`;
     });
 }
 
+/* =============================================================
+   Apply prebook row
+============================================================= */
 function applyPrebook() {
     const id = document.getElementById("prebookSelect").value;
     if (!id) return;
@@ -624,11 +638,13 @@ function applyPrebook() {
     document.getElementById("regInput").value = pb.registration || "";
     document.getElementById("notesInput").value = pb.notes || "";
 
-    // Set export flag and checkbox
     prebookExportFlag = pb.is_export === true;
     document.getElementById("exportCheckbox").checked = prebookExportFlag;
 }
 
+/* =============================================================
+   Submit vehicle
+============================================================= */
 async function submitVehicle() {
     if (submitting) return;
     submitting = true;
@@ -637,13 +653,14 @@ async function submitVehicle() {
     btn.style.pointerEvents = "none";
     btn.style.opacity = "0.5";
 
-    let reg = document.getElementById("regInput").value.trim();
-    let po = document.getElementById("poInput").value.trim();
+    let reg   = document.getElementById("regInput").value.trim();
+    let po    = document.getElementById("poInput").value.trim();
     let pager = parseInt(document.getElementById("pagerInput").value);
     let notes = document.getElementById("notesInput").value.trim();
     let quoted = parseInt(document.getElementById("quotedInput").value);
 
     reg = reg.replace(/\s+/g, "").toUpperCase();
+
     if (!reg) {
         alert("Registration required");
         submitting = false;
@@ -661,26 +678,21 @@ async function submitVehicle() {
     const now = new Date().toISOString();
     const due = new Date(Date.now() + quoted * 60000).toISOString();
 
-    // Check BOTH prebook flag AND manual checkbox
     const manualExport = document.getElementById("exportCheckbox").checked;
-    const isExport = prebookExportFlag || manualExport;
+    const classification = (prebookExportFlag || manualExport) ? "export" : "normal";
 
-    /* insert vehicle */
-    const { data, error } = await db
-        .from("vehicles")
-        .insert({
-            registration: reg,
-            po_ref: po,
-            pager_number: pager,
-            notes: notes,
-            quoted_minutes: quoted,
-            due_time: due,
-            status: "waiting",
-            check_in_time: now,
-            operator_id: opId,
-            classification: isExport ? "export" : "normal"
-        })
-        .select();
+    const { data, error } = await db.from("vehicles").insert({
+        registration: reg,
+        po_ref: po,
+        pager_number: pager,
+        notes: notes,
+        quoted_minutes: quoted,
+        due_time: due,
+        status: "waiting",
+        check_in_time: now,
+        operator_id: opId,
+        classification: classification
+    }).select();
 
     if (error) {
         alert("Error: " + error.message);
@@ -692,7 +704,14 @@ async function submitVehicle() {
 
     const vehicleId = data[0].id;
 
-    /* log action */
+    /* ==========================================================
+       AUTO-OPEN QR SCREEN FOR THIS VEHICLE
+    =========================================================== */
+    window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
+
+    /* ==========================================================
+       Log check-in action
+    =========================================================== */
     await db.from("actions_log").insert({
         vehicle_id: vehicleId,
         operator_id: opId,
@@ -700,7 +719,7 @@ async function submitVehicle() {
         details: {}
     });
 
-    /* mark prebook consumed */
+    /* Mark prebooking consumed */
     const selected = document.getElementById("prebookSelect").value;
     if (selected) {
         await db
@@ -709,7 +728,6 @@ async function submitVehicle() {
             .eq("id", selected);
     }
 
-    /* refresh dashboard */
     loadQueue();
     loadStats();
     loadActivity();
@@ -717,12 +735,15 @@ async function submitVehicle() {
     submitting = false;
     btn.style.pointerEvents = "auto";
     btn.style.opacity = "1";
+
     prebookExportFlag = false;
+    document.getElementById("exportCheckbox").checked = false;
 
     togglePanel();
 }
 </script>
 <!-- END C3 -->
+
 <!-- START C4 -->
 <script>
 let queueTimeout = null;  // debounce timer
