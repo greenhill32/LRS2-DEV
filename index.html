@@ -787,91 +787,111 @@ async function loadQueue() {
 </script>
 <!-- END C4 -->
 
-
 <!-- START C5 -->
 <script>
 function renderQueue(list) {
     const container = document.querySelector(".queue-container");
 
-    container.innerHTML = `
-        <div class="queue-header">
-            <span>Active Queue</span>
-            <span class="queue-count">${list.length} vehicles active</span>
-        </div>
-    `;
+    /* FULL RESET to prevent duplicates */
+    container.innerHTML = "";
+
+    /* HEADER */
+    container.innerHTML = 
+        '<div class="queue-header">' +
+            '<span>Active Queue</span>' +
+            '<span class="queue-count">' + list.length + ' vehicles active</span>' +
+        '</div>';
 
     if (!list || list.length === 0) {
-        container.innerHTML += `<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>`;
+        container.innerHTML += 
+            '<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>';
         return;
     }
 
-    list.forEach(v => {
+    list.forEach(function(v) {
 
-        const checkIn = new Date(v.check_in_time);
-        const due = new Date(v.due_time);
-        const now = new Date();
+        /* Compute overdue */
+        var checkIn = new Date(v.check_in_time);
+        var due = new Date(v.due_time);
+        var now = new Date();
 
-        let overdue = Math.floor((now - due) / 60000);
+        var overdue = Math.floor((now - due) / 60000);
         if (overdue < 0) overdue = 0;
 
-        let colour = "green";
+        /* Colour logic */
+        var colour = "green";
         if (now >= due) colour = "amber";
         if (overdue >= 30) colour = "red";
         if (overdue >= 180) colour = "red2";
 
-        const isExport = v.classification === "export";
-        const cardClass = isExport ? "export-card" : colour;
+        /* Export classification (safe version) */
+        var isExport = (v.classification === "export");
+        var cardClass = isExport ? "export-card" : colour;
 
-        const dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+        var dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
 
-        container.innerHTML += `
-            <div class="entry ${cardClass}">
+        /* Escape notes safely */
+        var notes = v.notes ? v.notes.replace(/</g,"&lt;") : '';
 
-                <div class="entry-top" onclick="openModalEditor('${v.id}')">
+        /* Build card HTML (NO nested template literals) */
+        var html = '';
 
-                    <div>
+        html += '<div class="entry ' + cardClass + '">';
+        html += '  <div class="entry-top" onclick="openModalEditor(\'' + v.id + '\')">';
 
-                        ${isExport ? `
-                            <div class="export-banner">EXPORT LOAD</div>
-                        ` : ""}
+        html += '    <div>';
 
-                        <strong>${v.registration}</strong><br>
-                        <span>${v.po_ref || "No PO"}</span><br>
+        if (isExport) {
+            html += '      <div class="export-banner">EXPORT LOAD</div>';
+        }
 
-                        <span style="font-size:11px;opacity:0.7;">Due at ${dueText}</span>
-                        <div class="pager-badge">Pager #${v.pager_number || "-"}</div>
+        html += '      <strong>' + v.registration + '</strong><br>';
+        html += '      <span>' + (v.po_ref || "No PO") + '</span><br>';
+        html += '      <span style="font-size:11px;opacity:0.7;">Due at ' + dueText + '</span>';
+        html += '      <div class="pager-badge">Pager #' + (v.pager_number || "-") + '</div>';
 
-                        <div id="notes-${v.id}"
-                             class="notes-text"
-                             onclick="event.stopPropagation(); enableNotesEdit('${v.id}', \`${v.notes || ''}\`)">
-                            ${v.notes ? v.notes : "<i>Click to add notes</i>"}
-                        </div>
+        html += '      <div id="notes-' + v.id + '" class="notes-text" ' +
+                    'onclick="event.stopPropagation(); enableNotesEdit(\'' + v.id + '\', \'' + notes + '\')">';
 
-                    </div>
+        if (v.notes) {
+            html += notes;
+        } else {
+            html += '<i>Click to add notes</i>';
+        }
 
-                    <div style="text-align:right;">
-                        <div>
-                            ${v.status === "notified"
-                                ? "<strong style='color:#1b4cd4;'>Notified</strong>"
-                                : (overdue > 0
-                                    ? overdue+" mins overdue"
-                                    : "On time")}
-                        </div>
-                        <div style="font-size:12px;opacity:0.7;">
-                            In: ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
-                        </div>
-                    </div>
+        html += '      </div>';
 
-                </div>
+        html += '    </div>';
 
-                <div class="entry-actions">
-                    <button class="action-btn notify-btn" onclick="notifyVehicle('${v.id}')">Notify</button>
-                    <button class="action-btn complete-btn" onclick="completeVehicle('${v.id}')">Complete</button>
-                    <button class="action-btn" style="background:#777;" onclick="undoVehicle('${v.id}')">Undo</button>
-                </div>
+        /* Right side info */
+        html += '    <div style="text-align:right;">';
 
-            </div>
-        `;
+        if (v.status === "notified") {
+            html += '      <div><strong style="color:#1b4cd4;">Notified</strong></div>';
+        } else if (overdue > 0) {
+            html += '      <div>' + overdue + ' mins overdue</div>';
+        } else {
+            html += '      <div>On time</div>';
+        }
+
+        html += '      <div style="font-size:12px;opacity:0.7;">In: ' +
+                    checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) +
+                '</div>';
+
+        html += '    </div>'; // end right side
+
+        html += '  </div>'; // end entry top
+
+        /* ACTION BUTTONS */
+        html += '  <div class="entry-actions">';
+        html += '    <button class="action-btn notify-btn" onclick="notifyVehicle(\'' + v.id + '\')">Notify</button>';
+        html += '    <button class="action-btn complete-btn" onclick="completeVehicle(\'' + v.id + '\')">Complete</button>';
+        html += '    <button class="action-btn" style="background:#777;" onclick="undoVehicle(\'' + v.id + '\')">Undo</button>';
+        html += '  </div>';
+
+        html += '</div>'; // end entry
+
+        container.innerHTML += html;
     });
 }
 </script>
