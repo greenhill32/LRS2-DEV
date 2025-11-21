@@ -59,9 +59,9 @@ const db = supabase.createClient(
 );
 
 /* ============================================================
-   DEV Base URL (driver.html lives here)
+   Base URL always matches the site you're on (DEV or LIVE)
 ============================================================ */
-const DEV_BASE = "lrs-2-dev.vercel.app";
+const BASE_URL = window.location.origin;
 
 /* ============================================================
    Check for ?uid param
@@ -70,10 +70,10 @@ const params = new URLSearchParams(location.search);
 const specificVehicle = params.get("uid");
 
 /* ============================================================
-   Create QR
+   Render QR
 ============================================================ */
 function showQR(vehicleId, regText) {
-    const finalUrl = `${DEV_BASE}/driver.html?uid=${vehicleId}`;
+    const finalUrl = `${BASE_URL}/driver.html?uid=${vehicleId}`;
 
     const box = document.getElementById("qrBox");
     box.innerHTML = "";
@@ -89,7 +89,7 @@ function showQR(vehicleId, regText) {
 }
 
 /* ============================================================
-   MODE 1 — Gateman popup (specific vehicle)
+   MODE 1 — Gateman popup (single vehicle)
 ============================================================ */
 if (specificVehicle) {
     db.from("vehicles")
@@ -107,7 +107,7 @@ if (specificVehicle) {
 }
 
 /* ============================================================
-   MODE 2 — Big Screen Auto Mode
+   MODE 2 — Big Screen Auto Mode (latest vehicle)
 ============================================================ */
 else {
     async function checkLatest() {
@@ -118,7 +118,8 @@ else {
             .limit(1);
 
         if (error) {
-            document.getElementById("status").innerText = "❌ Database error";
+            document.getElementById("status").innerText =
+                "❌ Database error";
             return;
         }
 
