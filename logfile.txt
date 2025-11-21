@@ -1,0 +1,181 @@
+Warehouse Pager — Development Log (21/11/2025)
+1. Pre-Booking System Introduced
+✔ New SQL table created
+
+We added the prebookings table to Supabase DEV:
+
+Columns:
+
+id
+
+created_at
+
+expected_date
+
+expected_time
+
+po_ref
+
+registration
+
+is_export
+
+notes
+
+consumed
+
+here is consumed
+
+
+
+alter table public.vehicles
+add column classification text default 'normal';  -- normal / export
+
+create table public.prebookings (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamp with time zone default now(),
+    expected_date date,                -- optional, can help ordering
+    expected_time time,                -- optional, or a single timestamp if you prefer
+    po_ref text not null,
+    registration text,                 -- optional (blank for unknown)
+    is_export boolean default false,   -- checkbox
+    notes text,
+    consumed boolean default false     -- set true when matched to real check-in
+);
+
+
+select *
+from public.prebookings
+order by created_at desc;
+
+select column_name, data_type
+from information_schema.columns
+where table_name = 'prebookings';
+
+✔ Created full prebooking.html page
+
+Inline CSS and JS, no dependencies
+
+Form fields: PO, Registration, Expected date/time, Notes, Export checkbox
+
+Insert logic updated to match the actual SQL columns (expected_date & expected_time)
+
+Success & error banners added
+
+Confirmed working inserts via SQL browser
+
+2. Dashboard Integration — Expected Loads Dropdown
+✔ New dropdown added to Add Lorry panel (Chunk B1)
+
+Loads all prebookings where consumed = false
+
+Sorted by earliest date/time
+
+Shows: PO — Reg — date time — EXPORT
+
+Auto-fills:
+
+PO
+
+Registration
+
+Notes
+
+Export classification flag
+
+✔ Classification is now saved with vehicle
+
+In submitVehicle() we added:
+
+classification: prebookExportFlag ? "export" : "normal"
+
+✔ Prebooking is auto-consumed
+
+Once submitted, the matching prebooking sets:
+
+consumed = true
+
+
+and disappears from dropdown on the next load.
+
+3. Queue Rendering — Export Highlighting
+✔ Fixed missing field in loadQueue (Chunk C4)
+
+Your list was missing classification, so queue disappeared.
+Fixed by adding:
+
+classification
+
+
+to the .select().
+
+✔ Added high-visibility “EXPORT LOAD” mode (Chunk C5)
+
+We added a full WOW-mode export style:
+
+Features:
+
+50px wide blue left bar
+
+Blue glow
+
+Pulsing animation
+
+Full card background tint
+
+EXPORT LOAD banner
+
+CSS lives inline in A5:
+
+.export-card
+
+.export-banner
+
+@keyframes exportPulse
+
+4. Repaired Slide-Down Add Vehicle Panel
+
+After adding the dropdown, part of the panel (Submit button) was visible at the top of the page.
+
+✔ Updated A3 transform
+
+Changed from:
+
+transform: translateY(-100%);
+
+
+To:
+
+transform: translateY(calc(-100% - 40px));
+
+
+This hides the panel completely until opened.
+
+5. Multiple Safety Fixes Applied
+
+Added fail-safe in renderQueue to stop blank lists
+
+Cleaned duplicated C5 blocks
+
+Ensured no missing curly braces or broken DOM merge
+
+Verified dropdown auto-fills and resets properly
+
+📦 Final Status at End of Day
+Prebooking flow COMPLETE
+
+Office → book loads → dropdown → classify → check-in → consume → export highlight
+
+Dashboard is fully integrated
+
+Importing prebookings works
+
+Classification appears in queue
+
+Export loads are now visually unmissable
+
+Gatehouse now gets an instant “priority” hit
+
+Excellent UX improvement for operations
+
+Everything stable + working after rollback & rebuild

@@ -1,281 +1,121 @@
-<!-- START CHUNK 1 — driver.html main structure -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vehicle Status</title>
+<title>Driver Scan Screen</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- QR generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
     body {
-        margin: 0;
-        padding: 0;
-        font-family: Arial, sans-serif;
-        background: #f4f6fa;
-        color: #333;
-        text-align: center;
+        margin:0;
+        padding:0;
+        background:#0d0d0d;
+        color:white;
+        font-family:Arial, sans-serif;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+        height:100vh;
+        padding-top:40px;
     }
-
     h1 {
-        font-size: 2.4rem;
-        margin-top: 30px;
-        color: #2563eb;
+        font-size:3rem;
+        margin:0;
+        font-weight:800;
     }
-
     h2 {
-        margin-top: 5px;
-        font-size: 1rem;
-        opacity: 0.6;
-        margin-bottom: 25px;
+        font-size:1.3rem;
+        margin:10px 0 35px;
+        opacity:0.7;
     }
-
-    .lang-row {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 25px;
+    #qrBox {
+        background:white;
+        width:260px;
+        height:260px;
+        border-radius:20px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow:0 0 25px rgba(0,0,0,0.5);
     }
-
-    .lang-btn {
-        padding: 10px 20px;
-        border-radius: 12px;
-        border: 1px solid #ccc;
-        background: white;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: 0.2s;
-    }
-
-    .lang-btn.active {
-        border: 2px solid #2563eb;
-        background: #eef3ff;
-        font-weight: bold;
-    }
-
-    .card {
-        background: white;
-        width: 85%;
-        margin: auto;
-        padding: 25px;
-        border-radius: 15px;
-        text-align: left;
-        box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
-    }
-
-    .label {
-        font-size: 0.9rem;
-        opacity: 0.7;
-        margin-bottom: 4px;
-    }
-
-    .value {
-        font-size: 1.2rem;
-        margin-bottom: 22px;
-    }
-
-    .status-value {
-        font-size: 1.4rem;
-        font-weight: bold;
-        color: #d97706; /* amber */
+    #status {
+        margin-top:25px;
+        font-size:1.05rem;
+        opacity:0.85;
+        word-break:break-all;
+        padding:0 20px;
+        max-width:95%;
     }
 </style>
 </head>
 
 <body>
 
-<h1 id="titleText">Vehicle Status</h1>
-<h2 id="subtitleText">Updates refresh every few seconds</h2>
+<h1>SCAN THIS QR</h1>
+<h2>To view your bay time & updates</h2>
 
-<div class="lang-row" id="langButtons"></div>
+<div id="qrBox"></div>
+<div id="status">Waiting for latest check-in…</div>
 
-<div class="card">
-    <div class="label" id="labelPO">PO / Reference</div>
-    <div class="value" id="poValue">...</div>
-
-    <div class="label" id="labelPager">Pager Number</div>
-    <div class="value" id="pagerValue">...</div>
-
-    <div class="label" id="labelStatus">Current Status</div>
-    <div class="status-value" id="statusValue">...</div>
-</div>
-<!-- END CHUNK 1 -->
-<!-- START CHUNK 2 — languages + buttons -->
 <script>
-const languages = {
-    en: {
-        name: "English",
-        flag: "GB",
-        title: "Vehicle Status",
-        subtitle: "Updates refresh every few seconds",
-        po: "PO / Reference",
-        pager: "Pager Number",
-        status: "Current Status",
-        waiting: "Waiting in lorry park",
-        notified: "You have been notified",
-        released: "Your release is complete",
-        due_in: "Due in",
-        overdue: "Overdue by"
-    },
-    pl: {
-        name: "Polski",
-        flag: "PL",
-        title: "Status Pojazdu",
-        subtitle: "Dane odświeżają się co kilka sekund",
-        po: "PO / Referencja",
-        pager: "Numer Pagetu",
-        status: "Aktualny Status",
-        waiting: "Oczekiwanie na parkingu",
-        notified: "Zostałeś powiadomiony",
-        released: "Twoje zwolnienie jest zakończone",
-        due_in: "Pozostało",
-        overdue: "Spóźnienie o"
-    },
-    ro: {
-        name: "Română",
-        flag: "RO",
-        title: "Starea Vehiculului",
-        subtitle: "Actualizări la câteva secunde",
-        po: "PO / Referință",
-        pager: "Număr Pager",
-        status: "Stare Curentă",
-        waiting: "Așteaptă în parcarea camioanelor",
-        notified: "Ați fost notificat",
-        released: "Eliberarea este finalizată",
-        due_in: "Estimat în",
-        overdue: "Întârziat cu"
-    },
-    ua: {
-        name: "Українська",
-        flag: "UA",
-        title: "Статус Транспортного Засобу",
-        subtitle: "Оновлюється кожні кілька секунд",
-        po: "PO / Посилання",
-        pager: "Номер пейджера",
-        status: "Поточний Статус",
-        waiting: "Очікування на стоянці",
-        notified: "Вас повідомлено",
-        released: "Ваше звільнення завершено",
-        due_in: "Очікується через",
-        overdue: "Запізнення на"
-    },
-    cz: {
-        name: "Čeština",
-        flag: "CZ",
-        title: "Stav Vozidla",
-        subtitle: "Aktualizace každých pár sekund",
-        po: "PO / Reference",
-        pager: "Číslo Pageru",
-        status: "Aktuální Stav",
-        waiting: "Čekání na parkovišti",
-        notified: "Byli jste upozorněni",
-        released: "Uvolnění dokončeno",
-        due_in: "Zbývá",
-        overdue: "Zpoždění o"
-    }
-};
-
-let currentLang = "en";
-
-function renderLanguageButtons() {
-    const container = document.getElementById("langButtons");
-    container.innerHTML = "";
-
-    Object.keys(languages).forEach(code => {
-        const btn = document.createElement("button");
-        btn.className = "lang-btn" + (code === currentLang ? " active" : "");
-        btn.innerText = `${languages[code].flag} ${languages[code].name}`;
-        btn.onclick = () => {
-            currentLang = code;
-            renderLanguageButtons();
-            translateStaticText();
-            updateUI(latestVehicleData);
-        };
-        container.appendChild(btn);
-    });
-}
-
-function translateStaticText() {
-    const L = languages[currentLang];
-    document.getElementById("titleText").innerText = L.title;
-    document.getElementById("subtitleText").innerText = L.subtitle;
-    document.getElementById("labelPO").innerText = L.po;
-    document.getElementById("labelPager").innerText = L.pager;
-    document.getElementById("labelStatus").innerText = L.status;
-}
-</script>
-<!-- END CHUNK 2 -->
-<!-- START CHUNK 3 — load vehicle via UUID -->
-<script>
+/* ------------------------------------------------------------------
+   SUPABASE
+------------------------------------------------------------------ */
 const db = supabase.createClient(
   "https://splcucorowqjxeeseolq.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbGN1Y29yb3dxanhlZXNlb2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTExMjUsImV4cCI6MjA3ODYyNzEyNX0.R-Fm04UtBOr9OBWHnS1fhk6SnfSm7f3ZrFrQdzO1Q4Y"
 );
 
-function getUID() {
-    return new URLSearchParams(window.location.search).get("uid");
+/* Your production domain */
+const PROD_BASE = "https://lorry-bay-system.vercel.app";
+
+/* ------------------------------------------------------------------
+   Render QR
+------------------------------------------------------------------ */
+function showQR(vehicleId) {
+    const finalUrl = `${PROD_BASE}/driver.html?uid=${vehicleId}`;
+
+    const box = document.getElementById("qrBox");
+    box.innerHTML = "";
+
+    new QRCode(box, {
+        text: finalUrl,
+        width: 240,
+        height: 240
+    });
+
+    document.getElementById("status").innerText = finalUrl;
 }
 
-let latestVehicleData = null;
-
-async function loadVehicle() {
-    const uid = getUID();
-    if (!uid) return;
-
-    const { data } = await db
+/* ------------------------------------------------------------------
+   Poll newest vehicle (fallback instead of realtime)
+------------------------------------------------------------------ */
+async function checkLatest() {
+    const { data, error } = await db
         .from("vehicles")
-        .select("*")
-        .eq("id", uid)
-        .single();
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    latestVehicleData = data;
-    updateUI(data);
-}
-</script>
-<!-- END CHUNK 3 -->
-<!-- START CHUNK 4 — status builder -->
-<script>
-function updateUI(v) {
-    if (!v) return;
+    if (error) return;
 
-    const L = languages[currentLang];
-
-    // PO + Pager
-    document.getElementById("poValue").innerText = v.po_ref || "-";
-    document.getElementById("pagerValue").innerText = v.pager_number || "-";
-
-    // Status text translation
-    let statusText = "";
-    if (v.status === "waiting") statusText = L.waiting;
-    if (v.status === "notified") statusText = L.notified;
-    if (v.status === "released") statusText = L.released;
-
-    // Due time logic
-    if (v.due_time) {
-        const now = Date.now();
-        const due = new Date(v.due_time).getTime();
-        let diff = Math.floor((due - now) / 60000);
-
-        if (diff > 0) {
-            statusText = `${L.due_in} ${diff} min`;
-        } else if (diff < 0 && v.status !== "released") {
-            statusText = `${L.overdue} ${Math.abs(diff)} min`;
-        }
+    if (data && data.length > 0) {
+        showQR(data[0].id);
+    } else {
+        document.getElementById("status").innerText = "No vehicles yet…";
     }
-
-    document.getElementById("statusValue").innerText = statusText;
 }
 
-// auto refresh every 5 sec
-setInterval(loadVehicle, 5000);
+/* Run immediately & poll every 3 secs */
+checkLatest();
+setInterval(checkLatest, 3000);
 </script>
-<!-- END CHUNK 4 -->
-<!-- START CHUNK 5 — init -->
-<script>
-renderLanguageButtons();
-translateStaticText();
-loadVehicle();
-</script>
+
 </body>
 </html>
-<!-- END CHUNK 5 -->
