@@ -2,82 +2,84 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>QR Code – Driver Check-in</title>
+<title>Driver Scan Screen</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- QR generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
     body {
-        margin: 0;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-        background: #0d0d0d;
-        color: #e6e6e6;
-        text-align: center;
+        margin:0;
+        padding:0;
+        background:#0d0d0d;
+        color:white;
+        font-family:Arial, sans-serif;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+        height:100vh;
+        padding-top:40px;
     }
-
     h1 {
-        font-size: 26px;
-        margin-bottom: 10px;
-        color: #1b8cff;
+        font-size:3rem;
+        margin:0;
+        font-weight:800;
     }
-
-    #status {
-        margin-top: 15px;
-        font-size: 16px;
-        opacity: 0.8;
-        word-break: break-all;
+    h2 {
+        font-size:1.3rem;
+        margin:10px 0 35px;
+        opacity:0.7;
     }
-
     #qrBox {
-        margin: 25px auto;
-        width: 240px;
-        height: 240px;
-        background: #fff;
-        padding: 10px;
-        border-radius: 12px;
+        background:white;
+        width:260px;
+        height:260px;
+        border-radius:20px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow:0 0 25px rgba(0,0,0,0.5);
+    }
+    #status {
+        margin-top:25px;
+        font-size:1.05rem;
+        opacity:0.85;
+        word-break:break-all;
+        padding:0 20px;
+        max-width:95%;
     }
 </style>
 </head>
 
 <body>
 
-<h1>Scan to View Your Status</h1>
+<h1>SCAN THIS QR</h1>
+<h2>To view your bay time & updates</h2>
 
 <div id="qrBox"></div>
-<div id="status">Loading QR…</div>
-
-<!-- Supabase JS pinned version (fixes 406 errors) -->
-<script src="https://esm.sh/@supabase/supabase-js@2.39.7"></script>
-
-<!-- QR Code library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
+<div id="status">Waiting for latest check-in…</div>
 
 <script>
-/* ============================================================
-   Supabase (DEV)
-============================================================ */
+/* ------------------------------------------------------------------
+   SUPABASE
+------------------------------------------------------------------ */
 const db = supabase.createClient(
-  "https://splcucorowqjxeeseolq.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbGN1Y29yb3dxanhlZXNlb2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTExMjUsImV4cCI6MjA3ODYyNzEyNX0.R-Fm04UtBOr9OBWHnS1fhk6SnfSm7f3ZrFrQdzO1Q4Y"
+  "https://gtixdparpjdpyhhubsfz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
 );
 
-/* ============================================================
-   Base URL always matches the site you're on (DEV or LIVE)
-============================================================ */
-const BASE_URL = window.location.origin;
+/* Your production domain */
+const PROD_BASE = "https://lorry-bay-system.vercel.app";
 
-/* ============================================================
-   Check for ?uid param
-============================================================ */
-const params = new URLSearchParams(location.search);
-const specificVehicle = params.get("uid");
-
-/* ============================================================
+/* ------------------------------------------------------------------
    Render QR
-============================================================ */
-function showQR(vehicleId, regText) {
-    const finalUrl = `${BASE_URL}/driver.html?uid=${vehicleId}`;
+------------------------------------------------------------------ */
+function showQR(vehicleId) {
+    const finalUrl = `${PROD_BASE}/driver.html?uid=${vehicleId}`;
 
     const box = document.getElementById("qrBox");
     box.innerHTML = "";
@@ -88,56 +90,31 @@ function showQR(vehicleId, regText) {
         height: 240
     });
 
-    document.getElementById("status").innerText =
-        regText ? `${regText} → ${finalUrl}` : finalUrl;
+    document.getElementById("status").innerText = finalUrl;
 }
 
-/* ============================================================
-   MODE 1 — Gateman popup (single vehicle)
-============================================================ */
-if (specificVehicle) {
-    db.from("vehicles")
-        .select("registration")
-        .eq("id", specificVehicle)
-        .single()
-        .then(({ data }) => {
-            if (data) {
-                showQR(specificVehicle, data.registration);
-            } else {
-                document.getElementById("status").innerText =
-                    "❌ Vehicle not found";
-            }
-        });
-}
+/* ------------------------------------------------------------------
+   Poll newest vehicle (fallback instead of realtime)
+------------------------------------------------------------------ */
+async function checkLatest() {
+    const { data, error } = await db
+        .from("vehicles")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-/* ============================================================
-   MODE 2 — Big Screen Auto Mode (latest vehicle)
-============================================================ */
-else {
-    async function checkLatest() {
-        const { data, error } = await db
-            .from("vehicles")
-            .select("id, registration")
-            .order("check_in_time", { ascending: false })
-            .limit(1);
+    if (error) return;
 
-        if (error) {
-            document.getElementById("status").innerText =
-                "❌ Database error";
-            return;
-        }
-
-        if (data && data.length > 0) {
-            showQR(data[0].id, data[0].registration);
-        } else {
-            document.getElementById("status").innerText =
-                "Waiting for first vehicle...";
-        }
+    if (data && data.length > 0) {
+        showQR(data[0].id);
+    } else {
+        document.getElementById("status").innerText = "No vehicles yet…";
     }
-
-    checkLatest();
-    setInterval(checkLatest, 3000);
 }
+
+/* Run immediately & poll every 3 secs */
+checkLatest();
+setInterval(checkLatest, 3000);
 </script>
 
 </body>
