@@ -104,7 +104,6 @@ const db = supabase.createClient(
 </script>
 <!-- chunk 2 end -->
 
-
 <!-- chunk 3 start: partial search -->
 <script>
 async function runSearch() {
@@ -114,24 +113,55 @@ async function runSearch() {
 
     detail.innerHTML = "";
 
+    // Require at least 2 characters
     if (q.length < 2) {
         list.innerHTML = "";
         return;
     }
 
-    const { data } = await db
+    /* --------------------------------------------
+       1) REGISTRATION SEARCH
+    -------------------------------------------- */
+    const { data: regMatches } = await db
         .from("vehicles")
         .select("id, registration, po_ref, status, check_in_time")
         .ilike("registration", `%${q}%`)
-        .order("check_in_time", { ascending:false });
+        .order("check_in_time", { ascending: false });
 
-    if (!data?.length) {
+    /* --------------------------------------------
+       2) PO SEARCH
+    -------------------------------------------- */
+    const { data: poMatches } = await db
+        .from("vehicles")
+        .select("id, registration, po_ref, status, check_in_time")
+        .ilike("po_ref", `%${q}%`)
+        .order("check_in_time", { ascending: false });
+
+    /* --------------------------------------------
+       3) MERGE + DEDUPE
+    -------------------------------------------- */
+    let combined = [...(regMatches || []), ...(poMatches || [])];
+
+    const seen = new Set();
+    combined = combined.filter(v => {
+        if (seen.has(v.id)) return false;
+        seen.add(v.id);
+        return true;
+    });
+
+    /* --------------------------------------------
+       4) NO RESULTS
+    -------------------------------------------- */
+    if (!combined.length) {
         list.innerHTML = "<i>No matches</i>";
         return;
     }
 
+    /* --------------------------------------------
+       5) RENDER RESULTS
+    -------------------------------------------- */
     let html = "";
-    data.forEach(v => {
+    combined.forEach(v => {
         html += `
             <div class="resultItem" onclick="openDetail('${v.id}')">
                 <strong>${v.registration}</strong> — ${v.status}<br>
