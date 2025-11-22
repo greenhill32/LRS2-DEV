@@ -1,0 +1,308 @@
+import { useState } from 'react';
+import { AlertCircle, Play, Database, Sparkles } from 'lucide-react';
+
+export default function SQLQueryRunner() {
+  const [question, setQuestion] = useState('');
+  const [generatedSQL, setGeneratedSQL] = useState('');
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [running, setRunning] = useState(false);
+
+  const SCHEMA_CONTEXT = `You are a PostgreSQL expert. Generate ONLY valid SQL queries, no explanations.
+
+DATABASE SCHEMA:
+
+Table: vehicles
+- id (uuid, primary key)
+- registration (text) - vehicle reg number like "RDGDWF777"
+- po_ref (text) - purchase order reference
+- pager_number (text)
+- check_in_time (timestamp) - when vehicle arrived
+- quoted_minutes (integer) - expected time in yard
+- due_time (timestamp) - when vehicle should be released
+- status (text) - current status
+- operator_id (uuid) - foreign key to operators
+
+Table: operators
+- id (uuid, primary key)
+- name (text) - operator name
+- pin (text) - login pin
+
+Table: actions_log
+- id (uuid, primary key)
+- timestamp (timestamp) - when action occurred
+- vehicle_id (uuid) - foreign key to vehicles.id
+- operator_id (uuid) - foreign key to operators.id
+- action (text) - one of: check_in, notified, completed, edit, delay, note_update
+- details (jsonb) - additional data
+
+IMPORTANT RULES:
+- "completed" action = vehicle was released/completed
+- To find who released a vehicle, look in actions_log where action='completed'
+- Always JOIN operators to get operator names
+- Use date ranges for date queries like: timestamp >= '2025-11-20 00:00:00' AND timestamp < '2025-11-21 00:00:00'
+- Current date is November 21, 2025
+
+Return ONLY the SQL query, no markdown, no explanations.`;
+
+  const generateSQL = async () => {
+    if (!question.trim()) return;
+    
+    setGenerating(true);
+    setError(null);
+    setResults(null);
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'user',
+              content: `${SCHEMA_CONTEXT}\n\nUser question: ${question}`
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      let sql = data.content[0].text.trim();
+      
+      // Clean up any markdown formatting
+      sql = sql.replace(/```sql\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      setGeneratedSQL(sql);
+    } catch (err) {
+      setError('Failed to generate SQL: ' + err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const runSQL = async () => {
+    if (!generatedSQL.trim()) return;
+
+    // Safety check
+    if (!generatedSQL.trim().toLowerCase().startsWith('select')) {
+      setError('Only SELECT queries are allowed for safety');
+      return;
+    }
+
+    setRunning(true);
+    setError(null);
+    setResults(null);
+
+    try {
+      // Note: You'll need to replace this with your actual Supabase endpoint
+      // This is a placeholder - you need to create the exec_sql function in Supabase
+      const response = await fetch('YOUR_SUPABASE_URL/rest/v1/rpc/exec_sql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'YOUR_SUPABASE_ANON_KEY',
+          'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY'
+        },
+        body: JSON.stringify({ sql_query: generatedSQL })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Query failed');
+      }
+
+      setResults(data);
+    } catch (err) {
+      setError('Query failed: ' + err.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Database className="w-6 h-6 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900">Lorry Database Query</h1>
+          </div>
+          <p className="text-gray-600">Ask a question in plain English, review the SQL, then run it</p>
+        </div>
+
+        {/* Question Input */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Ask a Question
+          </label>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && generateSQL()}
+              placeholder="e.g. Who released RDGDWF777 and when?"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              onClick={generateSQL}
+              disabled={generating || !question.trim()}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+            >
+              <Sparkles className="w-4 h-4" />
+              {generating ? 'Generating...' : 'Generate SQL'}
+            </button>
+          </div>
+          
+          {/* Example questions */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="text-sm text-gray-500">Examples:</span>
+            {[
+              'Who released RDGDWF777?',
+              'How many lorries completed yesterday?',
+              'Show overdue vehicles',
+              'List all completions today'
+            ].map((example) => (
+              <button
+                key={example}
+                onClick={() => setQuestion(example)}
+                className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Generated SQL */}
+        {generatedSQL && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Generated SQL Query
+              </label>
+              <button
+                onClick={runSQL}
+                disabled={running}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+              >
+                <Play className="w-4 h-4" />
+                {running ? 'Running...' : 'Run Query'}
+              </button>
+            </div>
+            <textarea
+              value={generatedSQL}
+              onChange={(e) => setGeneratedSQL(e.target.value)}
+              className="w-full h-32 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg font-mono text-sm"
+              placeholder="Generated SQL will appear here..."
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              You can edit the SQL before running it
+            </p>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-red-900">Error</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Results Display */}
+        {results && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Results</h3>
+            
+            {Array.isArray(results) && results.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No results found</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {results && results.length > 0 && Object.keys(results[0]).map((key) => (
+                        <th
+                          key={key}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          {key}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {results && results.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        {Object.values(row).map((value, i) => (
+                          <td key={i} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {value === null ? (
+                              <span className="text-gray-400">null</span>
+                            ) : typeof value === 'object' ? (
+                              JSON.stringify(value)
+                            ) : (
+                              String(value)
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-3 text-sm text-gray-500">
+                  {results.length} row{results.length !== 1 ? 's' : ''} returned
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Setup Instructions */}
+        {!generatedSQL && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="font-medium text-blue-900 mb-2">Setup Required</h3>
+            <p className="text-sm text-blue-800 mb-3">
+              To use this tool, you need to:
+            </p>
+            <ol className="text-sm text-blue-800 space-y-2 ml-4 list-decimal">
+              <li>Create the <code className="bg-blue-100 px-1 rounded">exec_sql</code> function in Supabase (see SQL below)</li>
+              <li>Replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY in the code</li>
+            </ol>
+            <pre className="mt-4 bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto">
+{`CREATE OR REPLACE FUNCTION exec_sql(sql_query text)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result json;
+BEGIN
+  IF NOT sql_query ~* '^\\s*SELECT' THEN
+    RAISE EXCEPTION 'Only SELECT queries allowed';
+  END IF;
+  
+  EXECUTE 'SELECT json_agg(row_to_json(t)) FROM (' 
+    || sql_query || ') t'
+  INTO result;
+  
+  RETURN COALESCE(result, '[]'::json);
+END;
+$$;`}
+            </pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
