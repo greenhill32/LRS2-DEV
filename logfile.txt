@@ -27,7 +27,6 @@ consumed
 here is consumed
 
 
-
 alter table public.vehicles
 add column classification text default 'normal';  -- normal / export
 
