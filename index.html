@@ -10,7 +10,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v2.0.1 — DEV BUILD";
+document.getElementById("versionBanner").innerText = "v2.0.3 — DEV BUILD";
 </script>
 
 <!-- START A2 -->
@@ -614,7 +614,6 @@ async function loadPrebooks() {
         .order("expected_time", { ascending: true });
 
     if (!data) return;
-
     prebookCache = data;
 
     data.forEach(p => {
@@ -671,11 +670,11 @@ async function submitVehicle() {
         pager_number: pager,
         notes: notes,
         quoted_minutes: quoted,
-        due_time: due,
         check_in_time: now,
+        due_time: due,
         operator_id: opId,
 
-        /* NEW DEFAULT */
+        /* NEW DEFAULT START STATE */
         status: "parked",
 
         classification: prebookExportFlag ? "export" : "normal"
@@ -690,6 +689,9 @@ async function submitVehicle() {
     }
 
     const vehicleId = data[0].id;
+
+    /* IMPORTANT: AUTO-OPEN QR SCREEN */
+    window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
 
     await db.from("actions_log").insert({
         vehicle_id: vehicleId,
@@ -716,6 +718,7 @@ async function submitVehicle() {
 }
 </script>
 <!-- END C3 -->
+
 <!-- START C4 -->
 <script>
 async function loadQueue() {
