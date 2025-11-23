@@ -10,7 +10,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v1.0.1 — BUILD";
+document.getElementById("versionBanner").innerText = "v2.0.1 — BUILD";
 </script>
 
 <!-- START A2 -->
@@ -271,6 +271,24 @@ document.getElementById("versionBanner").innerText = "v1.0.1 — BUILD";
 
     <div class="panel-title">Add New Lorry</div>
 
+    <!-- NEW: Haulier field -->
+    <label style="color:#ccc; margin-top:10px;">Haulier</label>
+    <input 
+        id="haulierInput"
+        type="text"
+        placeholder="Haulier name"
+        style="
+            width:100%;
+            padding:12px;
+            background:#2a2a2a;
+            color:#fff;
+            border:1px solid #444;
+            border-radius:8px;
+            font-size:16px;
+            margin-bottom:12px;
+        "
+    >
+
     <!-- Expected Loads Dropdown -->
     <label style="color:#ccc; margin-top:10px;">Expected Loads</label>
     <select id="prebookSelect"
@@ -294,7 +312,7 @@ document.getElementById("versionBanner").innerText = "v1.0.1 — BUILD";
     </div>
 
     <div class="form-row">
-        <input type="number" id="pagerInput" placeholder="Pager Number">
+        <input type="text" id="pagerInput" placeholder="Mobile Number">
 
         <select id="quotedInput">
             <option value="30">30 mins</option>
@@ -303,14 +321,6 @@ document.getElementById("versionBanner").innerText = "v1.0.1 — BUILD";
             <option value="90">90 mins</option>
             <option value="120">120 mins</option>
         </select>
-    </div>
-
-    <!-- NEW EXPORT CHECKBOX (added as requested) -->
-    <div class="form-row">
-        <label style="display:flex; align-items:center; gap:10px; color:#fff; cursor:pointer;">
-            <input type="checkbox" id="exportCheckbox" style="width:auto; cursor:pointer;">
-            <span style="font-size:16px;">Mark as EXPORT load</span>
-        </label>
     </div>
 
     <div class="form-row">
@@ -587,58 +597,32 @@ let submitting = false;
 let prebookCache = [];
 let prebookExportFlag = false;
 
-/* =============================================================
-   Toggle panel open/close + reset checkbox
-============================================================= */
 function togglePanel() {
-    const panel = document.getElementById("panel");
-    panel.classList.toggle("panel-visible");
-
-    if (panel.classList.contains("panel-visible")) {
-        loadPrebooks();
-    } else {
-        document.getElementById("poInput").value = "";
-        document.getElementById("regInput").value = "";
-        document.getElementById("notesInput").value = "";
-        document.getElementById("pagerInput").value = "";
-        document.getElementById("prebookSelect").value = "";
-        document.getElementById("quotedInput").value = "60";
-        prebookExportFlag = false;
-        document.getElementById("exportCheckbox").checked = false;
-    }
+    document.getElementById("panel").classList.toggle("panel-visible");
+    loadPrebooks();
 }
 
-/* =============================================================
-   Load prebookings
-============================================================= */
 async function loadPrebooks() {
     const sel = document.getElementById("prebookSelect");
     sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
 
-    const { data, error } = await db
+    const { data } = await db
         .from("prebookings")
         .select("*")
         .eq("consumed", false)
         .order("expected_date", { ascending: true })
         .order("expected_time", { ascending: true });
 
-    if (error || !data) return;
+    if (!data) return;
 
     prebookCache = data;
 
     data.forEach(p => {
-        const label =
-            `${p.po_ref} — ${p.registration || "No Reg"} — ` +
-            `${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}` +
-            `${p.is_export ? " — EXPORT" : ""}`;
-
+        const label = `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}${p.is_export ? " — EXPORT" : ""}`;
         sel.innerHTML += `<option value="${p.id}">${label}</option>`;
     });
 }
 
-/* =============================================================
-   Apply prebook row
-============================================================= */
 function applyPrebook() {
     const id = document.getElementById("prebookSelect").value;
     if (!id) return;
@@ -651,12 +635,8 @@ function applyPrebook() {
     document.getElementById("notesInput").value = pb.notes || "";
 
     prebookExportFlag = pb.is_export === true;
-    document.getElementById("exportCheckbox").checked = prebookExportFlag;
 }
 
-/* =============================================================
-   Submit vehicle
-============================================================= */
 async function submitVehicle() {
     if (submitting) return;
     submitting = true;
@@ -665,13 +645,11 @@ async function submitVehicle() {
     btn.style.pointerEvents = "none";
     btn.style.opacity = "0.5";
 
-    let reg   = document.getElementById("regInput").value.trim();
-    let po    = document.getElementById("poInput").value.trim();
+    let reg = document.getElementById("regInput").value.trim().replace(/\s+/g, "").toUpperCase();
+    let po = document.getElementById("poInput").value.trim();
     let pager = parseInt(document.getElementById("pagerInput").value);
     let notes = document.getElementById("notesInput").value.trim();
     let quoted = parseInt(document.getElementById("quotedInput").value);
-
-    reg = reg.replace(/\s+/g, "").toUpperCase();
 
     if (!reg) {
         alert("Registration required");
@@ -682,16 +660,10 @@ async function submitVehicle() {
     }
 
     const opId = localStorage.getItem("operator_id");
-    if (!opId) {
-        window.location.href = "login.html";
-        return;
-    }
+    if (!opId) { window.location.href = "login.html"; return; }
 
     const now = new Date().toISOString();
     const due = new Date(Date.now() + quoted * 60000).toISOString();
-
-    const manualExport = document.getElementById("exportCheckbox").checked;
-    const classification = (prebookExportFlag || manualExport) ? "export" : "normal";
 
     const { data, error } = await db.from("vehicles").insert({
         registration: reg,
@@ -700,10 +672,13 @@ async function submitVehicle() {
         notes: notes,
         quoted_minutes: quoted,
         due_time: due,
-        status: "waiting",
         check_in_time: now,
         operator_id: opId,
-        classification: classification
+
+        /* NEW DEFAULT */
+        status: "parked",
+
+        classification: prebookExportFlag ? "export" : "normal"
     }).select();
 
     if (error) {
@@ -716,14 +691,6 @@ async function submitVehicle() {
 
     const vehicleId = data[0].id;
 
-    /* ==========================================================
-       AUTO-OPEN QR SCREEN FOR THIS VEHICLE
-    =========================================================== */
-    window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-
-    /* ==========================================================
-       Log check-in action
-    =========================================================== */
     await db.from("actions_log").insert({
         vehicle_id: vehicleId,
         operator_id: opId,
@@ -731,13 +698,9 @@ async function submitVehicle() {
         details: {}
     });
 
-    /* Mark prebooking consumed */
     const selected = document.getElementById("prebookSelect").value;
     if (selected) {
-        await db
-            .from("prebookings")
-            .update({ consumed: true })
-            .eq("id", selected);
+        await db.from("prebookings").update({ consumed: true }).eq("id", selected);
     }
 
     loadQueue();
@@ -747,67 +710,51 @@ async function submitVehicle() {
     submitting = false;
     btn.style.pointerEvents = "auto";
     btn.style.opacity = "1";
-
     prebookExportFlag = false;
-    document.getElementById("exportCheckbox").checked = false;
 
     togglePanel();
 }
 </script>
 <!-- END C3 -->
-
 <!-- START C4 -->
 <script>
-let queueTimeout = null;  // debounce timer
+async function loadQueue() {
+    const { data } = await db
+        .from("vehicles")
+        .select(`
+            id,
+            registration,
+            po_ref,
+            pager_number,
+            notes,
+            check_in_time,
+            due_time,
+            quoted_minutes,
+            status,
+            classification
+        `)
+        .in("status", ["parked", "notified"])   <!-- UPDATED -->
+        .order("check_in_time", { ascending: true });
 
-function loadQueue() {
-    // Cancel any pending load request
-    clearTimeout(queueTimeout);
-    
-    // Schedule new load after 100ms
-    // If loadQueue() is called again within 100ms, this gets cancelled
-    queueTimeout = setTimeout(async () => {
-        const { data } = await db
-            .from("vehicles")
-            .select(`
-                id,
-                registration,
-                po_ref,
-                pager_number,
-                notes,
-                check_in_time,
-                due_time,
-                quoted_minutes,
-                status,
-                classification
-            `)
-            .in("status", ["waiting", "notified"])
-            .order("check_in_time", { ascending: true });
-
-        // Safe fallback array
-        const list = data || [];
-
-        renderQueue(list);
-    }, 100);
+    renderQueue(data || []);
 }
 </script>
 <!-- END C4 -->
+
 <!-- START C5 -->
 <script>
 function renderQueue(list) {
     const container = document.querySelector(".queue-container");
 
-    // Build ENTIRE HTML string first
-    let html = `
+    container.innerHTML = `
         <div class="queue-header">
             <span>Active Queue</span>
             <span class="queue-count">${list.length} vehicles active</span>
         </div>
     `;
 
-    if (!list || list.length === 0) {
-        html += `<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>`;
-        container.innerHTML = html;
+    if (!list.length) {
+        container.innerHTML += `<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>`;
         return;
     }
 
@@ -825,59 +772,61 @@ function renderQueue(list) {
         if (overdue >= 180) colour = "red2";
 
         const isExport = v.classification === "export";
-        
-        // Export cards get BOTH export styling AND time-based colour
-        const cardClass = isExport ? "export-card " + colour : colour;
-
+        const cardClass = isExport ? "export-card" : colour;
         const dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
 
-        html += `
+        const statusText = v.status === "parked"
+            ? "Parked"
+            : (v.status === "notified" ? "Notified" : "");
+
+        container.innerHTML += `
             <div class="entry ${cardClass}">
+
                 <div class="entry-top" onclick="openModalEditor('${v.id}')">
+
                     <div>
+
                         ${isExport ? `<div class="export-banner">EXPORT LOAD</div>` : ""}
-                        
+
                         <strong>${v.registration}</strong><br>
                         <span>${v.po_ref || "No PO"}</span><br>
-                        
+
                         <span style="font-size:11px;opacity:0.7;">Due at ${dueText}</span>
                         <div class="pager-badge">Pager #${v.pager_number || "-"}</div>
-                        
+
                         <div id="notes-${v.id}"
                              class="notes-text"
-                             onclick="event.stopPropagation(); enableNotesEdit('${v.id}', \`${(v.notes || "").replace(/`/g, "\\`")}\`)">
+                             onclick="event.stopPropagation(); enableNotesEdit('${v.id}', \`${v.notes || ''}\`)">
                             ${v.notes ? v.notes : "<i>Click to add notes</i>"}
                         </div>
+
                     </div>
-                    
+
                     <div style="text-align:right;">
                         <div>
-                            ${v.status === "notified"
-                                ? "<strong style='color:#1b4cd4;'>Notified</strong>"
-                                : (overdue > 0
-                                    ? overdue + " mins overdue"
-                                    : "On time")}
+                            ${statusText}
                         </div>
                         <div style="font-size:12px;opacity:0.7;">
                             In: ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
                         </div>
                     </div>
+
                 </div>
-                
+
                 <div class="entry-actions">
                     <button class="action-btn notify-btn" onclick="notifyVehicle('${v.id}')">Notify</button>
                     <button class="action-btn complete-btn" onclick="completeVehicle('${v.id}')">Complete</button>
                     <button class="action-btn" style="background:#777;" onclick="undoVehicle('${v.id}')">Undo</button>
                 </div>
+
             </div>
         `;
     });
-
-    // SINGLE assignment - this is the key
-    container.innerHTML = html;
 }
 </script>
 <!-- END C5 -->
+ 
+
 <!-- START C6 -->
 <script>
 let savingNotes = {};  // track which vehicles are currently saving
@@ -1137,7 +1086,6 @@ async function loadStats() {
 </script>
 <!-- END D2 -->
 
-
 <!-- START D3 -->
 <script>
 async function searchVehicles() {
@@ -1149,11 +1097,22 @@ async function searchVehicles() {
         return;
     }
 
-    const { data } = await db
+    const { data, error } = await db
         .from("vehicles")
         .select("*")
-        .ilike("registration", `%${q}%`)
+        .or(`
+            registration.ilike.%${q}%,
+            po_ref.ilike.%${q}%,
+            haulier.ilike.%${q}%,
+            mobile_number.ilike.%${q}%
+        `)
         .order("check_in_time", { ascending: false });
+
+    if (error) {
+        console.error(error);
+        box.innerHTML = `<i style="color:#777;">Search error</i>`;
+        return;
+    }
 
     if (!data || data.length === 0) {
         box.innerHTML = `<i style="color:#777;">No matches</i>`;
@@ -1172,9 +1131,11 @@ async function searchVehicles() {
                 cursor:pointer;
                 color:#fff;
             " onclick="openModalEditor('${v.id}')">
+
                 <strong>${v.registration}</strong> — ${v.status}<br>
                 PO: ${v.po_ref || "-"}<br>
-                Pager: ${v.pager_number || "-"}
+                Haulier: ${v.haulier || "-"}<br>
+                Mobile: ${v.mobile_number || "-"}
             </div>
         `;
     });
@@ -1183,7 +1144,6 @@ async function searchVehicles() {
 }
 </script>
 <!-- END D3 -->
-
 
 <!-- START D4 -->
 <script>
@@ -1207,9 +1167,12 @@ async function openModalEditor(id) {
             background:#1c1c1c; 
             color:#fff;
             border:1px solid #444; width:180px;">
-            <option value="waiting"  ${v.status==="waiting"?"selected":""}>waiting</option>
+
+            <!-- REMOVED waiting -->
+            <option value="parked"  ${v.status==="parked"?"selected":""}>parked</option>
             <option value="notified" ${v.status==="notified"?"selected":""}>notified</option>
             <option value="released" ${v.status==="released"?"selected":""}>released</option>
+
         </select>
 
         <label style="color:#bbb;">PO / Reference:</label>
@@ -1254,33 +1217,39 @@ function closeModal() {
 </script>
 <!-- END D4 -->
 
-
 <!-- START D5 -->
 <script>
 async function saveModalEditor(id) {
     const opId = localStorage.getItem("operator_id");
 
-    const status = document.getElementById(`edit-status-${id}`).value;
-    const po = document.getElementById(`edit-po-${id}`).value.trim();
-    const pager = parseInt(document.getElementById(`edit-pager-${id}`).value);
-    const notes = document.getElementById(`edit-notes-${id}`).value.trim();
-    const now = new Date().toISOString();
+    const status  = document.getElementById(`edit-status-${id}`).value;
+    const po      = document.getElementById(`edit-po-${id}`).value.trim();
+    const haulier = document.getElementById(`edit-haulier-${id}`).value.trim();
+    const mobile  = document.getElementById(`edit-mobile-${id}`).value.trim();
+    const notes   = document.getElementById(`edit-notes-${id}`).value.trim();
+    const now     = new Date().toISOString();
 
-    await db.from("vehicles").update({
+    const { error } = await db.from("vehicles").update({
         status,
         po_ref: po,
-        pager_number: pager,
+        haulier,
+        mobile_number: mobile,          /* NEW FIELD */
         notes,
-        notify_time: status === "notified" ? now : null,
+        notify_time:  status === "notified" ? now : null,
         release_time: status === "released" ? now : null,
         operator_id: opId
     }).eq("id", id);
+
+    if (error) {
+        alert("Save failed: " + error.message);
+        return;
+    }
 
     await db.from("actions_log").insert({
         vehicle_id: id,
         operator_id: opId,
         action: "modal_edit",
-        details: { status, po, pager, notes }
+        details: { status, po, haulier, mobile, notes }
     });
 
     closeModal();
