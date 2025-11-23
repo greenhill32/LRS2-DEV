@@ -86,7 +86,12 @@
 <h1>Search</h1>
 
 <!-- visible version indicator (edit as needed) -->
-<div id="versionBanner">v1.0.1 — BUILD</div>
+<div id="versionBanner"></div>
+
+<script>
+document.getElementById("versionBanner").innerText = "v1.0.2 — BUILD";
+</script>
+
 
 <input id="searchBox" placeholder="Enter registration…" onkeyup="runSearch()">
 
