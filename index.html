@@ -1,1316 +1,858 @@
-<!-- START SECTION A -->
-
 <!-- START A1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Warehouse Pager Dashboard</title>
-<!-- END A1 -->
-<div id="versionBanner"></div>
-
-<script>
-document.getElementById("versionBanner").innerText = "v2.0.3 — DEV BUILD";
-</script>
-
-<!-- START A2 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gatehouse Dashboard</title>
+<!--
+  Warehouse gatehouse dashboard.
+  This page adopts the polished dark theme and KPI layout from the new
+  demonstration dashboard while retaining your Supabase back‑end integration.
+  Features:
+    • Real‑time queue with colour‑coded entries for parked/notified/released.
+    • KPI tiles summarising current throughput and dwell times.
+    • Live activity feed based on the actions_log table.
+    • Chart of check‑ins by hour.
+    • Action buttons to notify, release or undo a vehicle. Actions write back
+      to Supabase and log to actions_log with the current operator ID.
+  To add new lorries, use your existing prebooking page; this dashboard
+  concentrates on monitoring and control.
+-->
 <style>
+    :root {
+        --bg: #0e1420;
+        --card: #1f2937;
+        --accent: #0ea5e9;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --success: #22c55e;
+        --warn: #fbbf24;
+        --danger: #ef4444;
+    }
     body {
         margin: 0;
-        background: #121212;
-        font-family: Arial, sans-serif;
-        color: #e6e6e6;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans‑serif;
+        background: var(--bg);
+        color: var(--text);
     }
-    * {
-        box-sizing: border-box;
+    header {
+        /* restructure header to accommodate title, clock and avatar */
+        background: var(--card);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #1e293b;
     }
-</style>
-<!-- END A2 -->
 
-<!-- START A3 -->
-<style>
+    /* header sections for left title, centre clock and right actions */
+    .header-left {
+        flex: 1;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--accent);
+    }
+    .header-clock {
+        flex: 1;
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        color: var(--text);
+    }
+    .header-right {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    /* avatar button and dropdown menu */
+    #avatarBtn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 1px solid #334155;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: var(--accent);
+        cursor: pointer;
+        user-select: none;
+    }
+    #avatarMenu {
+        position: absolute;
+        top: 48px;
+        right: 0;
+        background: var(--card);
+        border: 1px solid #334155;
+        border-radius: 6px;
+        min-width: 150px;
+        padding: 4px 0;
+        display: none;
+        z-index: 10000;
+    }
+    #avatarMenu > div {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text);
+    }
+    #avatarMenu > div:hover {
+        background: var(--accent);
+        color: #000;
+    }
+
+    /* make queue cards clickable */
+    .entry {
+        cursor: pointer;
+    }
+
+    /* modal overlay for editing vehicles */
+    #editModalOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        z-index: 10000;
+    }
+    #editModal {
+        background: var(--card);
+        color: var(--text);
+        width: 420px;
+        margin: 80px auto;
+        padding: 24px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+    }
+    #editModal label {
+        display: block;
+        margin-top: 12px;
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+    #editModal input,
+    #editModal textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+    }
+    #editModal textarea {
+        resize: vertical;
+        height: 80px;
+    }
+    #editModal .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    #editModal .modal-actions button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    #editModal .modal-actions .cancel-btn {
+        background: #475569;
+        color: #fff;
+    }
+    #editModal .modal-actions .save-btn {
+        background: var(--accent);
+        color: #000;
+    }
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        padding: 24px;
+    }
+    .tile {
+        background: var(--card);
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .tile .value {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: var(--accent);
+    }
+    .grid {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        padding: 0 24px 24px;
+    }
+    .queue, .details {
+        flex: 1;
+        background: var(--card);
+        border-radius: 8px;
+        border: 1px solid #334155;
+        padding: 16px;
+        min-height: 420px;
+        overflow-y: auto;
+    }
+    .queue h2, .details h2 {
+        margin-top: 0;
+        color: var(--accent);
+        font-size: 20px;
+    }
+    .entry {
+        background: #1f2937;
+        border-left: 8px solid var(--success);
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .entry.overdue {
+        border-left-color: var(--warn);
+    }
+    .entry.critical {
+        border-left-color: var(--danger);
+    }
+    .entry .info {
+        flex: 1;
+    }
+    .entry .actions button {
+        margin-left: 6px;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .entry .actions .notify { background: var(--warn); color: #000; }
+    .entry .actions .release { background: var(--success); color: #000; }
+    .entry .actions .undo { background: var(--danger); color: #fff; }
+    .activity-item {
+        margin-bottom: 8px;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 4px;
+        font-size: 14px;
+    }
+    /* Add Lorry Button & Panel Styles */
     .add-btn {
-        background:#1b4cd4;
-        color:white;
-        padding:10px 18px;
-        border-radius:8px;
-        border:none;
-        font-size:16px;
-        cursor:pointer;
-        margin-right:10px;
+        background: var(--accent);
+        color: #fff;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-right: 8px;
     }
-
-    /* DARK ADD LORRY PANEL */
     .slide-panel {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-
-        /* Increased height to support dropdown */
-        min-height: 420px;
-
-        background: #1c1c1c;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        padding: 20px 30px;
-
-        /* FIX: push completely off-screen */
+        min-height: 320px;
+        background: var(--card);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        padding: 20px 24px;
         transform: translateY(calc(-100% - 40px));
-
-        transition: transform 0.8s ease;
-        z-index: 999;
-        color: #fff;
+        transition: transform 0.4s ease;
+        z-index: 1000;
+        color: var(--text);
     }
-
-    .panel-visible { transform: translateY(0); }
-
+    .panel-visible {
+        transform: translateY(0);
+    }
     .panel-title {
-        font-size: 22px;
-        color: #1b8cff;
+        font-size: 20px;
+        color: var(--accent);
         font-weight: bold;
         margin-bottom: 10px;
     }
-
     .form-row {
         display: flex;
-        gap: 20px;
+        gap: 12px;
         margin-top: 10px;
     }
-
-    input, textarea, select {
-        padding: 12px;
-        width: 100%;
-        border: 1px solid #444;
-        border-radius: 8px;
-        font-size: 16px;
-        background: #2a2a2a;
-        color: #fff;
-    }
-
-    .submit-btn {
-        padding: 12px 20px;
-        background: #1b8cff;
-        color: white;
+    .slide-panel input,
+    .slide-panel textarea,
+    .slide-panel select {
+        padding: 10px;
+        flex: 1;
+        border: 1px solid #334155;
         border-radius: 6px;
-        margin-top: 15px;
+        font-size: 14px;
+        background: var(--bg);
+        color: var(--text);
+    }
+    .submit-btn {
+        padding: 10px 16px;
+        background: var(--accent);
+        color: #fff;
+        border-radius: 6px;
+        margin-top: 12px;
         cursor: pointer;
         text-align: center;
         font-weight: bold;
     }
 </style>
-<!-- END A3 -->
-
-<!-- START A4 -->
-<style>
-    /* HEADER */
-    .header {
-        background: #1b1b1b;
-        padding: 20px 30px;
-        font-size: 32px;
-        font-weight: bold;
-        color: #f1c40f;
-        border-bottom: 1px solid #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .header-left { flex: 1; }
-
-    .header-clock {
-        font-size: 40px;
-        font-weight: bold;
-        color: #ffffff;
-        text-align: center;
-        flex: 1;
-    }
-
-    .header-right {
-        font-size: 16px;
-        opacity: 0.85;
-        text-align: right;
-        flex: 1;
-        display: flex;
-        justify-content: flex-end;
-        gap: 20px;
-        color: #fff;
-    }
-
-    /* STATS */
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin: 25px 30px;
-    }
-
-    .stat {
-        background: #1f1f1f;
-        padding: 25px;
-        border-radius: 12px;
-        border: 1px solid #303030;
-        text-align: center;
-        color: #e6e6e6;
-    }
-
-    .stat .value {
-        font-size: 42px;
-        font-weight: bold;
-        margin-bottom: 6px;
-        color: #f1c40f;
-    }
-
-    /* LAYOUT */
-    .main-split {
-        display: flex;
-        gap: 20px;
-        margin: 0 30px 30px 30px;
-    }
-
-    .left-side  { flex: 6; }
-    .right-side { flex: 4; }
-
-    .activity-panel {
-        background: #1c1c1c;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #303030;
-        min-height: 400px;
-        font-size: 20px;
-        color: #e6e6e6;
-    }
-
-    .queue-container {
-        background: #1c1c1c;
-        border-radius: 12px;
-        padding: 20px;
-        border: 1px solid #303030;
-        color: #e6e6e6;
-    }
-
-    .queue-header {
-        font-size: 24px;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        font-weight: bold;
-        color: #ffffff;
-    }
-</style>
-<!-- END A4 -->
-<!-- START CHUNK A5 — Entry Card Styles (updated for export+overdue) -->
-<style>
-
-    /* BASE ENTRY CARD */
-    .entry {
-        padding: 15px;
-        margin-bottom: 14px;
-        border-radius: 8px;
-        border-left: 50px solid transparent;
-        background: #252525;
-        position: relative;
-        font-size: 18px;
-        color: #e6e6e6;
-        transition: 0.3s;
-    }
-
-    /* NORMAL LEFT BAR COLOURS */
-    .green { border-left-color: #22c55e; }
-    .amber { border-left-color: #f59e0b; }
-    .red   { border-left-color: #ef4444; }
-    .red2  { border-left-color: #7f1d1d; }
-
-    /* EXPORT MODE — BASE STATE (keeps blue background/glow) */
-    .export-card {
-        background: linear-gradient(90deg,
-                    rgba(27,140,255,0.20),
-                    rgba(27,140,255,0.05)) !important;
-
-        box-shadow: 0 0 22px rgba(27,140,255,0.55),
-                    0 0 10px rgba(27,140,255,0.35) !important;
-
-        animation: exportPulse 1.8s infinite ease-in-out;
-    }
-
-    @keyframes exportPulse {
-        0%   { box-shadow: 0 0 14px rgba(27,140,255,0.45); }
-        50%  { box-shadow: 0 0 28px rgba(27,140,255,0.85); }
-        100% { box-shadow: 0 0 14px rgba(27,140,255,0.45); }
-    }
-
-    /* NEW RULE:
-       Export + Overdue = Replace left bar with RED 
-       (background still stays export blue) */
-    .export-card.red  { border-left-color: #ef4444 !important; }
-    .export-card.red2 { border-left-color: #7f1d1d !important; }
-
-    /* EXPORT BADGE */
-    .export-banner {
-        display: inline-block;
-        background: #1b8cff;
-        color: #fff;
-        padding: 3px 10px;
-        font-size: 13px;
-        font-weight: bold;
-        border-radius: 6px;
-        margin-bottom: 8px;
-    }
-
-</style>
-<!-- END CHUNK A5 — Entry Card Styles (updated for export+overdue) -->
-
-<!-- START A6 -->
+<!-- END A1 -->
 </head>
 <body>
-<!-- END A6 -->
-
-<!-- END SECTION A -->
-
-<!-- START SECTION B -->
-<!-- START B1 -->
-<div id="panel" class="slide-panel">
-
-    <div class="panel-title">Add New Lorry</div>
-
-    <!-- NEW: Haulier field -->
-    <label style="color:#ccc; margin-top:10px;">Haulier</label>
-    <input 
-        id="haulierInput"
-        type="text"
-        placeholder="Haulier name"
-        style="
-            width:100%;
-            padding:12px;
-            background:#2a2a2a;
-            color:#fff;
-            border:1px solid #444;
-            border-radius:8px;
-            font-size:16px;
-            margin-bottom:12px;
-        "
-    >
-
-    <!-- Expected Loads Dropdown -->
-    <label style="color:#ccc; margin-top:10px;">Expected Loads</label>
-    <select id="prebookSelect"
-        onchange="applyPrebook()"
-        style="
-            width:100%;
-            padding:12px;
-            background:#2a2a2a;
-            color:#fff;
-            border:1px solid #444;
-            border-radius:8px;
-            font-size:16px;
-            margin-bottom:12px;
-        ">
-        <option value="">-- Select Pre-Booked Load --</option>
-    </select>
-
-    <div class="form-row">
-        <input type="text" id="poInput" placeholder="PO / Reference Number">
-        <input type="text" id="regInput" placeholder="Registration">
+    <!-- START A2 -->
+    <!-- Hidden Add Lorry Panel -->
+    <div id="addPanel" class="slide-panel">
+        <div class="panel-title">Add New Lorry</div>
+        <div class="form-row">
+            <input type="text" id="regInput" placeholder="Registration">
+            <input type="text" id="poInput" placeholder="PO / Reference">
+        </div>
+        <div class="form-row">
+            <input type="text" id="pagerInput" placeholder="Mobile Number">
+            <select id="quotedInput">
+                <option value="30">30 mins</option>
+                <option value="45">45 mins</option>
+                <option value="60" selected>60 mins</option>
+                <option value="90">90 mins</option>
+                <option value="120">120 mins</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <textarea id="notesInput" placeholder="Notes" style="width:100%;height:80px;"></textarea>
+        </div>
+        <div class="submit-btn" onclick="submitVehicle()">Submit</div>
     </div>
-
-    <div class="form-row">
-        <input type="text" id="pagerInput" placeholder="Mobile Number">
-
-        <select id="quotedInput">
-            <option value="30">30 mins</option>
-            <option value="45">45 mins</option>
-            <option value="60" selected>60 mins</option>
-            <option value="90">90 mins</option>
-            <option value="120">120 mins</option>
-        </select>
-    </div>
-
-    <div class="form-row">
-        <textarea id="notesInput" placeholder="Notes"></textarea>
-    </div>
-
-    <div id="submitBtn" class="submit-btn" onclick="submitVehicle()">Submit</div>
-</div>
-<!-- END B1 -->
-
-<!-- START B2 -->
-<div id="header" class="header">
-
-    <div class="header-left">Warehouse Pager</div>
-
-    <div id="clock" class="header-clock">--:--</div>
-
-    <div class="header-right">
-        <button class="add-btn" onclick="togglePanel()">Add Vehicle</button>
-
-        <!-- AVATAR + DROPDOWN -->
-        <div style="position:relative;">
-            <div id="avatarBtn"
-                style="
-                    width:42px;
-                    height:42px;
-                    border-radius:50%;
-                    background:#2a2a2a;
-                    border:1px solid #444;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:18px;
-                    cursor:pointer;
-                    user-select:none;
-                ">
-                ??
-            </div>
-
-            <div id="avatarMenu"
-                style="
-                    position:absolute;
-                    top:48px;
-                    right:0;
-                    background:#1c1c1c;
-                    border:1px solid #333;
-                    border-radius:8px;
-                    width:170px;
-                    padding:8px 0;
-                    display:none;
-                    z-index:9999;
-                ">
-                <div id="menuName"
-                    style="
-                        padding:10px 14px;
-                        color:#ddd;
-                        border-bottom:1px solid #333;
-                        font-size:14px;
-                    ">
-                    Loading...
-                </div>
-
-                <div onclick="logoutUser()"
-                    style="
-                        padding:10px 14px;
-                        color:#fff;
-                        cursor:pointer;
-                        font-size:16px;
-                    ">
-                    Logout
+    <header>
+        <div class="header-left">Gatehouse Dashboard</div>
+        <div id="clock" class="header-clock">--:--</div>
+        <div class="header-right">
+            <!-- Add lorry button -->
+            <button class="add-btn" onclick="togglePanel()">Add Lorry</button>
+            <button id="refreshBtn" style="padding:8px 16px;font-size:14px;background:var(--accent);color:#fff;border:none;border-radius:4px;" onclick="manualRefresh()">Refresh</button>
+            <!-- Avatar and dropdown -->
+            <div style="position: relative;">
+                <div id="avatarBtn">??</div>
+                <div id="avatarMenu">
+                    <div id="menuName">Loading...</div>
+                    <div onclick="logoutUser()">Logout</div>
                 </div>
             </div>
         </div>
-    </div>
-
-</div>
-
-<script>
-// Logout
-function logoutUser() {
-    localStorage.removeItem("operator_id");
-    window.location.href = "login.html";
-}
-
-// Avatar dropdown toggle
-document.addEventListener("click", e => {
-    const btn = document.getElementById("avatarBtn");
-    const menu = document.getElementById("avatarMenu");
-
-    if (btn.contains(e.target)) {
-        menu.style.display = (menu.style.display === "block" ? "none" : "block");
-    } else if (!menu.contains(e.target)) {
-        menu.style.display = "none";
-    }
-});
-
-// Inject operator name + initials
-(async () => {
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) return;
-
-    const { data: op } = await db
-        .from("operators")
-        .select("*")
-        .eq("id", opId)
-        .single();
-
-    const opName = op?.name || "Unknown";
-    document.getElementById("menuName").textContent = opName;
-
-    const initials = opName
-        .split(" ")
-        .map(x => x[0]?.toUpperCase() || "")
-        .join("")
-        .slice(0, 2);
-
-    document.getElementById("avatarBtn").textContent = initials;
-})();
-</script>
-<!-- END B2 -->
-
-
-<!-- START B3 -->
-<div class="grid">
-
-    <div class="stat">
-        <div class="value" id="statIn">0</div>
-        Lorries Booked In<br>
-        <span style="font-size:14px;opacity:0.6;">Last 8 hours</span>
-    </div>
-
-    <div class="stat">
-        <div class="value" id="statOut">0</div>
-        Lorries Booked Out<br>
-        <span style="font-size:14px;opacity:0.6;">Last 8 hours</span>
-    </div>
-
-    <div class="stat">
-        <div class="value" id="statDiff">0</div>
-        Difference<br>
-        <span style="font-size:14px;opacity:0.6;">In - Out</span>
-    </div>
-
-    <div class="stat">
-        <div class="value" id="statAvg">0 mins</div>
-        Average Waiting Time<br>
-        <span style="font-size:14px;opacity:0.6;">Across active</span>
-    </div>
-
-</div>
-<!-- END B3 -->
-
-
-<!-- START B4 -->
-<div class="main-split">
-
-    <div class="left-side">
-        <div class="queue-container">
-            <div class="queue-header">
-                <span>Active Queue</span>
-                <span class="queue-count" style="color:#bbb;">Loading...</span>
-            </div>
-
-            <!-- Queue items inserted by renderQueue() -->
+    </header>
+    <!-- END A2 -->
+    <!-- KPI Tiles -->
+    <!-- START A3 -->
+    <div class="stats">
+        <div class="tile">
+            <div class="value" id="kpiTotalIn">0</div>
+            Checked In
+        </div>
+        <div class="tile">
+            <div class="value" id="kpiTotalOut">0</div>
+            Released
+        </div>
+        <div class="tile">
+            <div class="value" id="kpiAvgWait">0</div>
+            Avg Wait (m)
+        </div>
+        <div class="tile">
+            <div class="value" id="kpiOverdue">0</div>
+            Overdue >30m
         </div>
     </div>
-
-    <div class="right-side">
-        <div class="activity-panel">
-            Loading activity...
+    <!-- END A3 -->
+    <!-- START A4 -->
+    <div class="grid">
+        <!-- Queue Section -->
+        <div class="queue">
+            <h2>Active Queue</h2>
+            <div id="queueList">Loading…</div>
+        </div>
+        <!-- Details / Timeline Section -->
+        <div class="details">
+            <h2>Recent Activity</h2>
+            <div id="activityList">Loading…</div>
         </div>
     </div>
+    <!-- END A4 -->
+    <!-- START A5 -->
+    <canvas id="chartTrend" style="max-width:600px;height:240px;max-height:240px;margin:0 auto 24px;display:block;"></canvas>
+    <!-- END A5 -->
 
-</div>
-<!-- END B4 -->
+    <!-- Supabase & Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // START A6
+    // Initialise Supabase client
+    const db = supabase.createClient(
+        "https://gtixdparpjdpyhhubsfz.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+    );
+    // END A6
 
-
-<!-- START B5 -->
-<div id="searchPanel" style="color:white; display:none;">
-    <h3>Search Vehicle</h3>
-
-    <input 
-        id="searchInput"
-        type="text"
-        placeholder="Enter registration…"
-        onkeyup="searchVehicles()"
-        style="
-            width:100%;
-            padding:12px;
-            background:#1f1f1f;
-            color:#fff;
-            border:1px solid #444;
-            border-radius:8px;
-        "
-    >
-
-    <div id="searchResults" style="margin-top:15px; font-size:16px; color:#ddd;"></div>
-</div>
-<!-- END B5 -->
-
-
-<!-- START B6 -->
-<div id="editModalOverlay" style="
-    position:fixed;
-    top:0; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,0.6);
-    display:none;
-    z-index:9999;
-">
-    <div id="editModal" style="
-        background:#1c1c1c;
-        color:#fff;
-        width:420px;
-        margin:80px auto;
-        padding:25px;
-        border-radius:12px;
-        border:1px solid #333;
-    ">
-        <!-- Modal content injected in D4 -->
-    </div>
-</div>
-<!-- END B6 -->
-
-<!-- END SECTION B -->
-<!-- START SECTION C -->
-
-<!-- START C1 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const supabaseUrl = "https://gtixdparpjdpyhhubsfz.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0";
-const db = supabase.createClient(supabaseUrl, supabaseKey);
-</script>
-<!-- END C1 -->
-
-<!--// START C2 — Operator Loader (fixed avatar) -->
-<script>
-(async () => {
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) { 
-        window.location.href = "login.html"; 
-        return; 
+    let vehicles = [];
+    let operators = [];
+    let logs = [];
+    let chart;
+    // START A7
+    // Fetch operators from Supabase (names for activity feed)
+    async function fetchOperators() {
+        const { data, error } = await db
+            .from('operators')
+            .select('id, name');
+        if (error) { console.error(error); return; }
+        operators = data || [];
     }
+    // END A7
 
-    const { data: op } = await db
-        .from("operators")
-        .select("name")
-        .eq("id", opId)
-        .single();
-
-    const opName = op?.name || "Unknown";
-
-    // Avatar menu name
-    if (document.getElementById("menuName")) {
-        document.getElementById("menuName").textContent = opName;
-    }
-
-    // Avatar initials
-    if (document.getElementById("avatarBtn")) {
-        const initials = opName
-            .split(" ")
-            .map(x => x[0]?.toUpperCase() || "")
-            .join("")
-            .slice(0, 2);
-
-        document.getElementById("avatarBtn").textContent = initials;
-    }
-})();
-</script>
-<!--// END C2 — Operator Loader (fixed avatar)-->
-<!-- START C3 -->
-<script>
-let submitting = false;
-let prebookCache = [];
-let prebookExportFlag = false;
-
-function togglePanel() {
-    document.getElementById("panel").classList.toggle("panel-visible");
-    loadPrebooks();
-}
-
-async function loadPrebooks() {
-    const sel = document.getElementById("prebookSelect");
-    sel.innerHTML = `<option value="">-- Select Pre-Booked Load --</option>`;
-
-    const { data } = await db
-        .from("prebookings")
-        .select("*")
-        .eq("consumed", false)
-        .order("expected_date", { ascending: true })
-        .order("expected_time", { ascending: true });
-
-    if (!data) return;
-    prebookCache = data;
-
-    data.forEach(p => {
-        const label = `${p.po_ref} — ${p.registration || "No Reg"} — ${p.expected_date || ""} ${p.expected_time?.slice(0,5) || ""}${p.is_export ? " — EXPORT" : ""}`;
-        sel.innerHTML += `<option value="${p.id}">${label}</option>`;
-    });
-}
-
-function applyPrebook() {
-    const id = document.getElementById("prebookSelect").value;
-    if (!id) return;
-
-    const pb = prebookCache.find(x => x.id === id);
-    if (!pb) return;
-
-    document.getElementById("poInput").value = pb.po_ref || "";
-    document.getElementById("regInput").value = pb.registration || "";
-    document.getElementById("notesInput").value = pb.notes || "";
-
-    prebookExportFlag = pb.is_export === true;
-}
-
-async function submitVehicle() {
-    if (submitting) return;
-    submitting = true;
-
-    const btn = document.getElementById("submitBtn");
-    btn.style.pointerEvents = "none";
-    btn.style.opacity = "0.5";
-
-    let reg = document.getElementById("regInput").value.trim().replace(/\s+/g, "").toUpperCase();
-    let po = document.getElementById("poInput").value.trim();
-    let pager = parseInt(document.getElementById("pagerInput").value);
-    let notes = document.getElementById("notesInput").value.trim();
-    let quoted = parseInt(document.getElementById("quotedInput").value);
-
-    if (!reg) {
-        alert("Registration required");
-        submitting = false;
-        btn.style.pointerEvents = "auto";
-        btn.style.opacity = "1";
-        return;
-    }
-
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) { window.location.href = "login.html"; return; }
-
-    const now = new Date().toISOString();
-    const due = new Date(Date.now() + quoted * 60000).toISOString();
-
-    const { data, error } = await db.from("vehicles").insert({
-        registration: reg,
-        po_ref: po,
-        pager_number: pager,
-        notes: notes,
-        quoted_minutes: quoted,
-        check_in_time: now,
-        due_time: due,
-        operator_id: opId,
-
-        /* NEW DEFAULT START STATE */
-        status: "parked",
-
-        classification: prebookExportFlag ? "export" : "normal"
-    }).select();
-
-    if (error) {
-        alert("Error: " + error.message);
-        submitting = false;
-        btn.style.pointerEvents = "auto";
-        btn.style.opacity = "1";
-        return;
-    }
-
-    const vehicleId = data[0].id;
-
-    /* IMPORTANT: AUTO-OPEN QR SCREEN */
-    window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-
-    await db.from("actions_log").insert({
-        vehicle_id: vehicleId,
-        operator_id: opId,
-        action: "check_in",
-        details: {}
-    });
-
-    const selected = document.getElementById("prebookSelect").value;
-    if (selected) {
-        await db.from("prebookings").update({ consumed: true }).eq("id", selected);
-    }
-
-    loadQueue();
-    loadStats();
-    loadActivity();
-
-    submitting = false;
-    btn.style.pointerEvents = "auto";
-    btn.style.opacity = "1";
-    prebookExportFlag = false;
-
-    togglePanel();
-}
-</script>
-<!-- END C3 -->
-
-<!-- START C4 -->
-<script>
-async function loadQueue() {
-    const { data } = await db
-        .from("vehicles")
-        .select(`
-            id,
-            registration,
-            po_ref,
-            pager_number,
-            notes,
-            check_in_time,
-            due_time,
-            quoted_minutes,
-            status,
-            classification
-        `)
-        .in("status", ["parked", "notified"])   <!-- UPDATED -->
-        .order("check_in_time", { ascending: true });
-
-    renderQueue(data || []);
-}
-</script>
-<!-- END C4 -->
-
-<!-- START C5 -->
-<script>
-function renderQueue(list) {
-    const container = document.querySelector(".queue-container");
-
-    container.innerHTML = `
-        <div class="queue-header">
-            <span>Active Queue</span>
-            <span class="queue-count">${list.length} vehicles active</span>
-        </div>
-    `;
-
-    if (!list.length) {
-        container.innerHTML += `<div style="padding:30px;text-align:center;color:#777;">No active vehicles</div>`;
-        return;
-    }
-
-    list.forEach(v => {
-        const checkIn = new Date(v.check_in_time);
-        const due = new Date(v.due_time);
-        const now = new Date();
-
-        let overdue = Math.floor((now - due) / 60000);
-        if (overdue < 0) overdue = 0;
-
-        let colour = "green";
-        if (now >= due) colour = "amber";
-        if (overdue >= 30) colour = "red";
-        if (overdue >= 180) colour = "red2";
-
-        const isExport = v.classification === "export";
-        const cardClass = isExport ? "export-card" : colour;
-        const dueText = due.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
-
-        const statusText = v.status === "parked"
-            ? "Parked"
-            : (v.status === "notified" ? "Notified" : "");
-
-        container.innerHTML += `
-            <div class="entry ${cardClass}">
-
-                <div class="entry-top" onclick="openModalEditor('${v.id}')">
-
-                    <div>
-
-                        ${isExport ? `<div class="export-banner">EXPORT LOAD</div>` : ""}
-
-                        <strong>${v.registration}</strong><br>
-                        <span>${v.po_ref || "No PO"}</span><br>
-
-                        <span style="font-size:11px;opacity:0.7;">Due at ${dueText}</span>
-                        <div class="pager-badge">Pager #${v.pager_number || "-"}</div>
-
-                        <div id="notes-${v.id}"
-                             class="notes-text"
-                             onclick="event.stopPropagation(); enableNotesEdit('${v.id}', \`${v.notes || ''}\`)">
-                            ${v.notes ? v.notes : "<i>Click to add notes</i>"}
-                        </div>
-
-                    </div>
-
-                    <div style="text-align:right;">
-                        <div>
-                            ${statusText}
-                        </div>
-                        <div style="font-size:12px;opacity:0.7;">
-                            In: ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="entry-actions">
-                    <button class="action-btn notify-btn" onclick="notifyVehicle('${v.id}')">Notify</button>
-                    <button class="action-btn complete-btn" onclick="completeVehicle('${v.id}')">Complete</button>
-                    <button class="action-btn" style="background:#777;" onclick="undoVehicle('${v.id}')">Undo</button>
-                </div>
-
-            </div>
-        `;
-    });
-}
-</script>
-<!-- END C5 -->
- 
-
-<!-- START C6 -->
-<script>
-let savingNotes = {};  // track which vehicles are currently saving
-
-function enableNotesEdit(vehicleId, oldNotes) {
-    const notesEl = document.getElementById("notes-" + vehicleId);
-    notesEl.innerHTML = `
-        <input id="notesInput-${vehicleId}" class="notes-input" value="${oldNotes || ''}">
-    `;
-
-    const input = document.getElementById("notesInput-" + vehicleId);
-    input.focus();
-
-    // Use flag to prevent double-save on Enter+Blur
-    let hasBeenSaved = false;
-
-    const handleSave = () => {
-        if (hasBeenSaved) return;
-        hasBeenSaved = true;
-        saveNotes(vehicleId);
-    };
-
-    input.addEventListener("blur", handleSave);
-    input.addEventListener("keydown", e => { 
-        if (e.key === "Enter") handleSave();
-    });
-}
-
-async function saveNotes(vehicleId) {
-    // Prevent duplicate saves for same vehicle
-    if (savingNotes[vehicleId]) return;
-    savingNotes[vehicleId] = true;
-
-    const input = document.getElementById("notesInput-" + vehicleId);
-    if (!input) {
-        savingNotes[vehicleId] = false;
-        return;
-    }
-
-    const newNotes = input.value.trim();
-    const opId = localStorage.getItem("operator_id");
-
-    await db.from("vehicles").update({
-        notes: newNotes,
-        operator_id: opId
-    }).eq("id", vehicleId);
-
-    await db.from("actions_log").insert({
-        vehicle_id: vehicleId,
-        operator_id: opId,
-        action: "notes_edit",
-        details: { notes: newNotes }
-    });
-
-    // Release lock BEFORE reloading (important!)
-    savingNotes[vehicleId] = false;
-
-    loadQueue();
-    loadActivity();
-}
-</script>
-<!-- END C6 -->
-
-<!-- START C7 — Complete/Notify/Undo -->
-<script>
-async function notifyVehicle(id) {
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) { window.location.href = "login.html"; return; }
-
-    const now = new Date().toISOString();
-
-    await db.from("vehicles").update({
-        status: "notified",
-        notify_time: now,
-        operator_id: opId
-    }).eq("id", id);
-
-    await db.from("actions_log").insert({
-        vehicle_id: id,
-        operator_id: opId,
-        action: "notified",
-        details: {}
-    });
-
-    loadQueue();
-    loadStats();
-    loadActivity();
-}
-
-async function completeVehicle(id) {
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) { window.location.href = "login.html"; return; }
-
-    const now = new Date().toISOString();
-
-    await db.from("vehicles").update({
-        status: "released",
-        release_time: now,
-        operator_id: opId
-    }).eq("id", id);
-
-    await db.from("actions_log").insert({
-        vehicle_id: id,
-        operator_id: opId,
-        action: "completed",   // UPDATED
-        details: {}
-    });
-
-    loadQueue();
-    loadStats();
-    loadActivity();
-}
-
-async function undoVehicle(id) {
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) { window.location.href = "login.html"; return; }
-
-    await db.from("vehicles").update({
-        status: "waiting",
-        notify_time: null,
-        release_time: null,
-        operator_id: opId
-    }).eq("id", id);
-
-    await db.from("actions_log").insert({
-        vehicle_id: id,
-        operator_id: opId,
-        action: "undo",
-        details: { reverted: true }
-    });
-
-    loadQueue();
-    loadStats();
-    loadActivity();
-}
-</script>
-<!-- END C7 — Complete/Notify/Undo -->
-
-
-
-<!-- END SECTION C -->
-<!-- START D1 — Load Activity (400-safe version) -->
-<script>
-async function loadActivity() {
-    const panel = document.querySelector(".activity-panel");
-    panel.innerHTML = `<h3 style="color:#fff;">Recent Activity</h3><hr style="border-color:#444;">`;
-
-    // Step 1 — get raw log rows only
-    const { data: logs, error } = await db
-        .from("actions_log")
-        .select("timestamp, action, operator_id, vehicle_id")
-        .order("timestamp", { ascending: false })
-        .limit(20);
-
-    if (error) {
-        panel.innerHTML += `<div style="color:#f55;">Failed to load activity</div>`;
-        return;
-    }
-
-    if (!logs || logs.length === 0) {
-        panel.innerHTML += `<div style="color:#888;">No recent actions</div>`;
-        return;
-    }
-
-    // Step 2 — lookup operator + vehicle names
-    for (const a of logs) {
-        let name = "unknown";
-        let reg = "unknown";
-        let po  = "";
-
-        if (a.operator_id) {
-            const { data: op } = await db
-                .from("operators")
-                .select("name")
-                .eq("id", a.operator_id)
-                .single();
-
-            if (op) name = op.name;
-        }
-
-        if (a.vehicle_id) {
-            const { data: v } = await db
-                .from("vehicles")
-                .select("registration, po_ref")
-                .eq("id", a.vehicle_id)
-                .single();
-
-            if (v) {
-                reg = v.registration || "unknown";
-                po  = v.po_ref || "";
-            }
-        }
-
-        const t = new Date(a.timestamp)
-            .toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
-
-        let label = a.action;
-        if (label === "check_in") label = "checked in";
-        if (label === "notified") label = "notified";
-        if (label === "completed") label = "completed";
-        if (label === "undo") label = "undo";
-        if (label === "modal_edit") label = "edited";
-
-        panel.innerHTML += `
-            <div style="margin-bottom:12px; color:#ddd;">
-                <strong style="font-size:18px;">${reg}</strong>
-                <span style="opacity:0.6; font-size:14px;">${po}</span><br>
-                <span style="opacity:0.75; font-size:14px;">
-                    ${label} by ${name} — ${t}
-                </span>
-            </div>
-        `;
-    }
-}
-</script>
-<!-- END D1 — Load Activity (400-safe version) -->
-
-<!-- START D2 -->
-<script>
-async function loadStats() {
-    const since = new Date(Date.now() - 8*60*60*1000).toISOString();
-
-    const { data: inRows } = await db
-        .from("vehicles")
-        .select("id")
-        .gte("check_in_time", since);
-
-    const { data: outRows } = await db
-        .from("vehicles")
-        .select("id")
-        .eq("status", "released")
-        .gte("release_time", since);
-
-    const { data: waitingRows } = await db
-        .from("vehicles")
-        .select("check_in_time")
-        .eq("status", "waiting");
-
-    const inCount = inRows?.length || 0;
-    const outCount = outRows?.length || 0;
-    const diff = inCount - outCount;
-
-    let avg = 0;
-    if (waitingRows && waitingRows.length > 0) {
-        const total = waitingRows.reduce((sum, v)=>
-            sum + (Date.now() - new Date(v.check_in_time)),
-        0);
-        avg = total / waitingRows.length;
-    }
-    const avgMins = Math.floor(avg / 60000);
-
-    document.getElementById("statIn").textContent = inCount;
-    document.getElementById("statOut").textContent = outCount;
-    document.getElementById("statDiff").textContent = diff;
-    document.getElementById("statAvg").textContent = `${avgMins} mins`;
-}
-</script>
-<!-- END D2 -->
-
-<!-- START D3 -->
-<script>
-async function searchVehicles() {
-    const q = document.getElementById("searchInput").value.trim().toUpperCase();
-    const box = document.getElementById("searchResults");
-
-    if (q.length < 2) {
-        box.innerHTML = `<i style="color:#777;">Type 2+ characters…</i>`;
-        return;
-    }
-
+    // START A8 — Load ALL vehicles so Recents works
+async function fetchVehicles() {
     const { data, error } = await db
-        .from("vehicles")
-        .select("*")
-        .or(`
-            registration.ilike.%${q}%,
-            po_ref.ilike.%${q}%,
-            haulier.ilike.%${q}%,
-            mobile_number.ilike.%${q}%
-        `)
-        .order("check_in_time", { ascending: false });
+        .from('vehicles')
+        .select('*')
+        .order('check_in_time', { ascending: true });
 
-    if (error) {
-        console.error(error);
-        box.innerHTML = `<i style="color:#777;">Search error</i>`;
-        return;
+    if (error) { console.error(error); return; }
+
+    vehicles = data || [];
+
+    renderQueue();
+    loadKPIs();
+    loadChart();
+}
+// END A8
+
+
+//<!-- START A9 -->
+<!-- Fetch recent actions (clean version) -->
+async function fetchLogs() {
+    try {
+        // Load the most recent 40 actions (we'll filter to 24h locally)
+        const { data, error } = await db
+            .from('actions_log')
+            .select('*')
+            .order('timestamp', { descending: true })
+            .limit(40);
+
+        if (error) {
+            console.error("Error loading logs:", error);
+            return;
+        }
+
+        const all = data || [];
+
+        // Keep ONLY last 24 hours
+        const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+
+        logs = all
+            .filter(l => new Date(l.timestamp).getTime() >= cutoff)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        renderActivity();   // use merged data from vehicles + operators
+    } catch (err) {
+        console.error("fetchLogs fatal:", err);
+    }
+}
+//<!-- END A9 -->
+
+
+
+    // START A10
+    // KPI calculations
+    function loadKPIs() {
+        const totalIn = vehicles.filter(v => v.status !== 'released').length;
+        const totalOut = vehicles.filter(v => v.status === 'released').length;
+        const waits = vehicles.filter(v => v.status === 'parked' || v.status === 'waiting' || v.status === 'notified').map(v => {
+            return Math.floor((Date.now() - new Date(v.check_in_time)) / 60000);
+        });
+        const avgWait = waits.length ? (waits.reduce((a,b)=>a+b,0)/waits.length).toFixed(0) : 0;
+        const overdue = vehicles.filter(v => {
+            const due = new Date(v.due_time || v.check_in_time).getTime() + 30*60000;
+            return Date.now() > due && v.status !== 'released';
+        }).length;
+        document.getElementById('kpiTotalIn').textContent = totalIn;
+        document.getElementById('kpiTotalOut').textContent = totalOut;
+        document.getElementById('kpiAvgWait').textContent = avgWait;
+        document.getElementById('kpiOverdue').textContent = overdue;
+    }
+    // END A10
+
+    // Render queue list
+    function renderQueue() {
+        const container = document.getElementById('queueList');
+        container.innerHTML = '';
+        vehicles.filter(v => v.status !== "released").forEach(v => {
+            const li = document.createElement('div');
+            // Determine overdue/critical status based on due time
+            const now = Date.now();
+            const dueTime = new Date(v.due_time || v.check_in_time).getTime() + 30*60000;
+            const minsLate = Math.floor((now - dueTime)/60000);
+            let cls = '';
+            if (minsLate > 0 && v.status !== 'released') cls = minsLate > 90 ? 'critical' : 'overdue';
+            li.className = `entry ${cls}`;
+            // When clicking anywhere on the card (except buttons) open edit modal
+            li.onclick = () => openEditModal(v.id);
+            li.innerHTML = `
+                <div class="info">
+                    <strong>${v.registration || '–'}</strong> — ${v.status}<br>
+                    PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
+                    In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-' }
+                </div>
+                <div class="actions">
+                    <button class="notify" onclick="event.stopPropagation(); notify('${v.id}')">Notify</button>
+                    <button class="release" onclick="event.stopPropagation(); release('${v.id}')">Release</button>
+                    <button class="undo" onclick="event.stopPropagation(); undo('${v.id}')">Undo</button>
+                </div>
+            `;
+            container.appendChild(li);
+        });
     }
 
-    if (!data || data.length === 0) {
-        box.innerHTML = `<i style="color:#777;">No matches</i>`;
-        return;
+    // Render recent activity
+    function renderActivity() {
+        const container = document.getElementById('activityList');
+        container.innerHTML = '';
+        logs.forEach(l => {
+            const item = document.createElement('div');
+            item.className = 'activity-item';
+            // find registration and PO from vehicles array
+            const veh = vehicles.find(v => v.id === l.vehicle_id) || {};
+            const reg = veh.registration || '';
+            const po = veh.po_ref || '';
+            // find operator name
+            const op = operators.find(o => o.id === l.operator_id) || {};
+            const name = op.name || 'Unknown';
+            // humanise action
+            let actionVerb = '';
+            switch(l.action) {
+                case 'check_in': actionVerb = 'checked in'; break;
+                case 'notified': actionVerb = 'notified'; break;
+                case 'released': actionVerb = 'completed'; break;
+                case 'undo': actionVerb = 'reverted'; break;
+                default: actionVerb = l.action; break;
+            }
+            const dt = new Date(l.timestamp);
+            const timeStr = dt.toLocaleString('en-GB', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+            item.textContent = `${reg || l.vehicle_id} ${po} ${actionVerb} by ${name} — ${timeStr}`.trim();
+            container.appendChild(item);
+        });
     }
 
-    let html = "";
-    data.forEach(v => {
-        html += `
-            <div style="
-                padding:12px;
-                border:1px solid #444;
-                border-radius:8px;
-                margin-bottom:12px;
-                background:#1f1f1f;
-                cursor:pointer;
-                color:#fff;
-            " onclick="openModalEditor('${v.id}')">
+    // START A11
+    // Chart for check‑ins per hour
+    function loadChart() {
+        const ctx = document.getElementById('chartTrend').getContext('2d');
+        const hours = [];
+        const counts = [];
+        const now = new Date();
+        for (let i=0; i<12; i++) {
+            const h = new Date(now.getTime() - (11-i)*60*60*1000);
+            const label = h.getHours().toString().padStart(2,'0')+':00';
+            hours.push(label);
+            // count vehicles checked in within that hour
+            const count = vehicles.filter(v => {
+                const ci = new Date(v.check_in_time);
+                return ci.getHours() === h.getHours();
+            }).length;
+            counts.push(count);
+        }
+        if (chart) chart.destroy();
+        const computedStyles = getComputedStyle(document.documentElement);
+        const accent = computedStyles.getPropertyValue('--accent').trim() || '#0ea5e9';
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: hours, datasets: [{ label: 'Check‑ins per hour', data: counts, borderColor: accent, backgroundColor: accent + '33', borderWidth: 2, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+    }
+    // END A11
 
-                <strong>${v.registration}</strong> — ${v.status}<br>
-                PO: ${v.po_ref || "-"}<br>
-                Haulier: ${v.haulier || "-"}<br>
-                Mobile: ${v.mobile_number || "-"}
-            </div>
-        `;
-    });
-
-    box.innerHTML = html;
-}
-</script>
-<!-- END D3 -->
-
-<!-- START D4 -->
-<script>
-async function openModalEditor(id) {
-    const { data: v } = await db
-        .from("vehicles")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-    const modal = document.getElementById("editModal");
-    const overlay = document.getElementById("editModalOverlay");
-
-    modal.innerHTML = `
-        <h2 style="color:#fff;">Edit ${v.registration}</h2>
-
-        <label style="color:#bbb;">Status:</label><br>
-        <select id="edit-status-${id}" style="
-            padding:10px; margin:6px 0 16px 0; 
-            border-radius:6px; 
-            background:#1c1c1c; 
-            color:#fff;
-            border:1px solid #444; width:180px;">
-
-            <!-- REMOVED waiting -->
-            <option value="parked"  ${v.status==="parked"?"selected":""}>parked</option>
-            <option value="notified" ${v.status==="notified"?"selected":""}>notified</option>
-            <option value="released" ${v.status==="released"?"selected":""}>released</option>
-
-        </select>
-
-        <label style="color:#bbb;">PO / Reference:</label>
-        <input id="edit-po-${id}" value="${v.po_ref || ""}" style="
-            width:100%; padding:10px; 
-            background:#1c1c1c; color:#fff;
-            border:1px solid #444; border-radius:6px; margin-bottom:16px;">
-
-        <label style="color:#bbb;">Pager Number:</label>
-        <input id="edit-pager-${id}" type="number" value="${v.pager_number || ""}" style="
-            width:100%; padding:10px;
-            background:#1c1c1c; color:#fff;
-            border:1px solid #444; border-radius:6px; margin-bottom:16px;">
-
-        <label style="color:#bbb;">Notes:</label>
-        <textarea id="edit-notes-${id}" style="
-            width:100%; height:90px; padding:10px;
-            background:#1c1c1c; color:#fff;
-            border:1px solid #444; border-radius:6px;">${v.notes || ""}</textarea>
-
-        <div style="margin-top:22px; text-align:right;">
-            <button onclick="closeModal()" style="
-                padding:10px 18px; background:#555; color:white;
-                border:none; border-radius:6px; margin-right:12px;">
-                Cancel
-            </button>
-
-            <button onclick="saveModalEditor('${id}')" style="
-                padding:10px 18px; background:#1b4cd4; color:white;
-                border:none; border-radius:6px;">
-                Save
-            </button>
-        </div>
-    `;
-
-    overlay.style.display = "block";
-}
-
-function closeModal() {
-    document.getElementById("editModalOverlay").style.display = "none";
-}
-</script>
-<!-- END D4 -->
-
-<!-- START D5 -->
-<script>
-async function saveModalEditor(id) {
-    const opId = localStorage.getItem("operator_id");
-
-    const status  = document.getElementById(`edit-status-${id}`).value;
-    const po      = document.getElementById(`edit-po-${id}`).value.trim();
-    const haulier = document.getElementById(`edit-haulier-${id}`).value.trim();
-    const mobile  = document.getElementById(`edit-mobile-${id}`).value.trim();
-    const notes   = document.getElementById(`edit-notes-${id}`).value.trim();
-    const now     = new Date().toISOString();
-
-    const { error } = await db.from("vehicles").update({
-        status,
-        po_ref: po,
-        haulier,
-        mobile_number: mobile,          /* NEW FIELD */
-        notes,
-        notify_time:  status === "notified" ? now : null,
-        release_time: status === "released" ? now : null,
-        operator_id: opId
-    }).eq("id", id);
-
-    if (error) {
-        alert("Save failed: " + error.message);
-        return;
+    // START A12
+    // Action handlers
+    async function notify(id) {
+        const operator = localStorage.getItem('operator_id') || null;
+        const now = new Date().toISOString();
+        const { error } = await db.from('vehicles').update({ status: 'notified', notify_time: now }).eq('id', id);
+        if (!error) {
+            await db.from('actions_log').insert({ vehicle_id: id, action: 'notified', timestamp: now, operator_id: operator });
+            await fetchVehicles();
+            await fetchLogs();
+        }
+    }
+    async function release(id) {
+        const operator = localStorage.getItem('operator_id') || null;
+        const now = new Date().toISOString();
+        const { error } = await db.from('vehicles').update({ status: 'released', release_time: now }).eq('id', id);
+        if (!error) {
+            await db.from('actions_log').insert({ vehicle_id: id, action: 'released', timestamp: now, operator_id: operator });
+            await fetchVehicles();
+            await fetchLogs();
+        }
+    }
+    async function undo(id) {
+        const operator = localStorage.getItem('operator_id') || null;
+        const now = new Date().toISOString();
+        const { data: v } = await db.from('vehicles').select('status').eq('id', id).single();
+        // revert statuses: notified -> parked, released -> notified? For simplicity, set to parked
+        const newStatus = 'parked';
+        const { error } = await db.from('vehicles').update({ status: newStatus }).eq('id', id);
+        if (!error) {
+            await db.from('actions_log').insert({ vehicle_id: id, action: 'undo', timestamp: now, operator_id: operator });
+            await fetchVehicles();
+            await fetchLogs();
+        }
     }
 
-    await db.from("actions_log").insert({
-        vehicle_id: id,
-        operator_id: opId,
-        action: "modal_edit",
-        details: { status, po, haulier, mobile, notes }
-    });
+    // Toggle the visibility of the add panel
+    function togglePanel() {
+        const panel = document.getElementById('addPanel');
+        if (panel) {
+            panel.classList.toggle('panel-visible');
+        }
+    }
 
-    closeModal();
-    loadQueue();
-    loadActivity();
-    loadStats();
-}
-</script>
-<!-- END D5 -->
+    // Submit a new lorry to the database
+    async function submitVehicle() {
+        const btn = document.querySelector('#addPanel .submit-btn');
+        if (!btn) return;
+        // disable button to avoid double submissions
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.6';
 
-<!-- END SECTION D -->
+        // Gather form values
+        let reg = document.getElementById('regInput').value.trim().replace(/\s+/g, '').toUpperCase();
+        let po = document.getElementById('poInput').value.trim();
+        // If pager input is blank, store null so Supabase won't attempt to parse an empty string as an integer
+        let pagerInput = document.getElementById('pagerInput').value.trim();
+        let pager = pagerInput === '' ? null : pagerInput;
+        let notes = document.getElementById('notesInput').value.trim();
+        let quoted = parseInt(document.getElementById('quotedInput').value, 10);
 
-<!-- START SECTION E -->
+        if (!reg) {
+            alert('Registration required');
+            btn.style.pointerEvents = 'auto';
+            btn.style.opacity = '1';
+            return;
+        }
 
-<!-- START E1 -->
-<script>
-function updateClock() {
-    const clock = document.getElementById("clock");
-    if (!clock) return;
+        const operatorId = localStorage.getItem('operator_id') || null;
+        const nowIso = new Date().toISOString();
+        const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
 
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
+        try {
+            // Insert into vehicles table
+            const { data, error } = await db.from('vehicles').insert({
+                registration: reg,
+                po_ref: po || null,
+                // pager_number is nullable; pass null if empty to avoid invalid integer parsing
+                pager_number: pager,
+                notes: notes || null,
+                quoted_minutes: quoted,
+                check_in_time: nowIso,
+                due_time: dueIso,
+                status: 'parked',
+                operator_id: operatorId
+            }).select();
+            if (error) {
+                alert('Error: ' + error.message);
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+                return;
+            }
+            const vehicleId = data && data[0] && data[0].id;
+            // Log check in action
+            await db.from('actions_log').insert({
+                vehicle_id: vehicleId,
+                action: 'check_in',
+                timestamp: nowIso,
+                operator_id: operatorId
+            });
+            // Refresh lists
+            await fetchVehicles();
+            await fetchLogs();
+            await fetchOperators();
+            // Close panel and reset form
+            togglePanel();
+            document.getElementById('regInput').value = '';
+            document.getElementById('poInput').value = '';
+            document.getElementById('pagerInput').value = '';
+            document.getElementById('notesInput').value = '';
+            document.getElementById('quotedInput').value = '60';
+        } finally {
+            btn.style.pointerEvents = 'auto';
+            btn.style.opacity = '1';
+        }
+    }
+    // END A12
 
-    clock.textContent = `${hh}:${mm}`;
-}
-setInterval(updateClock, 1000);
-updateClock();
-</script>
-<!-- END E1 -->
+    // START A13
+    function manualRefresh() {
+        fetchVehicles();
+        fetchOperators();
+        fetchLogs();
+    }
 
+    // Initial load and periodic refresh
+    fetchVehicles();
+    fetchOperators();
+    fetchLogs();
+    setInterval(() => {
+        fetchVehicles();
+        fetchOperators();
+        fetchLogs();
+    }, 15000);
+    // END A13
 
-<!-- START E2 -->
-<script>
-async function autoRefresh() {
-    await loadQueue();
-    await loadActivity();
-    await loadStats();
-}
-setInterval(autoRefresh, 90000); // every 30 seconds
-</script>
-<!-- END E2 -->
+    // BEGIN - added clock update and avatar/menu logic and edit modal
 
-
-<!-- START E3 -->
-<script>
-window.onload = function() {
+    // Live clock update
+    function updateClock() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const clk = document.getElementById('clock');
+        if (clk) clk.textContent = timeStr;
+    }
     updateClock();
-    loadQueue();
-    loadActivity();
-    loadStats();
-};
-</script>
-<!-- END E3 -->
+    setInterval(updateClock, 1000);
 
-<!-- END SECTION E -->
-<!-- START END-OF-FILE -->
+    // Logout handler
+    function logoutUser() {
+        localStorage.removeItem('operator_id');
+        window.location.href = 'login.html';
+    }
+
+    // Avatar dropdown toggle
+    document.addEventListener('click', (e) => {
+        const btn = document.getElementById('avatarBtn');
+        const menu = document.getElementById('avatarMenu');
+        if (!btn || !menu) return;
+        if (btn.contains(e.target)) {
+            menu.style.display = (menu.style.display === 'block' ? 'none' : 'block');
+        } else if (!menu.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+    // Populate avatar with operator initials/name
+    (async () => {
+        const opId = localStorage.getItem('operator_id');
+        if (!opId) return;
+        try {
+            const { data: op } = await db.from('operators').select('name').eq('id', opId).single();
+            const opName = op?.name || 'Unknown';
+            const menuName = document.getElementById('menuName');
+            const avatarBtn = document.getElementById('avatarBtn');
+            if (menuName) menuName.textContent = opName;
+            if (avatarBtn) {
+                const initials = opName.split(' ').map(x => (x[0] || '').toUpperCase()).join('').slice(0, 2);
+                avatarBtn.textContent = initials || '??';
+            }
+        } catch (err) {
+            console.error('Failed to load operator:', err);
+        }
+    })();
+
+    // Show edit modal with fields prefilled
+    let currentEditId = null;
+    function openEditModal(id) {
+        const veh = vehicles.find(v => v.id === id);
+        if (!veh) return;
+        currentEditId = id;
+        const reg = document.getElementById('editReg');
+        const po = document.getElementById('editPO');
+        const pager = document.getElementById('editPager');
+        const notes = document.getElementById('editNotes');
+        if (reg) reg.value = veh.registration || '';
+        if (po) po.value = veh.po_ref || '';
+        if (pager) pager.value = veh.pager_number || '';
+        if (notes) notes.value = veh.notes || '';
+        const overlay = document.getElementById('editModalOverlay');
+        if (overlay) overlay.style.display = 'block';
+    }
+
+    // Hide edit modal
+    function closeEditModal() {
+        const overlay = document.getElementById('editModalOverlay');
+        if (overlay) overlay.style.display = 'none';
+        currentEditId = null;
+    }
+
+    // Save edits back to Supabase
+    async function saveEditModal() {
+        if (!currentEditId) { closeEditModal(); return; }
+        const regVal = document.getElementById('editReg').value.trim().toUpperCase();
+        const poVal = document.getElementById('editPO').value.trim();
+        const pagerVal = document.getElementById('editPager').value.trim();
+        const notesVal = document.getElementById('editNotes').value.trim();
+        const operatorId = localStorage.getItem('operator_id') || null;
+        const updates = {
+            registration: regVal,
+            po_ref: poVal || null,
+            pager_number: pagerVal === '' ? null : pagerVal,
+            notes: notesVal || null,
+            operator_id: operatorId
+        };
+        try {
+            const { error } = await db.from('vehicles').update(updates).eq('id', currentEditId);
+            if (error) {
+                alert('Error updating record: ' + error.message);
+                return;
+            }
+            // Log edit action
+            const nowIso = new Date().toISOString();
+            await db.from('actions_log').insert({
+                vehicle_id: currentEditId,
+                action: 'edit',
+                timestamp: nowIso,
+                operator_id: operatorId
+            });
+            await fetchVehicles();
+            await fetchLogs();
+            closeEditModal();
+        } catch (err) {
+            console.error('Edit save failed:', err);
+            alert('Failed to save changes');
+        }
+    }
+
+    // END - added clock update and avatar/menu logic and edit modal
+    </script>
+
+    <!-- Modal overlay for editing vehicles -->
+    <div id="editModalOverlay">
+        <div id="editModal">
+            <h3 style="margin-top:0; margin-bottom:8px; font-size:20px; color: var(--accent);">Edit Vehicle</h3>
+            <label for="editReg">Registration</label>
+            <input type="text" id="editReg">
+            <label for="editPO">PO / Reference</label>
+            <input type="text" id="editPO">
+            <label for="editPager">Mobile Number</label>
+            <input type="text" id="editPager">
+            <label for="editNotes">Notes</label>
+            <textarea id="editNotes"></textarea>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                <button class="save-btn" onclick="saveEditModal()">Save</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
-<!-- END END-OF-FILE -->
-
