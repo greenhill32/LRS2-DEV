@@ -479,7 +479,7 @@ async function fetchLogs() {
             .from('actions_log')
             .select('*')
             .order('timestamp', { ascending: false })
-            .limit(40);
+            .limit(15);
 
         if (error) {
             console.error("Error loading logs:", error);
