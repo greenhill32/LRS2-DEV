@@ -8,7 +8,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.1.1 — DEV BUILD";
+document.getElementById("versionBanner").innerText = "v3.1.2 — DEV BUILD";
 </script>
 
 
@@ -479,7 +479,7 @@ async function fetchLogs() {
             .from('actions_log')
             .select('*')
             .order('timestamp', { ascending: false })
-            .limit(15);
+            .limit(16);
 
         if (error) {
             console.error("Error loading logs:", error);
