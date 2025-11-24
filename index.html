@@ -713,6 +713,8 @@ async function fetchLogs() {
                 return;
             }
             const vehicleId = data && data[0] && data[0].id;
+            // Open QR screen in new window
+            window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
             // Log check in action
             await db.from('actions_log').insert({
                 vehicle_id: vehicleId,
