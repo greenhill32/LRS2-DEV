@@ -510,7 +510,7 @@ async function fetchLogs() {
             const li = document.createElement('div');
             // Determine overdue/critical status based on due time
             const now = Date.now();
-            const dueTime = new Date(v.due_time || v.check_in_time).getTime() + 30*60000;
+            const dueTime = new Date(v.due_time).getTime();
             const minsLate = Math.floor((now - dueTime)/60000);
             let cls = '';
             if (minsLate > 0 && v.status !== 'released') cls = minsLate > 90 ? 'critical' : 'overdue';
