@@ -8,7 +8,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD";
+document.getElementById("versionBanner").innerText = "v3.1.0 — DEV BUILD";
 </script>
 
 
@@ -36,6 +36,22 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD";
         --success: #22c55e;
         --warn: #fbbf24;
         --danger: #ef4444;
+    }
+
+    /* Export load styling */
+    .queue-export {
+        background: linear-gradient(
+            90deg,
+            rgba(14,165,233,0.25),
+            rgba(14,165,233,0.08)
+        ) !important;
+        box-shadow: 0 0 16px rgba(14,165,233,0.5);
+        animation: exportPulse 2.4s infinite ease-in-out;
+    }
+
+    @keyframes exportPulse {
+        0%, 100% { box-shadow: 0 0 16px rgba(14,165,233,0.5); }
+        50% { box-shadow: 0 0 24px rgba(14,165,233,0.8); }
     }
     body {
         margin: 0;
@@ -345,6 +361,12 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD";
         <div class="form-row">
             <textarea id="notesInput" placeholder="Notes" style="width:100%;height:80px;"></textarea>
         </div>
+        <div class="form-row">
+            <label style="color:#ccc;">
+                <input type="checkbox" id="addExport" style="margin-right:6px;">
+                Export Load
+            </label>
+        </div>
         <div class="submit-btn" onclick="submitVehicle()">Submit</div>
     </div>
     <header>
@@ -514,7 +536,9 @@ async function fetchLogs() {
             const minsLate = Math.floor((now - dueTime)/60000);
             let cls = '';
             if (minsLate > 0 && v.status !== 'released') cls = minsLate > 90 ? 'critical' : 'overdue';
-            li.className = `entry ${cls}`;
+            // Check if this is an export load
+            const isExport = v.classification === 'export';
+            li.className = `entry ${cls} ${isExport ? 'queue-export' : ''}`;
             // When clicking anywhere on the card (except buttons) open edit modal
             li.onclick = () => openEditModal(v.id);
             li.innerHTML = `
@@ -664,6 +688,9 @@ async function fetchLogs() {
         const nowIso = new Date().toISOString();
         const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
 
+        // Get export checkbox value
+        const isExport = document.getElementById('addExport').checked;
+
         try {
             // Insert into vehicles table
             const { data, error } = await db.from('vehicles').insert({
@@ -676,7 +703,8 @@ async function fetchLogs() {
                 check_in_time: nowIso,
                 due_time: dueIso,
                 status: 'parked',
-                operator_id: operatorId
+                operator_id: operatorId,
+                classification: isExport ? 'export' : 'normal'
             }).select();
             if (error) {
                 alert('Error: ' + error.message);
@@ -703,6 +731,7 @@ async function fetchLogs() {
             document.getElementById('pagerInput').value = '';
             document.getElementById('notesInput').value = '';
             document.getElementById('quotedInput').value = '60';
+            document.getElementById('addExport').checked = false;
         } finally {
             btn.style.pointerEvents = 'auto';
             btn.style.opacity = '1';
