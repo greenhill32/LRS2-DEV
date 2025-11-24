@@ -509,7 +509,7 @@ async function fetchLogs() {
     function loadKPIs() {
         const totalIn = vehicles.filter(v => v.status !== 'released').length;
         const totalOut = vehicles.filter(v => v.status === 'released').length;
-        const waits = vehicles.filter(v => v.status === 'parked' || v.status === 'waiting' || v.status === 'notified').map(v => {
+        const waits = vehicles.filter(v => v.status === 'parked' || v.status === 'notified').map(v => {
             return Math.floor((Date.now() - new Date(v.check_in_time)) / 60000);
         });
         const avgWait = waits.length ? (waits.reduce((a,b)=>a+b,0)/waits.length).toFixed(0) : 0;

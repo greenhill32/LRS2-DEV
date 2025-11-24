@@ -15,9 +15,9 @@
         --accent: #1b8cff;
         --border: #303030;
 
-        --waiting: #ffb300;
-        --loading: #1b8cff;
-        --ready:   #46d369;
+        --parked: #ffb300;
+        --notified: #1b8cff;
+        --released:   #46d369;
     }
 
     body {
@@ -99,9 +99,9 @@
         border-radius: 10px;
     }
 
-    .waiting { color: var(--waiting); }
-    .loading { color: var(--loading); }
-    .ready   { color: var(--ready); }
+    .parked { color: var(--parked); }
+    .notified { color: var(--notified); }
+    .released   { color: var(--released); }
 
     .note {
         margin-top: 14px;
@@ -142,7 +142,7 @@
     <div id="pagerValue"></div>
 
     <div id="statusLabel" class="label"></div>
-    <div id="statusValue" class="status waiting"></div>
+    <div id="statusValue" class="status parked"></div>
 
     <div id="noteText" class="note"></div>
 </div>
@@ -157,15 +157,15 @@ const db = supabase.createClient(
 );
 
 const T = {
-    en:{title:"Vehicle Status",subtitle:"Updates refresh every few seconds",po:"PO / Reference",pager:"Pager Number",status:"Current Status",waiting:"Waiting in lorry park",loading:"Proceed to loading area",ready:"Proceed to gatehouse",note:"Please remain in your cab unless instructed."},
-    pl:{title:"Status Twojego Pojazdu",subtitle:"Aktualizacje co kilka sekund",po:"PO / Numer referencyjny",pager:"Numer pagera",status:"Aktualny status",waiting:"Czekaj na parkingu",loading:"Kieruj się do strefy załadunku",ready:"Podejdź do bramy",note:"Pozostań w kabinie, chyba że otrzymasz inne instrukcje."},
-    ro:{title:"Starea Vehiculului",subtitle:"Actualizare automată",po:"PO / Referință",pager:"Număr pager",status:"Stare curentă",waiting:"Așteptați în parcarea pentru camioane",loading:"Mergeți spre zona de încărcare",ready:"Mergeți la poartă",note:"Rămâneți în cabină până la noi instrucțiuni."},
-    uk:{title:"Статус ТЗ",subtitle:"Оновлюється автоматично",po:"PO / Номер",pager:"Номер пейджера",status:"Поточний статус",waiting:"Очікуйте на стоянці",loading:"Прямуйте до зони навантаження",ready:"Прямуйте до воріт",note:"Залишайтесь у кабіні."},
-    cs:{title:"Stav Vozidla",subtitle:"Pravidelně aktualizováno",po:"PO / Reference",pager:"Číslo pageru",status:"Aktuální stav",waiting:"Čekejte na parkovišti",loading:"Přejděte do nakládací zóny",ready:"Přejděte k bráně",note:"Zůstaňте v кабіні."}
+    en:{title:"Vehicle Status",subtitle:"Updates refresh every few seconds",po:"PO / Reference",mobile:"Mobile Number",status:"Current Status",parked:"Waiting in lorry park",notified:"Proceed to loading area",released:"Proceed to gatehouse",note:"Please remain in your cab unless instructed."},
+    pl:{title:"Status Twojego Pojazdu",subtitle:"Aktualizacje co kilka sekund",po:"PO / Numer referencyjny",mobile:"Numer telefonu",status:"Aktualny status",parked:"Czekaj na parkingu",notified:"Kieruj się do strefy załadunku",released:"Podejdź do bramy",note:"Pozostań w kabinie, chyba że otrzymasz inne instrukcje."},
+    ro:{title:"Starea Vehiculului",subtitle:"Actualizare automată",po:"PO / Referință",mobile:"Număr de telefon",status:"Stare curentă",parked:"Așteptați în parcarea pentru camioane",notified:"Mergeți spre zona de încărcare",released:"Mergeți la poartă",note:"Rămâneți în cabină până la noi instrucțiuni."},
+    uk:{title:"Статус ТЗ",subtitle:"Оновлюється автоматично",po:"PO / Номер",mobile:"Номер телефону",status:"Поточний статус",parked:"Очікуйте на стоянці",notified:"Прямуйте до зони навантаження",released:"Прямуйте до воріт",note:"Залишайтесь у кабіні."},
+    cs:{title:"Stav Vozidla",subtitle:"Pravidelně aktualizováno",po:"PO / Reference",mobile:"Telefonní číslo",status:"Aktuální stav",parked:"Čekejte na parkovišti",notified:"Přejděte do nakládací zóny",released:"Přejděte k bráně",note:"Zůstaňте v кабіні."}
 };
 
 let currentLang = "en";
-let currentStatus = "waiting";
+let currentStatus = "parked";
 
 // LOAD VEHICLE
 async function loadVehicle() {
@@ -198,15 +198,15 @@ function setLang(lang) {
     document.getElementById("subtitle").textContent = L.subtitle;
 
     document.getElementById("poLabel").textContent = L.po;
-    document.getElementById("pagerLabel").textContent = L.pager;
+    document.getElementById("pagerLabel").textContent = L.mobile;
     document.getElementById("statusLabel").textContent = L.status;
 
     const st = document.getElementById("statusValue");
     st.className = "status";
 
-    if (currentStatus === "waiting") { st.textContent = L.waiting; st.classList.add("waiting"); }
-    if (currentStatus === "notified") { st.textContent = L.loading; st.classList.add("loading"); }
-    if (currentStatus === "released") { st.textContent = L.ready; st.classList.add("ready"); }
+    if (currentStatus === "parked") { st.textContent = L.parked; st.classList.add("parked"); }
+    if (currentStatus === "notified") { st.textContent = L.notified; st.classList.add("notified"); }
+    if (currentStatus === "released") { st.textContent = L.released; st.classList.add("released"); }
 
     document.getElementById("noteText").textContent = L.note;
 }
