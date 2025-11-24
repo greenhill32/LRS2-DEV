@@ -448,17 +448,16 @@ async function fetchVehicles() {
 }
 // END A8
 
-
-//<!-- START A9 -->
-<!-- Fetch recent actions (clean version) -->
+// START A9
+/* Fetch recent actions (last 24 hours, newest first) */
 async function fetchLogs() {
     try {
-        // Load the most recent 40 actions (we'll filter to 24h locally)
+        // Load 40 latest raw actions from DB
         const { data, error } = await db
             .from('actions_log')
             .select('*')
-            .order('timestamp', { descending: true })
-            .limit(13);
+            .order('timestamp', { ascending: false })
+            .limit(40);
 
         if (error) {
             console.error("Error loading logs:", error);
@@ -467,19 +466,19 @@ async function fetchLogs() {
 
         const all = data || [];
 
-        // Keep ONLY last 24 hours
+        // Cutoff = last 24 hours
         const cutoff = Date.now() - (24 * 60 * 60 * 1000);
 
         logs = all
             .filter(l => new Date(l.timestamp).getTime() >= cutoff)
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        renderActivity();   // use merged data from vehicles + operators
+        renderActivity();
     } catch (err) {
         console.error("fetchLogs fatal:", err);
     }
 }
-//<!-- END A9 -->
+// END A9
 
 
 
