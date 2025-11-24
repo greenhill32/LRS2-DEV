@@ -189,7 +189,7 @@ document.getElementById("superSearch").addEventListener("input", async (e) => {
                 border-radius:6px;
                 cursor:pointer;">
             <strong>${v.registration}</strong> (${v.status})<br>
-            PO: ${v.po_ref || "-"} | Pager: ${v.pager_number || "-"}
+            PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || v.pager_number || "-"}
         </div>
     `).join("");
 });
@@ -219,8 +219,8 @@ async function superEditVehicle(id) {
             width:100%; padding:10px; margin-bottom:12px;
             background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
 
-        <label>Pager Number</label>
-        <input id="sv-pager" type="number" value="${v.pager_number || ""}" style="
+        <label>Mobile Number</label>
+        <input id="sv-pager" type="text" value="${v.mobile_number || v.pager_number || ""}" style="
             width:100%; padding:10px; margin-bottom:12px;
             background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
 
@@ -247,38 +247,24 @@ async function superEditVehicle(id) {
 
     overlay.style.display = "block";
 
-    // Load status list dynamically
-    loadStatusOptions("sv-status", v.status);
+    // Load V3 statuses
+    const sel = document.getElementById("sv-status");
+    sel.innerHTML = `
+        <option value="parked" ${v.status === "parked" ? "selected" : ""}>parked</option>
+        <option value="notified" ${v.status === "notified" ? "selected" : ""}>notified</option>
+        <option value="released" ${v.status === "released" ? "selected" : ""}>released</option>
+    `;
 }
 
 function svClose() {
     document.getElementById("superEditOverlay").style.display = "none";
 }
 
-// Dynamic status loader from DB
-async function loadStatusOptions(selectId, current) {
-    const { data: statuses } = await db
-        .from("statuses")
-        .select("name")
-        .order("name");
-
-    const sel = document.getElementById(selectId);
-    sel.innerHTML = "";
-
-    statuses.forEach(s => {
-        sel.innerHTML += `
-            <option value="${s.name}" ${current === s.name ? "selected" : ""}>
-                ${s.name}
-            </option>
-        `;
-    });
-}
-
 // SAVE EDITS
 async function svSave(id) {
     const status = document.getElementById("sv-status").value;
     const po = document.getElementById("sv-po").value.trim();
-    const pager = parseInt(document.getElementById("sv-pager").value);
+    const mobile = document.getElementById("sv-pager").value.trim();
     const notes = document.getElementById("sv-notes").value.trim();
     const opId = localStorage.getItem("operator_id");
     const now = new Date().toISOString();
@@ -286,7 +272,7 @@ async function svSave(id) {
     await db.from("vehicles").update({
         status,
         po_ref: po,
-        pager_number: pager,
+        mobile_number: mobile || null,
         notes,
         notify_time: (status==="notified" ? now : null),
         release_time: (status==="released" ? now : null),
@@ -297,7 +283,7 @@ async function svSave(id) {
         vehicle_id: id,
         operator_id: opId,
         action: "supervisor_edit",
-        details: { status, po, pager, notes }
+        details: { status, po, mobile, notes }
     });
 
     svClose();
@@ -401,11 +387,11 @@ async function loadKPIs() {
 
     const { data: waiting } = await db
         .from("vehicles").select("check_in_time")
-        .eq("status","waiting");
+        .eq("status","parked");
 
     const { data: active } = await db
         .from("vehicles").select("due_time")
-        .in("status", ["waiting","notified"]);
+        .in("status", ["parked","notified"]);
 
     let overdue = 0;
     const now = Date.now();
@@ -434,7 +420,7 @@ async function loadTopWaits() {
     const { data } = await db
         .from("vehicles")
         .select("registration, po_ref, check_in_time")
-        .eq("status", "waiting");
+        .eq("status", "parked");
 
     if (!data.length) {
         tbl.innerHTML += `<tr><td colspan="3">No active waits</td></tr>`;
@@ -519,7 +505,7 @@ async function loadCharts() {
     const { data: active } = await db
         .from("vehicles")
         .select("due_time")
-        .in("status", ["waiting","notified"]);
+        .in("status", ["parked","notified"]);
 
     let b0_30=0, b30_60=0, b60_120=0, b120plus=0;
     const now = Date.now();
