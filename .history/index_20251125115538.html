@@ -362,7 +362,7 @@ document.getElementById("versionBanner").innerText = "v3.1.2 — DEV BUILD";
             <input type="text" id="poInput" placeholder="PO / Reference">
         </div>
         <div class="form-row">
-            <input type="text" id="mobileInput" placeholder="Mobile Number">
+            <input type="text" id="pagerInput" placeholder="Mobile Number">
             <select id="quotedInput">
                 <option value="30">30 mins</option>
                 <option value="45">45 mins</option>
@@ -559,7 +559,7 @@ async function fetchLogs() {
             li.innerHTML = `
                 <div class="info">
                     <strong>${v.registration || '–'}</strong> — ${v.status}<br>
-                    PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || '-'}<br>
+                    PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
                     In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-' }
                 </div>
                 <div class="actions">
@@ -602,34 +602,88 @@ async function fetchLogs() {
         });
     }
 
-    // START A11
-    // Chart for check‑ins per hour
-    function loadChart() {
-        const ctx = document.getElementById('chartTrend').getContext('2d');
-        const hours = [];
-        const counts = [];
-        const now = new Date();
-        for (let i=0; i<12; i++) {
-            const h = new Date(now.getTime() - (11-i)*60*60*1000);
-            const label = h.getHours().toString().padStart(2,'0')+':00';
-            hours.push(label);
-            // count vehicles checked in within that hour
-            const count = vehicles.filter(v => {
-                const ci = new Date(v.check_in_time);
-                return ci.getHours() === h.getHours();
-            }).length;
-            counts.push(count);
+  //  <!-- START A11 -->
+<script>
+function loadChart() {
+    const ctx = document.getElementById('chartTrend').getContext('2d');
+
+    // Reset buckets
+    let bucketOnTime = 0;       // 0–30m (green)
+    let bucket30 = 0;           // 30–60m (amber)
+    let bucket60 = 0;           // 60–120m (red)
+    let bucket120 = 0;          // 120+ (deep red)
+
+    const now = Date.now();
+
+    // Only active vehicles count (parked/notified)
+    const active = vehicles.filter(v => v.status !== "released");
+
+    active.forEach(v => {
+        const due = new Date(v.due_time || v.check_in_time).getTime();
+        const late = Math.floor((now - due) / 60000); // lateness in minutes
+
+        if (late <= 0) {
+            bucketOnTime++;
+        } else if (late > 0 && late <= 30) {
+            bucketOnTime++; // still 'on time' under 30m late
+        } else if (late > 30 && late <= 60) {
+            bucket30++;
+        } else if (late > 60 && late <= 120) {
+            bucket60++;
+        } else if (late > 120) {
+            bucket120++;
         }
-        if (chart) chart.destroy();
-        const computedStyles = getComputedStyle(document.documentElement);
-        const accent = computedStyles.getPropertyValue('--accent').trim() || '#0ea5e9';
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: hours, datasets: [{ label: 'Check‑ins per hour', data: counts, borderColor: accent, backgroundColor: accent + '33', borderWidth: 2, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-        });
-    }
-    // END A11
+    });
+
+    // Destroy previous chart if exists
+    if (chart) chart.destroy();
+
+    const css = getComputedStyle(document.documentElement);
+    const green   = css.getPropertyValue('--success').trim();
+    const amber   = css.getPropertyValue('--warn').trim();
+    const red     = css.getPropertyValue('--danger').trim();
+    const deepRed = '#7f1d1d';  // manually define deep red
+
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [
+                "0–30m",
+                "30–60m",
+                "60–120m",
+                "120+m"
+            ],
+            datasets: [{
+                label: "Overdue Buckets",
+                data: [bucketOnTime, bucket30, bucket60, bucket120],
+                backgroundColor: [
+                    green,
+                    amber,
+                    red,
+                    deepRed
+                ],
+                borderColor: "#000",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+</script>
+//<!-- END A11 -->
+
 
     // START A12
     // Action handlers
@@ -729,9 +783,9 @@ async function fetchLogs() {
         let reg = document.getElementById('regInput').value.trim().replace(/\s+/g, '').toUpperCase();
         let po = document.getElementById('poInput').value.trim();
         let haulier = document.getElementById('haulierInput').value.trim();
-        // If mobile input is blank, store null so Supabase won't attempt to parse an empty string as an integer
-        let mobileInput = document.getElementById('mobileInput').value.trim();
-        let mobile = mobileInput === '' ? null : mobileInput;
+        // If pager input is blank, store null so Supabase won't attempt to parse an empty string as an integer
+        let pagerInput = document.getElementById('pagerInput').value.trim();
+        let pager = pagerInput === '' ? null : pagerInput;
         let notes = document.getElementById('notesInput').value.trim();
         let quoted = parseInt(document.getElementById('quotedInput').value, 10);
 
@@ -755,8 +809,8 @@ async function fetchLogs() {
                 registration: reg,
                 po_ref: po || null,
                 haulier: haulier || null,
-                // mobile_number is nullable; pass null if empty to avoid invalid integer parsing
-                mobile_number: mobile,
+                // pager_number is nullable; pass null if empty to avoid invalid integer parsing
+                pager_number: pager,
                 notes: notes || null,
                 quoted_minutes: quoted,
                 check_in_time: nowIso,
@@ -797,7 +851,7 @@ async function fetchLogs() {
             document.getElementById('regInput').value = '';
             document.getElementById('poInput').value = '';
             document.getElementById('haulierInput').value = '';
-            document.getElementById('mobileInput').value = '';
+            document.getElementById('pagerInput').value = '';
             document.getElementById('notesInput').value = '';
             document.getElementById('quotedInput').value = '60';
             document.getElementById('addExport').checked = false;
@@ -885,11 +939,11 @@ async function fetchLogs() {
         currentEditId = id;
         const reg = document.getElementById('editReg');
         const po = document.getElementById('editPO');
-        const mobile = document.getElementById('editMobile');
+        const pager = document.getElementById('editPager');
         const notes = document.getElementById('editNotes');
         if (reg) reg.value = veh.registration || '';
         if (po) po.value = veh.po_ref || '';
-        if (mobile) mobile.value = veh.mobile_number || '';
+        if (pager) pager.value = veh.pager_number || '';
         if (notes) notes.value = veh.notes || '';
         const overlay = document.getElementById('editModalOverlay');
         if (overlay) overlay.style.display = 'block';
@@ -907,13 +961,13 @@ async function fetchLogs() {
         if (!currentEditId) { closeEditModal(); return; }
         const regVal = document.getElementById('editReg').value.trim().toUpperCase();
         const poVal = document.getElementById('editPO').value.trim();
-        const mobileVal = document.getElementById('editMobile').value.trim();
+        const pagerVal = document.getElementById('editPager').value.trim();
         const notesVal = document.getElementById('editNotes').value.trim();
         const operatorId = localStorage.getItem('operator_id') || null;
         const updates = {
             registration: regVal,
             po_ref: poVal || null,
-            mobile_number: mobileVal === '' ? null : mobileVal,
+            pager_number: pagerVal === '' ? null : pagerVal,
             notes: notesVal || null,
             operator_id: operatorId
         };
@@ -951,8 +1005,8 @@ async function fetchLogs() {
             <input type="text" id="editReg">
             <label for="editPO">PO / Reference</label>
             <input type="text" id="editPO">
-            <label for="editMobile">Mobile Number</label>
-            <input type="text" id="editMobile">
+            <label for="editPager">Mobile Number</label>
+            <input type="text" id="editPager">
             <label for="editNotes">Notes</label>
             <textarea id="editNotes"></textarea>
             <div class="modal-actions">

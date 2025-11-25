@@ -189,7 +189,7 @@ document.getElementById("superSearch").addEventListener("input", async (e) => {
                 border-radius:6px;
                 cursor:pointer;">
             <strong>${v.registration}</strong> (${v.status})<br>
-            PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || v.pager_number || "-"}
+            PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || "-"}
         </div>
     `).join("");
 });
@@ -220,7 +220,7 @@ async function superEditVehicle(id) {
             background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
 
         <label>Mobile Number</label>
-        <input id="sv-pager" type="text" value="${v.mobile_number || v.pager_number || ""}" style="
+        <input id="sv-mobile" type="text" value="${v.mobile_number || ""}" style="
             width:100%; padding:10px; margin-bottom:12px;
             background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
 
@@ -264,7 +264,7 @@ function svClose() {
 async function svSave(id) {
     const status = document.getElementById("sv-status").value;
     const po = document.getElementById("sv-po").value.trim();
-    const mobile = document.getElementById("sv-pager").value.trim();
+    const mobile = document.getElementById("sv-mobile").value.trim();
     const notes = document.getElementById("sv-notes").value.trim();
     const opId = localStorage.getItem("operator_id");
     const now = new Date().toISOString();

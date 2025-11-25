@@ -178,3 +178,23 @@ Gatehouse now gets an instant “priority” hit
 Excellent UX improvement for operations
 
 Everything stable + working after rollback & rebuild
+
+
+Summary of Changes
+I've added the following to your index.html file:
+1. Haulier/Lorry Company Field (Lines 348-351)
+Added a text input field for "Haulier / Lorry Company" at the top of the Add Lorry panel
+2. Expected Loads Dropdown (Lines 353-358)
+Added a dropdown that displays pre-booked loads from the Supabase prebookings table
+Shows PO Reference, Registration, Expected Date/Time, and EXPORT flag
+3. Backend Functionality
+Variables (Lines 458-459): Added prebookCache and prebookExportFlag to track prebookings
+loadPrebooks() (Lines 682-701): Fetches unconsumed prebookings from Supabase and populates the dropdown
+applyPrebook() (Lines 703-718): Auto-fills form fields when a prebooking is selected (PO, Registration, Haulier, Notes, Export status)
+Updated togglePanel() (Lines 670-680): Loads prebookings when the panel opens
+Updated submitVehicle():
+Captures haulier field (Line 731)
+Saves haulier to database (Line 757)
+Marks selected prebooking as consumed (Lines 785-789)
+Resets all form fields including new ones (Lines 797-805)
+The Expected Loads dropdown pulls data from your existing Supabase prebookings table (the same data source that would be synced from Google Sheets if you have that set up elsewhere). When a user selects an expected load, it automatically fills in the registration, PO reference, haulier, notes, and export status, making check-ins much faster!
