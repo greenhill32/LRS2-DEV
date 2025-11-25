@@ -344,6 +344,19 @@ document.getElementById("versionBanner").innerText = "v3.1.2 — DEV BUILD";
     <!-- Hidden Add Lorry Panel -->
     <div id="addPanel" class="slide-panel">
         <div class="panel-title">Add New Lorry</div>
+
+        <!-- Haulier/Lorry field -->
+        <div class="form-row">
+            <input type="text" id="haulierInput" placeholder="Haulier / Lorry Company" style="width:100%;">
+        </div>
+
+        <!-- Expected Loads Dropdown -->
+        <div class="form-row">
+            <select id="prebookSelect" onchange="applyPrebook()" style="width:100%;">
+                <option value="">-- Select Expected Load --</option>
+            </select>
+        </div>
+
         <div class="form-row">
             <input type="text" id="regInput" placeholder="Registration">
             <input type="text" id="poInput" placeholder="PO / Reference">
@@ -442,6 +455,8 @@ document.getElementById("versionBanner").innerText = "v3.1.2 — DEV BUILD";
     let operators = [];
     let logs = [];
     let chart;
+    let prebookCache = [];
+    let prebookExportFlag = false;
     // START A7
     // Fetch operators from Supabase (names for activity feed)
     async function fetchOperators() {
@@ -657,7 +672,49 @@ async function fetchLogs() {
         const panel = document.getElementById('addPanel');
         if (panel) {
             panel.classList.toggle('panel-visible');
+            // Load prebookings when panel opens
+            if (panel.classList.contains('panel-visible')) {
+                loadPrebooks();
+            }
         }
+    }
+
+    // Load expected loads from prebookings table
+    async function loadPrebooks() {
+        const sel = document.getElementById('prebookSelect');
+        sel.innerHTML = `<option value="">-- Select Expected Load --</option>`;
+
+        const { data } = await db
+            .from('prebookings')
+            .select('*')
+            .eq('consumed', false)
+            .order('expected_date', { ascending: true })
+            .order('expected_time', { ascending: true });
+
+        if (!data) return;
+        prebookCache = data;
+
+        data.forEach(p => {
+            const label = `${p.po_ref || 'No PO'} — ${p.registration || 'No Reg'} — ${p.expected_date || ''} ${p.expected_time?.slice(0,5) || ''}${p.is_export ? ' — EXPORT' : ''}`;
+            sel.innerHTML += `<option value="${p.id}">${label}</option>`;
+        });
+    }
+
+    // Apply selected prebooking to form fields
+    function applyPrebook() {
+        const id = document.getElementById('prebookSelect').value;
+        if (!id) return;
+
+        const pb = prebookCache.find(x => x.id === id);
+        if (!pb) return;
+
+        document.getElementById('poInput').value = pb.po_ref || '';
+        document.getElementById('regInput').value = pb.registration || '';
+        document.getElementById('notesInput').value = pb.notes || '';
+        document.getElementById('haulierInput').value = pb.haulier || '';
+
+        prebookExportFlag = pb.is_export === true;
+        document.getElementById('addExport').checked = prebookExportFlag;
     }
 
     // Submit a new lorry to the database
@@ -671,6 +728,7 @@ async function fetchLogs() {
         // Gather form values
         let reg = document.getElementById('regInput').value.trim().replace(/\s+/g, '').toUpperCase();
         let po = document.getElementById('poInput').value.trim();
+        let haulier = document.getElementById('haulierInput').value.trim();
         // If pager input is blank, store null so Supabase won't attempt to parse an empty string as an integer
         let pagerInput = document.getElementById('pagerInput').value.trim();
         let pager = pagerInput === '' ? null : pagerInput;
@@ -696,6 +754,7 @@ async function fetchLogs() {
             const { data, error } = await db.from('vehicles').insert({
                 registration: reg,
                 po_ref: po || null,
+                haulier: haulier || null,
                 // pager_number is nullable; pass null if empty to avoid invalid integer parsing
                 pager_number: pager,
                 notes: notes || null,
@@ -722,6 +781,13 @@ async function fetchLogs() {
                 timestamp: nowIso,
                 operator_id: operatorId
             });
+
+            // Mark prebooking as consumed if one was selected
+            const selectedPrebookId = document.getElementById('prebookSelect').value;
+            if (selectedPrebookId) {
+                await db.from('prebookings').update({ consumed: true }).eq('id', selectedPrebookId);
+            }
+
             // Refresh lists
             await fetchVehicles();
             await fetchLogs();
@@ -730,10 +796,13 @@ async function fetchLogs() {
             togglePanel();
             document.getElementById('regInput').value = '';
             document.getElementById('poInput').value = '';
+            document.getElementById('haulierInput').value = '';
             document.getElementById('pagerInput').value = '';
             document.getElementById('notesInput').value = '';
             document.getElementById('quotedInput').value = '60';
             document.getElementById('addExport').checked = false;
+            document.getElementById('prebookSelect').value = '';
+            prebookExportFlag = false;
         } finally {
             btn.style.pointerEvents = 'auto';
             btn.style.opacity = '1';
