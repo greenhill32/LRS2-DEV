@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SMS Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body {
+        margin: 0;
+        padding: 20px;
+        background: #0d0d0d;
+        color: #e6e6e6;
+        font-family: Arial, sans-serif;
+    }
+
+    h1 {
+        color: #0ea5e9;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .btn-clear {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-refresh {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: #1c1c1c;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #303030;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #0ea5e9;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #999;
+    }
+
+    .log-entry {
+        background: #1c1c1c;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        border-left: 4px solid #0ea5e9;
+    }
+
+    .log-entry.check_in { border-left-color: #22c55e; }
+    .log-entry.notified { border-left-color: #f59e0b; }
+    .log-entry.released { border-left-color: #8b5cf6; }
+
+    .log-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .log-type {
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+    }
+
+    .log-time {
+        color: #999;
+        font-size: 12px;
+    }
+
+    .log-details {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #ccc;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+</style>
+</head>
+<body>
+
+<h1>📱 SMS Message Log</h1>
+
+<div class="stats">
+    <div class="stat-card">
+        <div class="stat-value" id="totalSMS">0</div>
+        <div class="stat-label">Total Sent</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="todaySMS">0</div>
+        <div class="stat-label">Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="lastHourSMS">0</div>
+        <div class="stat-label">Last Hour</div>
+    </div>
+</div>
+
+<div class="controls">
+    <button class="btn btn-refresh" onclick="loadLog()">↻ Refresh</button>
+    <button class="btn btn-clear" onclick="clearLog()">Clear Log</button>
+</div>
+
+<div id="logContainer"></div>
+
+<script>
+function loadLog() {
+    const log = JSON.parse(localStorage.getItem('sms_log') || '[]');
+    const container = document.getElementById('logContainer');
+
+    if (log.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <div>No SMS messages sent yet</div>
+            </div>
+        `;
+        updateStats(log);
+        return;
+    }
+
+    container.innerHTML = log.map(entry => {
+        const date = new Date(entry.timestamp);
+        const timeStr = date.toLocaleString('en-GB', { 
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        const typeLabels = {
+            check_in: '📍 Check-In',
+            notified: '🔔 Notified',
+            released: '✅ Released'
+        };
+
+        return `
+            <div class="log-entry ${entry.type}">
+                <div class="log-header">
+                    <span class="log-type">${typeLabels[entry.type] || entry.type}</span>
+                    <span class="log-time">${timeStr}</span>
+                </div>
+                <div class="log-details">
+                    To: ${entry.data.phone || 'N/A'}<br>
+                    Reference: ${entry.data.po || 'N/A'}<br>
+                    ${entry.data.quoted ? `Quoted: ${entry.data.quoted} mins<br>` : ''}
+                    ${entry.data.duration ? `Duration: ${entry.data.duration}<br>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    updateStats(log);
+}
+
+function updateStats(log) {
+    const now = Date.now();
+    const todayStart = new Date().setHours(0, 0, 0, 0);
+    const hourAgo = now - (60 * 60 * 1000);
+
+    document.getElementById('totalSMS').textContent = log.length;
+    document.getElementById('todaySMS').textContent = 
+        log.filter(e => new Date(e.timestamp) >= todayStart).length;
+    document.getElementById('lastHourSMS').textContent = 
+        log.filter(e => new Date(e.timestamp) >= hourAgo).length;
+}
+
+function clearLog() {
+    if (confirm('Clear all SMS logs? This cannot be undone.')) {
+        localStorage.removeItem('sms_log');
+        loadLog();
+    }
+}
+
+// Auto-refresh every 5 seconds
+setInterval(loadLog, 5000);
+
+// Initial load
+loadLog();
+</script>
+
+</body>
+</html>

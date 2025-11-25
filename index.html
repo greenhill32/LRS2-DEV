@@ -389,6 +389,7 @@ document.getElementById("versionBanner").innerText = "v3.1.2 — DEV BUILD";
             <!-- Add lorry button -->
             <button class="add-btn" onclick="togglePanel()">Add Lorry</button>
             <button id="refreshBtn" style="padding:8px 16px;font-size:14px;background:var(--accent);color:#fff;border:none;border-radius:4px;" onclick="manualRefresh()">Refresh</button>
+            <button onclick="window.open('sms_log.html', '_blank', 'width=400,height=700')" style="padding:8px 16px;font-size:14px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">📱 SMS Log</button>
             <!-- Avatar and dropdown -->
             <div style="position: relative;">
                 <div id="avatarBtn">??</div>
@@ -639,6 +640,19 @@ async function fetchLogs() {
         const { error } = await db.from('vehicles').update({ status: 'notified', notify_time: now }).eq('id', id);
         if (!error) {
             await db.from('actions_log').insert({ vehicle_id: id, action: 'notified', timestamp: now, operator_id: operator });
+
+            // Get vehicle details for SMS notification
+            const { data: vehicle } = await db.from('vehicles').select('po_ref, mobile_number').eq('id', id).single();
+            const phone = vehicle?.mobile_number || 'N/A';
+            const po = vehicle?.po_ref || 'N/A';
+
+            // Open SMS simulator for notification
+            if (phone && phone !== 'N/A') {
+                window.open(`sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}`,
+                    "_blank",
+                    "width=400,height=700");
+            }
+
             await fetchVehicles();
             await fetchLogs();
         }
@@ -646,9 +660,27 @@ async function fetchLogs() {
     async function release(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
+
+        // Get vehicle for duration calculation and contact info
+        const { data: vehicle } = await db.from('vehicles').select('*').eq('id', id).single();
+
         const { error } = await db.from('vehicles').update({ status: 'released', release_time: now }).eq('id', id);
         if (!error) {
             await db.from('actions_log').insert({ vehicle_id: id, action: 'released', timestamp: now, operator_id: operator });
+
+            // Calculate duration
+            const checkIn = new Date(vehicle.check_in_time);
+            const duration = Math.floor((new Date(now) - checkIn) / 60000);
+            const phone = vehicle?.mobile_number || 'N/A';
+            const po = vehicle?.po_ref || 'N/A';
+
+            // Open SMS simulator for departure confirmation
+            if (phone && phone !== 'N/A') {
+                window.open(`sms_simulator.html?type=released&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}&duration=${duration} mins`,
+                    "_blank",
+                    "width=400,height=700");
+            }
+
             await fetchVehicles();
             await fetchLogs();
         }
@@ -772,8 +804,17 @@ async function fetchLogs() {
                 return;
             }
             const vehicleId = data && data[0] && data[0].id;
+
             // Open QR screen in new window
             window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
+
+            // Open SMS simulator for check-in notification
+            if (mobile) {
+                window.open(`sms_simulator.html?type=check_in&phone=${encodeURIComponent(mobile)}&po=${encodeURIComponent(po || 'N/A')}&quoted=${quoted}`,
+                    "_blank",
+                    "width=400,height=700");
+            }
+
             // Log check in action
             await db.from('actions_log').insert({
                 vehicle_id: vehicleId,
