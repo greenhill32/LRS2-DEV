@@ -8,16 +8,16 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
+document.getElementById("versionBanner").innerText = "v3.2.1 - SMS RESTORED";
 </script>
 
 <!--
   Warehouse gatehouse dashboard - OPTIMIZED VERSION
   Changes from v3.1.2:
-    • Filtered queries - only fetch active vehicles, not entire history
-    • Supabase Realtime - instant updates, no polling
-    • Cached operators - load once, not every 15 seconds
-    • Debounced refreshes - prevent hammering DB on rapid changes
+    â€¢ Filtered queries - only fetch active vehicles, not entire history
+    â€¢ Supabase Realtime - instant updates, no polling
+    â€¢ Cached operators - load once, not every 15 seconds
+    â€¢ Debounced refreshes - prevent hammering DB on rapid changes
 -->
 <style>
     :root {
@@ -348,12 +348,22 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
     <!-- Hidden Add Lorry Panel -->
     <div id="addPanel" class="slide-panel">
         <div class="panel-title">Add New Lorry</div>
+        <!-- Haulier/Lorry field -->
+        <div class="form-row">
+            <input type="text" id="haulierInput" placeholder="Haulier / Lorry Company" style="width:100%;">
+        </div>
+        <!-- Expected Loads Dropdown -->
+        <div class="form-row">
+            <select id="prebookSelect" onchange="applyPrebook()" style="width:100%;">
+                <option value="">-- Select Expected Load --</option>
+            </select>
+        </div>
         <div class="form-row">
             <input type="text" id="regInput" placeholder="Registration">
             <input type="text" id="poInput" placeholder="PO / Reference">
         </div>
         <div class="form-row">
-            <input type="text" id="pagerInput" placeholder="Mobile Number">
+            <input type="text" id="mobileInput" placeholder="Mobile Number">
             <select id="quotedInput">
                 <option value="30">30 mins</option>
                 <option value="45">45 mins</option>
@@ -419,11 +429,11 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
     <div class="grid">
         <div class="queue">
             <h2>Active Queue</h2>
-            <div id="queueList">Loading…</div>
+            <div id="queueList">Loadingâ€¦</div>
         </div>
         <div class="details">
             <h2>Recent Activity</h2>
-            <div id="activityList">Loading…</div>
+            <div id="activityList">Loadingâ€¦</div>
         </div>
     </div>
     <!-- END A4 -->
@@ -453,6 +463,13 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
     let logs = [];
     let chart;
     let refreshTimeout = null;  // For debouncing
+
+    // Additional state for prebookings and export flag. These are used by the
+    // Add Lorry form to preload expected loads (prebookings) and preserve
+    // whether a selected prebooking is marked as an export. Without this,
+    // the prebooking selection would not populate the form fields correctly.
+    let prebookCache = [];
+    let prebookExportFlag = false;
 
     // ============================================================
     // OPTIMIZED FETCH: OPERATORS (load once, cache in memory)
@@ -649,7 +666,7 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
             
             li.innerHTML = `
                 <div class="info">
-                    <strong>${v.registration || '—'}</strong> — ${v.status}<br>
+                    <strong>${v.registration || 'â€”'}</strong> â€” ${v.status}<br>
                     PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
                     In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-'}
                 </div>
@@ -703,7 +720,7 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
                 hour:'2-digit', minute:'2-digit', second:'2-digit' 
             });
             
-            item.textContent = `${reg} ${po} ${actionVerb} by ${name} — ${timeStr}`.trim();
+            item.textContent = `${reg} ${po} ${actionVerb} by ${name} â€” ${timeStr}`.trim();
             container.appendChild(item);
         });
     }
@@ -774,6 +791,19 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
                 timestamp: now, 
                 operator_id: operator 
             });
+
+            // Get vehicle details for SMS notification
+            const { data: vehicle } = await db.from('vehicles').select('po_ref, mobile_number').eq('id', id).single();
+            const phone = vehicle?.mobile_number || 'N/A';
+            const po = vehicle?.po_ref || 'N/A';
+
+            // Open SMS simulator for notification
+            if (phone && phone !== 'N/A') {
+                window.open(`sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}`,
+                    "_blank",
+                    "width=400,height=700");
+            }
+
             // Realtime will trigger refresh, but do it immediately for responsiveness
             fetchVehicles();
             fetchLogs();
@@ -783,6 +813,9 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
     async function release(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
+        
+        // Get vehicle for duration calculation and contact info BEFORE updating
+        const { data: vehicle } = await db.from('vehicles').select('*').eq('id', id).single();
         
         const { error } = await db.from('vehicles')
             .update({ status: 'released', release_time: now })
@@ -795,6 +828,20 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
                 timestamp: now, 
                 operator_id: operator 
             });
+
+            // Calculate duration and get contact info
+            const checkIn = new Date(vehicle.check_in_time);
+            const duration = Math.floor((new Date(now) - checkIn) / 60000);
+            const phone = vehicle?.mobile_number || 'N/A';
+            const po = vehicle?.po_ref || 'N/A';
+
+            // Open SMS simulator for departure confirmation
+            if (phone && phone !== 'N/A') {
+                window.open(`sms_simulator.html?type=released&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}&duration=${duration} mins`,
+                    "_blank",
+                    "width=400,height=700");
+            }
+
             fetchVehicles();
             fetchLogs();
         }
@@ -823,10 +870,16 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
     // ============================================================
     // ADD VEHICLE
     // ============================================================
-    function togglePanel() {
-        const panel = document.getElementById('addPanel');
-        if (panel) panel.classList.toggle('panel-visible');
+function togglePanel() {
+    const panel = document.getElementById('addPanel');
+    if (!panel) return;
+    panel.classList.toggle('panel-visible');
+    // When the panel becomes visible, load any expected prebookings
+    if (panel.classList.contains('panel-visible')) {
+        // Populate the expected loads dropdown
+        loadPrebooks();
     }
+}
 
     async function submitVehicle() {
         const btn = document.querySelector('#addPanel .submit-btn');
@@ -835,10 +888,15 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
         btn.style.pointerEvents = 'none';
         btn.style.opacity = '0.6';
 
+        // Normalise registration and fetch form values. Trim whitespace and
+        // uppercase the registration, pull in the PO reference, haulier,
+        // mobile number and notes. Mobile number is stored as null when
+        // blank so Supabase won't parse an empty string as an integer.
         let reg = document.getElementById('regInput').value.trim().replace(/\s+/g, '').toUpperCase();
         let po = document.getElementById('poInput').value.trim();
-        let pagerInput = document.getElementById('pagerInput').value.trim();
-        let pager = pagerInput === '' ? null : pagerInput;
+        let haulier = document.getElementById('haulierInput').value.trim();
+        let mobileInput = document.getElementById('mobileInput').value.trim();
+        let mobile = mobileInput === '' ? null : mobileInput;
         let notes = document.getElementById('notesInput').value.trim();
         let quoted = parseInt(document.getElementById('quotedInput').value, 10);
 
@@ -852,13 +910,21 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
         const operatorId = localStorage.getItem('operator_id') || null;
         const nowIso = new Date().toISOString();
         const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
+        // Determine if the user has flagged this load as export. When
+        // applying a prebooking, prebookExportFlag synchronises the
+        // checkbox state; reading it here suffices to set classification.
         const isExport = document.getElementById('addExport').checked;
 
         try {
+            // Insert new vehicle with haulier and mobile details. Use
+            // mobile_number column instead of pager_number to align with
+            // ref_index implementation. Empty mobile values are passed as
+            // null to prevent invalid integer parsing in Supabase.
             const { data, error } = await db.from('vehicles').insert({
                 registration: reg,
                 po_ref: po || null,
-                pager_number: pager,
+                haulier: haulier || null,
+                mobile_number: mobile,
                 notes: notes || null,
                 quoted_minutes: quoted,
                 check_in_time: nowIso,
@@ -876,7 +942,18 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
             }
             
             const vehicleId = data && data[0] && data[0].id;
+            // Open QR code in a new window so the gatehouse can scan it
             window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
+            // Open SMS simulator to send the checkâ€‘in notification if a
+            // mobile number was provided. This mirrors the functionality
+            // implemented in ref_index.html.
+            if (mobile) {
+                window.open(
+                    `sms_simulator.html?type=check_in&phone=${encodeURIComponent(mobile)}&po=${encodeURIComponent(po || 'N/A')}&quoted=${quoted}`,
+                    "_blank",
+                    "width=400,height=700"
+                );
+            }
             
             await db.from('actions_log').insert({
                 vehicle_id: vehicleId,
@@ -884,22 +961,91 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
                 timestamp: nowIso,
                 operator_id: operatorId
             });
+
+            // If a prebooking was used, mark it as consumed so it no longer
+            // appears in the expected loads dropdown on subsequent adds.
+            const selectedPrebookId = document.getElementById('prebookSelect').value;
+            if (selectedPrebookId) {
+                await db.from('prebookings').update({ consumed: true }).eq('id', selectedPrebookId);
+            }
             
             // Realtime will trigger, but refresh immediately
             await fetchVehicles();
             await fetchLogs();
             
             togglePanel();
+            // Reset form fields to prepare for the next entry
             document.getElementById('regInput').value = '';
             document.getElementById('poInput').value = '';
-            document.getElementById('pagerInput').value = '';
+            const hInp = document.getElementById('haulierInput');
+            if (hInp) hInp.value = '';
+            const mInp = document.getElementById('mobileInput');
+            if (mInp) mInp.value = '';
             document.getElementById('notesInput').value = '';
             document.getElementById('quotedInput').value = '60';
             document.getElementById('addExport').checked = false;
-        } finally {
+            const pbSel = document.getElementById('prebookSelect');
+            if (pbSel) pbSel.value = '';
+            prebookExportFlag = false;
+    } finally {
             btn.style.pointerEvents = 'auto';
             btn.style.opacity = '1';
         }
+    }
+
+    // ----------------------------------------------------------------------
+    // PREBOOKING HELPERS
+    // ----------------------------------------------------------------------
+    // Load expected loads from the prebookings table. This populates the
+    // dropdown with any unconsumed prebooked loads so operators can pick
+    // them when adding a new lorry. Results are cached in prebookCache.
+    async function loadPrebooks() {
+        const sel = document.getElementById('prebookSelect');
+        if (!sel) return;
+        // Reset options to the default placeholder
+        sel.innerHTML = `<option value="">-- Select Expected Load --</option>`;
+        try {
+            const { data } = await db
+                .from('prebookings')
+                .select('*')
+                .eq('consumed', false)
+                .order('expected_date', { ascending: true })
+                .order('expected_time', { ascending: true });
+            if (!data) return;
+            prebookCache = data;
+            data.forEach(p => {
+                const label = `${p.po_ref || 'No PO'} â€” ${p.registration || 'No Reg'} â€” ${p.expected_date || ''} ${p.expected_time?.slice(0,5) || ''}${p.is_export ? ' â€” EXPORT' : ''}`;
+                sel.innerHTML += `<option value="${p.id}">${label}</option>`;
+            });
+        } catch (err) {
+            console.error('Failed to load prebooks', err);
+        }
+    }
+
+    // Apply selected prebook values to the Add Lorry form. When a
+    // prebooked load is chosen, copy its PO, registration, notes and haulier
+    // into the corresponding input fields and set the export flag if needed.
+    function applyPrebook() {
+        const sel = document.getElementById('prebookSelect');
+        if (!sel) return;
+        const id = sel.value;
+        if (!id) return;
+        // convert to number for comparison; some IDs may be strings
+        const pb = prebookCache.find(x => String(x.id) === String(id));
+        if (!pb) return;
+        const poInput = document.getElementById('poInput');
+        const regInput = document.getElementById('regInput');
+        const notesInput = document.getElementById('notesInput');
+        const haulierInput = document.getElementById('haulierInput');
+        if (poInput) poInput.value = pb.po_ref || '';
+        if (regInput) regInput.value = pb.registration || '';
+        if (notesInput) notesInput.value = pb.notes || '';
+        if (haulierInput) haulierInput.value = pb.haulier || '';
+        // remember if this prebooking is an export load and reflect that on
+        // the checkbox. some prebookings may specify is_export on the row.
+        prebookExportFlag = pb.is_export === true;
+        const exportChk = document.getElementById('addExport');
+        if (exportChk) exportChk.checked = prebookExportFlag;
     }
 
     // ============================================================
@@ -972,7 +1118,9 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
         
         document.getElementById('editReg').value = veh.registration || '';
         document.getElementById('editPO').value = veh.po_ref || '';
-        document.getElementById('editPager').value = veh.pager_number || '';
+        // Prefer mobile_number on the record; fallback to pager_number for older rows
+        const editMobile = document.getElementById('editMobile');
+        if (editMobile) editMobile.value = veh.mobile_number || veh.pager_number || '';
         document.getElementById('editNotes').value = veh.notes || '';
         document.getElementById('editModalOverlay').style.display = 'block';
     }
@@ -987,14 +1135,14 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
         
         const regVal = document.getElementById('editReg').value.trim().toUpperCase();
         const poVal = document.getElementById('editPO').value.trim();
-        const pagerVal = document.getElementById('editPager').value.trim();
+        const mobileVal = document.getElementById('editMobile').value.trim();
         const notesVal = document.getElementById('editNotes').value.trim();
         const operatorId = localStorage.getItem('operator_id') || null;
         
         const updates = {
             registration: regVal,
             po_ref: poVal || null,
-            pager_number: pagerVal === '' ? null : pagerVal,
+            mobile_number: mobileVal === '' ? null : mobileVal,
             notes: notesVal || null,
             operator_id: operatorId
         };
@@ -1054,8 +1202,8 @@ document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
             <input type="text" id="editReg">
             <label for="editPO">PO / Reference</label>
             <input type="text" id="editPO">
-            <label for="editPager">Mobile Number</label>
-            <input type="text" id="editPager">
+            <label for="editMobile">Mobile Number</label>
+            <input type="text" id="editMobile">
             <label for="editNotes">Notes</label>
             <textarea id="editNotes"></textarea>
             <div class="modal-actions">
