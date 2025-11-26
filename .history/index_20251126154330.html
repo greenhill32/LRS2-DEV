@@ -8,7 +8,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FIX";
+document.getElementById("versionBanner").innerText = "v3.2.1 - SMS RESTORED";
 </script>
 
 <!--
@@ -412,7 +412,7 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
         </div>
         <div class="tile">
             <div class="value" id="kpiTotalOut">0</div>
-            Released Today
+            Released
         </div>
         <div class="tile">
             <div class="value" id="kpiAvgWait">0</div>
@@ -514,17 +514,16 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
         if (error) { console.error(error); return; }
         vehicles = data || [];
 
-        // Fetch released count for TODAY only (matches Supervisor dashboard)
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        
-        const { count } = await db
-            .from('vehicles')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'released')
-            .gte('release_time', todayStart.toISOString());
-        
-        releasedCount = count || 0;
+        // Fetch total released count (ALL TIME - matches original behavior)
+        // Change to .gte('release_time', today) if you want "Released Today" instead
+        // Calculate stats
+        const inYard = vehicles.length;
+        const releasedTodayQuery = await db
+            .from("vehicles")
+            .select("id")
+            .eq("status", "released")
+            .gte("release_time", new Date().toISOString().slice(0, 10));
+        const releasedToday = releasedTodayQuery.data?.length || 0;
 
         renderQueue();
         loadKPIs();
