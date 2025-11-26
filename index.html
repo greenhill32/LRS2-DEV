@@ -14,10 +14,10 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
 <!--
   Warehouse gatehouse dashboard - OPTIMIZED VERSION
   Changes from v3.1.2:
-    â€¢ Filtered queries - only fetch active vehicles, not entire history
-    â€¢ Supabase Realtime - instant updates, no polling
-    â€¢ Cached operators - load once, not every 15 seconds
-    â€¢ Debounced refreshes - prevent hammering DB on rapid changes
+    • Filtered queries - only fetch active vehicles, not entire history
+    • Supabase Realtime - instant updates, no polling
+    • Cached operators - load once, not every 15 seconds
+    • Debounced refreshes - prevent hammering DB on rapid changes
 -->
 <style>
     :root {
@@ -429,11 +429,11 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
     <div class="grid">
         <div class="queue">
             <h2>Active Queue</h2>
-            <div id="queueList">Loadingâ€¦</div>
+            <div id="queueList">Loading…</div>
         </div>
         <div class="details">
             <h2>Recent Activity</h2>
-            <div id="activityList">Loadingâ€¦</div>
+            <div id="activityList">Loading…</div>
         </div>
     </div>
     <!-- END A4 -->
@@ -669,7 +669,7 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             
             li.innerHTML = `
                 <div class="info">
-                    <strong>${v.registration || 'â€”'}</strong> â€” ${v.status}<br>
+                    <strong>${v.registration || '—'}</strong> — ${v.status}<br>
                     PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
                     In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-'}
                 </div>
@@ -723,7 +723,7 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
                 hour:'2-digit', minute:'2-digit', second:'2-digit' 
             });
             
-            item.textContent = `${reg} ${po} ${actionVerb} by ${name} â€” ${timeStr}`.trim();
+            item.textContent = `${reg} ${po} ${actionVerb} by ${name} — ${timeStr}`.trim();
             container.appendChild(item);
         });
     }
@@ -947,7 +947,7 @@ function togglePanel() {
             const vehicleId = data && data[0] && data[0].id;
             // Open QR code in a new window so the gatehouse can scan it
             window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-            // Open SMS simulator to send the checkâ€‘in notification if a
+            // Open SMS simulator to send the check‑in notification if a
             // mobile number was provided. This mirrors the functionality
             // implemented in ref_index.html.
             if (mobile) {
@@ -1017,7 +1017,7 @@ function togglePanel() {
             if (!data) return;
             prebookCache = data;
             data.forEach(p => {
-                const label = `${p.po_ref || 'No PO'} â€” ${p.registration || 'No Reg'} â€” ${p.expected_date || ''} ${p.expected_time?.slice(0,5) || ''}${p.is_export ? ' â€” EXPORT' : ''}`;
+                const label = `${p.po_ref || 'No PO'} — ${p.registration || 'No Reg'} — ${p.expected_date || ''} ${p.expected_time?.slice(0,5) || ''}${p.is_export ? ' — EXPORT' : ''}`;
                 sel.innerHTML += `<option value="${p.id}">${label}</option>`;
             });
         } catch (err) {
