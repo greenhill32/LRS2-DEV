@@ -1,0 +1,172 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "📝 Log Claude Session (Quick)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$project = Split-Path -Leaf $PWD; if (-not (Test-Path .claude-logs)) { New-Item -ItemType Directory -Path .claude-logs | Out-Null }; $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm'; $desc = '${input:sessionDescription}'; Add-Content -Path .claude-logs\\$project.md -Value \"`n## $timestamp - $desc\"; Write-Host \"Logged to .claude-logs\\$project.md\" -ForegroundColor Green"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "📋 Log Claude Session (Detailed)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$project = Split-Path -Leaf $PWD; if (-not (Test-Path .claude-logs)) { New-Item -ItemType Directory -Path .claude-logs | Out-Null }; $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm'; $desc = '${input:sessionDescription}'; $files = '${input:filesChanged}'; $status = '${input:sessionStatus}'; $logEntry = \"`n## $timestamp`n**Description:** $desc`n**Files:** $files`n**Status:** $status`n`n### Changes`n\"; Add-Content -Path .claude-logs\\$project.md -Value $logEntry; try { git diff HEAD | Add-Content -Path .claude-logs\\$project.md } catch { Add-Content -Path .claude-logs\\$project.md -Value 'No git changes' }; Write-Host 'Detailed log saved' -ForegroundColor Green"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "🔍 View Current Project Log",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$project = Split-Path -Leaf $PWD; $logPath = \".claude-logs\\$project.md\"; if (Test-Path $logPath) { Get-Content $logPath } else { Write-Host 'No log file found' -ForegroundColor Red }"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "📊 View All Project Logs",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "if (Test-Path .claude-logs) { Write-Host '=== Available Logs ===' -ForegroundColor Cyan; Get-ChildItem .claude-logs\\*.md | Format-Table Name, Length, LastWriteTime; Write-Host '=== Recent Entries ===' -ForegroundColor Cyan; Get-ChildItem .claude-logs\\*.md | ForEach-Object { Get-Content $_.FullName -Tail 20 } } else { Write-Host 'No logs directory' -ForegroundColor Red }"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "🚀 Setup Auto-Logging (Git Hook)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "if (-not (Test-Path .git\\hooks)) { New-Item -ItemType Directory -Path .git\\hooks -Force | Out-Null }; $hookContent = @'\n#!/bin/sh\nproject=$(basename \"$PWD\")\nmkdir -p .claude-logs\necho \"$(date '+%Y-%m-%d %H:%M') - Commit: $(git log -1 --pretty=%B)\" >> .claude-logs/${project}.md\n'@; Set-Content -Path .git\\hooks\\post-commit -Value $hookContent; Write-Host 'Auto-logging enabled' -ForegroundColor Green"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "💾 Commit & Log Claude Changes",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$project = Split-Path -Leaf $PWD; if (-not (Test-Path .claude-logs)) { New-Item -ItemType Directory -Path .claude-logs | Out-Null }; git add -A; $msg = '${input:commitMessage}'; git commit -m $msg; $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm'; Add-Content -Path .claude-logs\\$project.md -Value \"`n## $timestamp - $msg\"; git diff HEAD~1 HEAD | Add-Content -Path .claude-logs\\$project.md; Write-Host 'Committed and logged' -ForegroundColor Green"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "🗑️ Clear Current Project Log",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$project = Split-Path -Leaf $PWD; $logPath = \".claude-logs\\$project.md\"; if (Test-Path $logPath) { Remove-Item $logPath; Write-Host 'Log cleared' -ForegroundColor Green } else { Write-Host 'No log file' -ForegroundColor Red }"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "📤 Export Log Summary",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$project = Split-Path -Leaf $PWD; $logPath = \".claude-logs\\$project.md\"; if (Test-Path $logPath) { $summary = \"Log Summary for $project`nGenerated: $(Get-Date)`n`n\"; $summary += Get-Content $logPath -Tail 50 | Out-String; Set-Content -Path claude-summary.txt -Value $summary; Write-Host 'Summary exported' -ForegroundColor Green } else { Write-Host 'No log file' -ForegroundColor Red }"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sessionDescription",
+      "type": "promptString",
+      "description": "What did Claude do this session?",
+      "default": "Made changes"
+    },
+    {
+      "id": "filesChanged",
+      "type": "promptString",
+      "description": "Which files were changed? (optional)",
+      "default": "Multiple files"
+    },
+    {
+      "id": "sessionStatus",
+      "type": "pickString",
+      "description": "Session status:",
+      "options": [
+        "✅ Complete",
+        "🚧 In Progress",
+        "⚠️ Needs Review",
+        "❌ Rolled Back"
+      ],
+      "default": "✅ Complete"
+    },
+    {
+      "id": "commitMessage",
+      "type": "promptString",
+      "description": "Git commit message:",
+      "default": "Claude: updated files"
+    }
+  ]
+}

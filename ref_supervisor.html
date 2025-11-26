@@ -189,7 +189,7 @@ document.getElementById("superSearch").addEventListener("input", async (e) => {
                 border-radius:6px;
                 cursor:pointer;">
             <strong>${v.registration}</strong> (${v.status})<br>
-            PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || "-"}
+            PO: ${v.po_ref || "-"} | Pager: ${v.pager_number || "-"}
         </div>
     `).join("");
 });
@@ -219,8 +219,8 @@ async function superEditVehicle(id) {
             width:100%; padding:10px; margin-bottom:12px;
             background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
 
-        <label>Mobile Number</label>
-        <input id="sv-mobile" type="text" value="${v.mobile_number || ""}" style="
+        <label>Pager Number</label>
+        <input id="sv-pager" type="number" value="${v.pager_number || ""}" style="
             width:100%; padding:10px; margin-bottom:12px;
             background:#222; border:1px solid #444; border-radius:6px; color:#fff;">
 
@@ -247,24 +247,38 @@ async function superEditVehicle(id) {
 
     overlay.style.display = "block";
 
-    // Load V3 statuses
-    const sel = document.getElementById("sv-status");
-    sel.innerHTML = `
-        <option value="parked" ${v.status === "parked" ? "selected" : ""}>parked</option>
-        <option value="notified" ${v.status === "notified" ? "selected" : ""}>notified</option>
-        <option value="released" ${v.status === "released" ? "selected" : ""}>released</option>
-    `;
+    // Load status list dynamically
+    loadStatusOptions("sv-status", v.status);
 }
 
 function svClose() {
     document.getElementById("superEditOverlay").style.display = "none";
 }
 
+// Dynamic status loader from DB
+async function loadStatusOptions(selectId, current) {
+    const { data: statuses } = await db
+        .from("statuses")
+        .select("name")
+        .order("name");
+
+    const sel = document.getElementById(selectId);
+    sel.innerHTML = "";
+
+    statuses.forEach(s => {
+        sel.innerHTML += `
+            <option value="${s.name}" ${current === s.name ? "selected" : ""}>
+                ${s.name}
+            </option>
+        `;
+    });
+}
+
 // SAVE EDITS
 async function svSave(id) {
     const status = document.getElementById("sv-status").value;
     const po = document.getElementById("sv-po").value.trim();
-    const mobile = document.getElementById("sv-mobile").value.trim();
+    const pager = parseInt(document.getElementById("sv-pager").value);
     const notes = document.getElementById("sv-notes").value.trim();
     const opId = localStorage.getItem("operator_id");
     const now = new Date().toISOString();
@@ -272,7 +286,7 @@ async function svSave(id) {
     await db.from("vehicles").update({
         status,
         po_ref: po,
-        mobile_number: mobile || null,
+        pager_number: pager,
         notes,
         notify_time: (status==="notified" ? now : null),
         release_time: (status==="released" ? now : null),
@@ -283,7 +297,7 @@ async function svSave(id) {
         vehicle_id: id,
         operator_id: opId,
         action: "supervisor_edit",
-        details: { status, po, mobile, notes }
+        details: { status, po, pager, notes }
     });
 
     svClose();
@@ -341,8 +355,8 @@ async function svSave(id) {
 
 <script>
 const db = supabase.createClient(
-    "https://gtixdparpjdpyhhubsfz.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+    "https://splcucorowqjxeeseolq.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbGN1Y29yb3dxanhlZXNlb2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTExMjUsImV4cCI6MjA3ODYyNzEyNX0.R-Fm04UtBOr9OBWHnS1fhk6SnfSm7f3ZrFrQdzO1Q4Y"
 );
 
 // CHECK SUPERVISOR ROLE
@@ -387,11 +401,11 @@ async function loadKPIs() {
 
     const { data: waiting } = await db
         .from("vehicles").select("check_in_time")
-        .eq("status","parked");
+        .eq("status","waiting");
 
     const { data: active } = await db
         .from("vehicles").select("due_time")
-        .in("status", ["parked","notified"]);
+        .in("status", ["waiting","notified"]);
 
     let overdue = 0;
     const now = Date.now();
@@ -420,7 +434,7 @@ async function loadTopWaits() {
     const { data } = await db
         .from("vehicles")
         .select("registration, po_ref, check_in_time")
-        .eq("status", "parked");
+        .eq("status", "waiting");
 
     if (!data.length) {
         tbl.innerHTML += `<tr><td colspan="3">No active waits</td></tr>`;
@@ -505,7 +519,7 @@ async function loadCharts() {
     const { data: active } = await db
         .from("vehicles")
         .select("due_time")
-        .in("status", ["parked","notified"]);
+        .in("status", ["waiting","notified"]);
 
     let b0_30=0, b30_60=0, b60_120=0, b120plus=0;
     const now = Date.now();

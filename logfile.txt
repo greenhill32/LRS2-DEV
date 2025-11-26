@@ -198,3 +198,53 @@ Saves haulier to database (Line 757)
 Marks selected prebooking as consumed (Lines 785-789)
 Resets all form fields including new ones (Lines 797-805)
 The Expected Loads dropdown pulls data from your existing Supabase prebookings table (the same data source that would be synced from Google Sheets if you have that set up elsewhere). When a user selects an expected load, it automatically fills in the registration, PO reference, haulier, notes, and export status, making check-ins much faster!
+
+using re_supervisor as a reference, add the search registration or PO function to supervisor.html.popping out modal with relevant inforamtion and ability to change status (3) statuses
+I'll help you add the search registration or PO function to supervisor.html using re_supervisor as a reference. Let me start by reading both files to understand the structure.
+Read c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\ref_supervisor.html, c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html
+Now I can see both files. I need to add the search functionality from ref_supervisor.html (lines 118-305) to supervisor.html. This includes:
+A search input field
+Search results display
+A modal for editing vehicle details with 3 status options
+Functions to handle search, display results, and save changes
+Let me add this functionality to supervisor.html:
+Edit c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html
+⎿
+Added 19 lines
+Now I need to add a modal for editing the vehicle details. Let me add it after the existing modal:
+Edit c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html
+⎿
+Added 22 lines
+Now I need to add the JavaScript functions for the search functionality and modal. Let me add them before the closing script tag:
+Edit c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html
+⎿
+Added 204 lines
+Perfect! I've successfully added the search registration or PO function to supervisor.html. Here's what I added:
+Features Added:
+1. Search Bar (supervisor.html:425-441)
+Input field at the top of the dashboard
+Searches by registration or PO reference
+Live search that updates as you type (minimum 2 characters)
+2. Search Results Display (supervisor.html:997-1041)
+Shows matching vehicles with their current status
+Displays registration, status badge, PO reference, and mobile number
+Clickable cards that open the edit modal
+3. Edit Modal (supervisor.html:575-595)
+Pops out when you click on a search result
+Shows all relevant vehicle information
+Allows editing of:
+Status (3 statuses: parked, notified, released)
+PO/Reference
+Mobile Number
+Pager Number
+Notes
+4. Status Management (supervisor.html:1124-1152)
+Dynamically loads statuses from the database
+Falls back to 3 main statuses (parked, notified, released) if the statuses table isn't available
+Automatically sets timestamp when status changes to "notified" or "released"
+5. Save Functionality (supervisor.html:1155-1196)
+Saves all changes to the database
+Logs the edit action to the actions_log table
+Refreshes the dashboard after saving
+Clears the search results
+The implementation follows the reference file's pattern but uses the supervisor.html styling (dark theme with CSS variables) for a consistent look and feel.
