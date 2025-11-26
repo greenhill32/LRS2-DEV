@@ -5,7 +5,6 @@
 <title>Supervisor Intervention Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
 <style>
     :root {
         --bg: #0a0e14;
@@ -409,7 +408,7 @@
 <body>
 
 <div class="header">
-    <h1>âš¡ Supervisor Intervention Dashboard</h1>
+    <h1>⚡ Supervisor Intervention Dashboard</h1>
     <div class="header-right">
         <div style="display: flex; align-items: center; gap: 8px;">
             <div class="status-dot"></div>
@@ -427,7 +426,7 @@
         <input
             id="superSearch"
             type="text"
-            placeholder="Search by registration or POâ€¦"
+            placeholder="Search by registration or PO…"
             style="
                 width:100%;
                 padding:14px;
@@ -465,7 +464,7 @@
     <div class="zone zone-critical" id="criticalZone">
         <div class="zone-header">
             <div class="zone-title">
-                ðŸš¨ URGENT
+                🚨 URGENT
                 <span class="badge-critical" id="criticalCount">0 vehicles</span>
             </div>
             <span style="font-size: 13px; color: var(--muted);">Overdue >90 mins or critical issues</span>
@@ -477,7 +476,7 @@
     <div class="zone zone-warning" id="watchZone">
         <div class="zone-header">
             <div class="zone-title">
-                âš ï¸ WATCH LIST
+                ⚠️ WATCH LIST
                 <span class="badge-warning" id="watchCount">0 vehicles</span>
             </div>
             <span style="font-size: 13px; color: var(--muted);">Approaching quoted time</span>
@@ -492,37 +491,13 @@
     <div id="caseModal">
         <div class="modal-header">
             <div class="modal-title" id="modalTitle">Vehicle Details</div>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <div class="modal-body">
             
-            <!-- SUMMARY BAR - Quick glance status -->
-            <div id="modalSummaryBar" style="
-                display: flex;
-                gap: 12px;
-                margin-bottom: 24px;
-                padding: 16px;
-                background: rgba(255,255,255,0.03);
-                border-radius: 8px;
-                border: 1px solid var(--border);
-            ">
-                <div style="flex: 1; text-align: center; border-right: 1px solid var(--border);">
-                    <div style="font-size: 28px; font-weight: 700;" id="modalTotalWait">-</div>
-                    <div style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Total Wait</div>
-                </div>
-                <div style="flex: 1; text-align: center; border-right: 1px solid var(--border);">
-                    <div style="font-size: 28px; font-weight: 700;" id="modalQuoted">-</div>
-                    <div style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Quoted</div>
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <div style="font-size: 28px; font-weight: 700;" id="modalVariance">-</div>
-                    <div style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Variance</div>
-                </div>
-            </div>
-
-            <!-- VEHICLE IDENTITY -->
+            <!-- VEHICLE INFO -->
             <div class="modal-section">
-                <div class="modal-section-title">Vehicle Identity</div>
+                <div class="modal-section-title">Vehicle Information</div>
                 <div class="info-grid">
                     <div class="info-label">Registration</div>
                     <div class="info-value" id="modalReg">-</div>
@@ -538,54 +513,34 @@
                     
                     <div class="info-label">Classification</div>
                     <div class="info-value" id="modalClassification">-</div>
+                    
+                    <div class="info-label">Check-in Time</div>
+                    <div class="info-value" id="modalCheckIn">-</div>
+                    
+                    <div class="info-label">Due Time</div>
+                    <div class="info-value" id="modalDue">-</div>
+                    
+                    <div class="info-label">Wait Time</div>
+                    <div class="info-value" id="modalWait">-</div>
+                    
+                    <div class="info-label">Overdue By</div>
+                    <div class="info-value" id="modalOverdue">-</div>
+                    
+                    <div class="info-label">Last Operator</div>
+                    <div class="info-value" id="modalOperator">-</div>
                 </div>
             </div>
 
-            <!-- TIME ANALYSIS - The key upgrade -->
+            <!-- TIMELINE -->
             <div class="modal-section">
-                <div class="modal-section-title">Time Analysis</div>
-                
-                <!-- Visual timeline bar -->
-                <div id="modalTimelineBar" style="
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 20px;
-                    padding: 12px 0;
-                "></div>
-
-                <!-- Detailed stage breakdown table -->
-                <div id="modalStageTable" style="
-                    background: rgba(0,0,0,0.2);
-                    border-radius: 8px;
-                    overflow: hidden;
-                "></div>
-            </div>
-
-            <!-- ACTIVITY LOG -->
-            <div class="modal-section">
-                <div class="modal-section-title">Activity Log</div>
-                <div id="modalActivityLog" style="
-                    max-height: 200px;
-                    overflow-y: auto;
-                    background: rgba(0,0,0,0.2);
-                    border-radius: 8px;
-                    padding: 12px;
-                "></div>
+                <div class="modal-section-title">Timeline</div>
+                <div id="modalTimeline"></div>
             </div>
 
             <!-- NOTES -->
             <div class="modal-section">
-                <div class="modal-section-title">Notes</div>
-                <div id="modalNotes" style="
-                    padding: 12px; 
-                    background: rgba(255,255,255,0.03); 
-                    border-radius: 6px; 
-                    font-size: 14px; 
-                    color: var(--text);
-                    white-space: pre-wrap;
-                    max-height: 150px;
-                    overflow-y: auto;
-                ">-</div>
+                <div class="modal-section-title">Vehicle Notes</div>
+                <div id="modalNotes" style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 14px; color: var(--text);">-</div>
             </div>
 
             <!-- SUPERVISOR ACTIONS -->
@@ -596,19 +551,19 @@
                     <label style="display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted);">Add Supervisor Note</label>
                     <textarea id="supervisorNote" class="note-input" placeholder="Enter note about this case..."></textarea>
                     <button class="action-btn action-btn-primary" style="margin-top: 8px; width: auto;" onclick="addSupervisorNote()">
-                        ðŸ’¾ Save Note
+                        💾 Save Note
                     </button>
                 </div>
 
                 <div class="supervisor-actions">
                     <button class="action-btn" onclick="markUnderReview()">
-                        ðŸ” Mark Under Review
+                        🔍 Mark Under Review
                     </button>
                     <button class="action-btn" onclick="markSupervisorAware()">
-                        âœ“ Mark Supervisor Aware
+                        ✓ Mark Supervisor Aware
                     </button>
                     <button class="action-btn" onclick="sendDriverSMS()" title="Feature coming soon">
-                        ðŸ“± SMS Driver
+                        📱 SMS Driver
                     </button>
                 </div>
             </div>
@@ -760,7 +715,7 @@ function renderCriticalList(vehicles) {
     if (vehicles.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">âœ…</div>
+                <div class="empty-state-icon">✅</div>
                 <div style="font-size: 16px; font-weight: 600;">All Clear</div>
                 <div style="font-size: 14px;">No critical interventions needed</div>
             </div>
@@ -776,15 +731,15 @@ function renderCriticalList(vehicles) {
             <div class="intervention-card">
                 <div class="card-left">
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
-                    <div class="card-alert">â° ${v.overdueMinutes} minutes overdue</div>
+                    <div class="card-alert">⏰ ${v.overdueMinutes} minutes overdue</div>
                     <div class="card-meta">
-                        <span>ðŸ“‹ PO: ${v.po_ref || "-"}</span>
-                        <span>ðŸ“± ${mobile}</span>
-                        <span>âœ“ ${v.status === "parked" ? "Parked" : "Notified"}</span>
+                        <span>📋 PO: ${v.po_ref || "-"}</span>
+                        <span>📱 ${mobile}</span>
+                        <span>✓ ${v.status === "parked" ? "Parked" : "Notified"}</span>
                     </div>
                 </div>
                 <div class="card-right">
-                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">ðŸ‘ï¸ View Case</button>
+                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">👁️ View Case</button>
                 </div>
             </div>
         `;
@@ -813,15 +768,15 @@ function renderWatchList(vehicles) {
             <div class="intervention-card">
                 <div class="card-left">
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
-                    <div style="font-size: 14px; color: var(--warning);">â±ï¸ ${timeUntilDue}</div>
+                    <div style="font-size: 14px; color: var(--warning);">⏱️ ${timeUntilDue}</div>
                     <div class="card-meta">
-                        <span>ðŸ“‹ PO: ${v.po_ref || "-"}</span>
-                        <span>ðŸ“± ${mobile}</span>
-                        <span>âœ“ ${v.status === "parked" ? "Parked" : "Notified"}</span>
+                        <span>📋 PO: ${v.po_ref || "-"}</span>
+                        <span>📱 ${mobile}</span>
+                        <span>✓ ${v.status === "parked" ? "Parked" : "Notified"}</span>
                     </div>
                 </div>
                 <div class="card-right">
-                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">ðŸ‘ï¸ View Case</button>
+                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">👁️ View Case</button>
                 </div>
             </div>
         `;
@@ -849,54 +804,21 @@ async function openCaseModal(vehicleId) {
             .eq("vehicle_id", vehicleId)
             .order("timestamp", { ascending: true });
 
-        // ==================== TIME CALCULATIONS ====================
-        const now = Date.now();
+        // Get operator name
+        let operatorName = "Unknown";
+        if (vehicle.operator_id) {
+            const op = operators.find(o => o.id === vehicle.operator_id);
+            operatorName = op?.name || "Unknown";
+        }
+
+        // Calculate times
         const checkInTime = new Date(vehicle.check_in_time);
         const dueTime = new Date(vehicle.due_time);
-        const notifyTime = vehicle.notify_time ? new Date(vehicle.notify_time) : null;
-        const releaseTime = vehicle.release_time ? new Date(vehicle.release_time) : null;
-        const quoted = vehicle.quoted_minutes || 0;
+        const now = Date.now();
+        const waitMinutes = Math.floor((now - checkInTime.getTime()) / 60000);
+        const overdueMinutes = Math.floor((now - dueTime.getTime()) / 60000);
 
-        // Calculate total wait (either to release or to now)
-        const endTime = releaseTime || now;
-        const totalWaitMins = Math.floor((endTime - checkInTime.getTime()) / 60000);
-
-        // Calculate stage durations
-        let checkInToNotify = null;
-        let notifyToRelease = null;
-        let notifyToNow = null;
-
-        if (notifyTime) {
-            checkInToNotify = Math.floor((notifyTime.getTime() - checkInTime.getTime()) / 60000);
-            if (releaseTime) {
-                notifyToRelease = Math.floor((releaseTime.getTime() - notifyTime.getTime()) / 60000);
-            } else {
-                notifyToNow = Math.floor((now - notifyTime.getTime()) / 60000);
-            }
-        }
-
-        // Calculate variance
-        const variance = totalWaitMins - quoted;
-
-        // ==================== SUMMARY BAR ====================
-        document.getElementById("modalTotalWait").textContent = totalWaitMins + "m";
-        document.getElementById("modalTotalWait").style.color = variance > 0 ? "var(--critical)" : "var(--ok)";
-        
-        document.getElementById("modalQuoted").textContent = quoted + "m";
-        
-        const varianceEl = document.getElementById("modalVariance");
-        if (variance > 0) {
-            varianceEl.textContent = "+" + variance + "m";
-            varianceEl.style.color = "var(--critical)";
-        } else if (variance < 0) {
-            varianceEl.textContent = variance + "m";
-            varianceEl.style.color = "var(--ok)";
-        } else {
-            varianceEl.textContent = "0m";
-            varianceEl.style.color = "var(--text)";
-        }
-
-        // ==================== VEHICLE IDENTITY ====================
+        // Populate modal
         document.getElementById("modalTitle").textContent = vehicle.registration;
         document.getElementById("modalReg").textContent = vehicle.registration;
         
@@ -906,230 +828,28 @@ async function openCaseModal(vehicleId) {
         document.getElementById("modalPO").textContent = vehicle.po_ref || "-";
         document.getElementById("modalMobile").textContent = vehicle.mobile_number || vehicle.pager_number || "-";
         document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? "🟣 EXPORT" : "Normal";
-
-        // ==================== VISUAL TIMELINE BAR ====================
-        const timelineBarEl = document.getElementById("modalTimelineBar");
-        
-        // Calculate proportions for the visual bar
-        let segments = [];
-        if (vehicle.status === "released" && notifyTime && releaseTime) {
-            // Completed journey
-            const total = totalWaitMins || 1;
-            const seg1Pct = Math.round((checkInToNotify / total) * 100);
-            const seg2Pct = 100 - seg1Pct;
-            segments = [
-                { label: "Check-in → Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
-                { label: "Notify → Release", mins: notifyToRelease, pct: seg2Pct, color: "var(--ok)" }
-            ];
-        } else if (notifyTime) {
-            // Notified but not released
-            const total = totalWaitMins || 1;
-            const seg1Pct = Math.round((checkInToNotify / total) * 100);
-            const seg2Pct = 100 - seg1Pct;
-            segments = [
-                { label: "Check-in → Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
-                { label: "Notify → Now", mins: notifyToNow, pct: seg2Pct, color: "var(--accent)", active: true }
-            ];
-        } else {
-            // Still parked
-            segments = [
-                { label: "Check-in → Now", mins: totalWaitMins, pct: 100, color: "var(--warning)", active: true }
-            ];
-        }
-
-        timelineBarEl.innerHTML = `
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; height: 24px; border-radius: 4px; overflow: hidden;">
-                    ${segments.map(s => `
-                        <div style="
-                            width: ${s.pct}%;
-                            background: ${s.color};
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 11px;
-                            font-weight: 600;
-                            color: #000;
-                            ${s.active ? 'animation: pulse 2s infinite;' : ''}
-                        ">${s.mins}m</div>
-                    `).join('')}
-                </div>
-                <div style="display: flex; font-size: 11px; color: var(--muted);">
-                    ${segments.map(s => `
-                        <div style="width: ${s.pct}%; text-align: center;">${s.label}</div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-
-        // ==================== STAGE TABLE ====================
-        const stageTableEl = document.getElementById("modalStageTable");
-        
-        // Find operators for each stage from logs
-        let checkInOp = "Unknown";
-        let notifyOp = "Unknown";
-        let releaseOp = "Unknown";
-
-        logs?.forEach(log => {
-            const op = operators.find(o => o.id === log.operator_id);
-            const opName = op?.name || "Unknown";
-            if (log.action === "check_in") checkInOp = opName;
-            if (log.action === "notified" || log.action === "notify") notifyOp = opName;
-            if (log.action === "released" || log.action === "completed") releaseOp = opName;
-        });
-
-        const formatTime = (d) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-        const formatDate = (d) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" });
-
-        let stageRows = [];
-
-        // Check-in row
-        stageRows.push({
-            stage: "Check-in",
-            time: formatTime(checkInTime),
-            date: formatDate(checkInTime),
-            duration: "-",
-            operator: checkInOp,
-            highlight: false
-        });
-
-        // Notify row (if exists)
-        if (notifyTime) {
-            const delayFlag = checkInToNotify > quoted ? ' ⚠️' : '';
-            stageRows.push({
-                stage: "Notified",
-                time: formatTime(notifyTime),
-                date: formatDate(notifyTime),
-                duration: `+${checkInToNotify}m${delayFlag}`,
-                operator: notifyOp,
-                highlight: checkInToNotify > quoted
-            });
-        }
-
-        // Release row (if exists)
-        if (releaseTime) {
-            stageRows.push({
-                stage: "Released",
-                time: formatTime(releaseTime),
-                date: formatDate(releaseTime),
-                duration: notifyTime ? `+${notifyToRelease}m` : `+${totalWaitMins}m`,
-                operator: releaseOp,
-                highlight: false
-            });
-        }
-
-        // Current state row (if not released)
-        if (!releaseTime) {
-            const currentDuration = notifyTime ? notifyToNow : totalWaitMins;
-            const overdueFlag = variance > 0 ? ' 🔴' : '';
-            stageRows.push({
-                stage: vehicle.status === "notified" ? "Waiting (notified)" : "Waiting (parked)",
-                time: "NOW",
-                date: "-",
-                duration: `+${currentDuration}m${overdueFlag}`,
-                operator: "-",
-                highlight: variance > 0,
-                active: true
-            });
-        }
-
-        // Total row
-        const totalColor = variance > 0 ? "var(--critical)" : (variance < 0 ? "var(--ok)" : "var(--text)");
-        const varianceText = variance > 0 ? `+${variance}m over` : (variance < 0 ? `${Math.abs(variance)}m under` : "on time");
-
-        stageTableEl.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <thead>
-                    <tr style="background: rgba(255,255,255,0.05);">
-                        <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Stage</th>
-                        <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Time</th>
-                        <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Duration</th>
-                        <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Operator</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${stageRows.map(row => `
-                        <tr style="${row.highlight ? 'background: rgba(239,68,68,0.1);' : ''} ${row.active ? 'background: rgba(59,130,246,0.1);' : ''}">
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">
-                                ${row.stage}
-                            </td>
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">
-                                ${row.time}
-                                <span style="font-size: 11px; color: var(--muted); margin-left: 4px;">${row.date !== '-' ? row.date : ''}</span>
-                            </td>
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border); ${row.highlight ? 'color: var(--critical); font-weight: 600;' : ''}">
-                                ${row.duration}
-                            </td>
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">
-                                ${row.operator}
-                            </td>
-                        </tr>
-                    `).join('')}
-                    <tr style="background: rgba(255,255,255,0.03); font-weight: 600;">
-                        <td style="padding: 12px; border-top: 2px solid var(--border);">TOTAL</td>
-                        <td style="padding: 12px; border-top: 2px solid var(--border);">
-                            ${formatTime(checkInTime)} → ${releaseTime ? formatTime(releaseTime) : 'NOW'}
-                        </td>
-                        <td style="padding: 12px; border-top: 2px solid var(--border); color: ${totalColor};">
-                            ${totalWaitMins}m <span style="font-size: 12px; opacity: 0.8;">(${varianceText})</span>
-                        </td>
-                        <td style="padding: 12px; border-top: 2px solid var(--border);">-</td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-
-        // ==================== ACTIVITY LOG ====================
-        const activityLogEl = document.getElementById("modalActivityLog");
-        
-        if (!logs || logs.length === 0) {
-            activityLogEl.innerHTML = `<div style="color: var(--muted); font-size: 14px;">No activity logged</div>`;
-        } else {
-            activityLogEl.innerHTML = logs.map(log => {
-                const logTime = new Date(log.timestamp);
-                const logOp = operators.find(o => o.id === log.operator_id);
-                
-                // Humanize action names
-                let actionLabel = log.action;
-                switch(log.action) {
-                    case 'check_in': actionLabel = 'Checked in'; break;
-                    case 'notified': actionLabel = 'Notified driver'; break;
-                    case 'notify': actionLabel = 'Notified driver'; break;
-                    case 'released': actionLabel = 'Released'; break;
-                    case 'completed': actionLabel = 'Completed'; break;
-                    case 'undo': actionLabel = 'Status reverted'; break;
-                    case 'edit': actionLabel = 'Record edited'; break;
-                    case 'modal_edit': actionLabel = 'Record edited'; break;
-                    case 'supervisor_edit': actionLabel = 'Supervisor edit'; break;
-                    case 'supervisor_note': actionLabel = 'Supervisor note added'; break;
-                    case 'under_review': actionLabel = 'Marked under review'; break;
-                    case 'supervisor_aware': actionLabel = 'Supervisor aware'; break;
-                    case 'notes_edit': actionLabel = 'Notes updated'; break;
-                }
-
-                return `
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        padding: 8px 0;
-                        border-bottom: 1px solid var(--border);
-                    ">
-                        <div>
-                            <span style="font-weight: 500;">${actionLabel}</span>
-                            <span style="color: var(--muted); margin-left: 8px;">by ${logOp?.name || "Unknown"}</span>
-                        </div>
-                        <div style="font-size: 12px; color: var(--muted);">
-                            ${logTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-                            <span style="margin-left: 4px;">${logTime.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" })}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // ==================== NOTES ====================
+        document.getElementById("modalCheckIn").textContent = checkInTime.toLocaleString("en-GB");
+        document.getElementById("modalDue").textContent = dueTime.toLocaleString("en-GB");
+        document.getElementById("modalWait").textContent = waitMinutes + " minutes";
+        document.getElementById("modalOverdue").textContent = overdueMinutes > 0 ? overdueMinutes + " minutes" : "Not overdue";
+        document.getElementById("modalOperator").textContent = operatorName;
         document.getElementById("modalNotes").textContent = vehicle.notes || "No notes";
+
+        // Render timeline
+        const timelineHTML = logs?.map(log => {
+            const logTime = new Date(log.timestamp);
+            const logOp = operators.find(o => o.id === log.operator_id);
+            return `
+                <div class="timeline-item">
+                    <div class="timeline-time">${logTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</div>
+                    <div class="timeline-event">
+                        <strong>${log.action}</strong> by ${logOp?.name || "Unknown"}
+                    </div>
+                </div>
+            `;
+        }).join("") || "<div style='color: var(--muted); font-size: 14px;'>No activity logged</div>";
+
+        document.getElementById("modalTimeline").innerHTML = timelineHTML;
 
         // Clear supervisor note input
         document.getElementById("supervisorNote").value = "";
@@ -1187,7 +907,7 @@ async function addSupervisorNote() {
             timestamp: now
         });
 
-        alert("âœ“ Note added successfully");
+        alert("✓ Note added successfully");
         document.getElementById("supervisorNote").value = "";
         
         // Reload modal
@@ -1220,7 +940,7 @@ async function markUnderReview() {
             timestamp: now
         });
 
-        alert("âœ“ Marked as Under Review");
+        alert("✓ Marked as Under Review");
         openCaseModal(currentVehicle.id);
 
     } catch (error) {
@@ -1250,7 +970,7 @@ async function markSupervisorAware() {
             timestamp: now
         });
 
-        alert("âœ“ Marked as Supervisor Aware");
+        alert("✓ Marked as Supervisor Aware");
         openCaseModal(currentVehicle.id);
 
     } catch (error) {
@@ -1261,7 +981,7 @@ async function markSupervisorAware() {
 
 function sendDriverSMS() {
     if (!currentVehicle) return;
-    alert("ðŸ“± SMS Feature\n\nThis feature is coming soon.\n\nWill send SMS to: " + (currentVehicle.mobile_number || currentVehicle.pager_number || "No mobile"));
+    alert("📱 SMS Feature\n\nThis feature is coming soon.\n\nWill send SMS to: " + (currentVehicle.mobile_number || currentVehicle.pager_number || "No mobile"));
 }
 
 // ==================== CLOCK ====================
@@ -1430,7 +1150,7 @@ async function svSave(id) {
             timestamp: now
         });
 
-        alert("âœ“ Vehicle updated successfully");
+        alert("✓ Vehicle updated successfully");
         svClose();
 
         // Clear search and refresh dashboard
