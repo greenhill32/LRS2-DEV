@@ -5,6 +5,7 @@
 <title>Supervisor Intervention Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+
 <style>
     :root {
         --bg: #0a0e14;
@@ -406,23 +407,12 @@
 </head>
 
 <body>
-
-<div id="versionBanner" style="
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    z-index: 9999;
-">v3.1.3 - DEV BUILD</div>
-
+<div id="versionBanner" style="..."></div>
+<script>document.getElementById("versionBanner").innerText = "v3.1.2 — DEV BUILD";</script>
 <div class="header">
-    <h1>&#9889; Supervisor Intervention Dashboard</h1>
+    
+<div class="header">
+    <h1>âš¡ Supervisor Intervention Dashboard</h1>
     <div class="header-right">
         <div style="display: flex; align-items: center; gap: 8px;">
             <div class="status-dot"></div>
@@ -440,7 +430,7 @@
         <input
             id="superSearch"
             type="text"
-            placeholder="Search by registration or PO..."
+            placeholder="Search by registration or POâ€¦"
             style="
                 width:100%;
                 padding:14px;
@@ -478,7 +468,7 @@
     <div class="zone zone-critical" id="criticalZone">
         <div class="zone-header">
             <div class="zone-title">
-                &#128680; URGENT
+                ðŸš¨ URGENT
                 <span class="badge-critical" id="criticalCount">0 vehicles</span>
             </div>
             <span style="font-size: 13px; color: var(--muted);">Overdue >90 mins or critical issues</span>
@@ -490,7 +480,7 @@
     <div class="zone zone-warning" id="watchZone">
         <div class="zone-header">
             <div class="zone-title">
-                &#9888; WATCH LIST
+                âš ï¸ WATCH LIST
                 <span class="badge-warning" id="watchCount">0 vehicles</span>
             </div>
             <span style="font-size: 13px; color: var(--muted);">Approaching quoted time</span>
@@ -609,19 +599,19 @@
                     <label style="display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted);">Add Supervisor Note</label>
                     <textarea id="supervisorNote" class="note-input" placeholder="Enter note about this case..."></textarea>
                     <button class="action-btn action-btn-primary" style="margin-top: 8px; width: auto;" onclick="addSupervisorNote()">
-                        &#128190; Save Note
+                        ðŸ’¾ Save Note
                     </button>
                 </div>
 
                 <div class="supervisor-actions">
                     <button class="action-btn" onclick="markUnderReview()">
-                        &#128269; Mark Under Review
+                        ðŸ” Mark Under Review
                     </button>
                     <button class="action-btn" onclick="markSupervisorAware()">
-                        &#10003; Mark Supervisor Aware
+                        âœ“ Mark Supervisor Aware
                     </button>
                     <button class="action-btn" onclick="sendDriverSMS()" title="Feature coming soon">
-                        &#128241; SMS Driver
+                        ðŸ“± SMS Driver
                     </button>
                 </div>
             </div>
@@ -773,7 +763,7 @@ function renderCriticalList(vehicles) {
     if (vehicles.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">&#9989;</div>
+                <div class="empty-state-icon">âœ…</div>
                 <div style="font-size: 16px; font-weight: 600;">All Clear</div>
                 <div style="font-size: 14px;">No critical interventions needed</div>
             </div>
@@ -791,13 +781,13 @@ function renderCriticalList(vehicles) {
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
                     <div class="card-alert">â° ${v.overdueMinutes} minutes overdue</div>
                     <div class="card-meta">
-                        <span>&#128203; PO: ${v.po_ref || "-"}</span>
-                        <span>&#128241; ${mobile}</span>
-                        <span>&#10003; ${v.status === "parked" ? "Parked" : "Notified"}</span>
+                        <span>ðŸ“‹ PO: ${v.po_ref || "-"}</span>
+                        <span>ðŸ“± ${mobile}</span>
+                        <span>âœ“ ${v.status === "parked" ? "Parked" : "Notified"}</span>
                     </div>
                 </div>
                 <div class="card-right">
-                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">View Case</button>
+                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">ðŸ‘ï¸ View Case</button>
                 </div>
             </div>
         `;
@@ -828,13 +818,13 @@ function renderWatchList(vehicles) {
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
                     <div style="font-size: 14px; color: var(--warning);">â±ï¸ ${timeUntilDue}</div>
                     <div class="card-meta">
-                        <span>&#128203; PO: ${v.po_ref || "-"}</span>
-                        <span>&#128241; ${mobile}</span>
-                        <span>&#10003; ${v.status === "parked" ? "Parked" : "Notified"}</span>
+                        <span>ðŸ“‹ PO: ${v.po_ref || "-"}</span>
+                        <span>ðŸ“± ${mobile}</span>
+                        <span>âœ“ ${v.status === "parked" ? "Parked" : "Notified"}</span>
                     </div>
                 </div>
                 <div class="card-right">
-                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">View Case</button>
+                    <button class="btn btn-view" onclick="openCaseModal('${v.id}')">ðŸ‘ï¸ View Case</button>
                 </div>
             </div>
         `;
@@ -1200,7 +1190,7 @@ async function addSupervisorNote() {
             timestamp: now
         });
 
-        alert("&#10003; Note added successfully");
+        alert("âœ“ Note added successfully");
         document.getElementById("supervisorNote").value = "";
         
         // Reload modal
@@ -1233,7 +1223,7 @@ async function markUnderReview() {
             timestamp: now
         });
 
-        alert("&#10003; Marked as Under Review");
+        alert("âœ“ Marked as Under Review");
         openCaseModal(currentVehicle.id);
 
     } catch (error) {
@@ -1263,7 +1253,7 @@ async function markSupervisorAware() {
             timestamp: now
         });
 
-        alert("&#10003; Marked as Supervisor Aware");
+        alert("âœ“ Marked as Supervisor Aware");
         openCaseModal(currentVehicle.id);
 
     } catch (error) {
@@ -1274,7 +1264,7 @@ async function markSupervisorAware() {
 
 function sendDriverSMS() {
     if (!currentVehicle) return;
-    alert("&#128241; SMS Feature\n\nThis feature is coming soon.\n\nWill send SMS to: " + (currentVehicle.mobile_number || currentVehicle.pager_number || "No mobile"));
+    alert("ðŸ“± SMS Feature\n\nThis feature is coming soon.\n\nWill send SMS to: " + (currentVehicle.mobile_number || currentVehicle.pager_number || "No mobile"));
 }
 
 // ==================== CLOCK ====================
@@ -1315,7 +1305,7 @@ document.getElementById("superSearch").addEventListener("input", async (e) => {
     }
 
     box.innerHTML = results.map(v => `
-        <div onclick="openCaseModal('${v.id}')"
+        <div onclick="superEditVehicle('${v.id}')"
             style="
                 padding:14px;
                 margin-bottom:10px;
@@ -1443,7 +1433,7 @@ async function svSave(id) {
             timestamp: now
         });
 
-        alert("&#10003; Vehicle updated successfully");
+        alert("âœ“ Vehicle updated successfully");
         svClose();
 
         // Clear search and refresh dashboard
