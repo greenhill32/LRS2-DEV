@@ -1,3 +1,3 @@
-make released show only the day not all
-phone simulator works in dev -great not index
-supervisor modal actions require sql entries?
+prebooked does not populate mobile field
+non std charsshoing again
+supervisor modal actions require sql entries? under review,supervisor aware

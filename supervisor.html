@@ -402,6 +402,167 @@
     .status-parked { background: #fbbf24; color: #000; }
     .status-notified { background: #3b82f6; color: white; }
     .status-released { background: #10b981; color: white; }
+
+    /* ============================================================
+       COMMAND PALETTE (Ctrl+K) - Inline Integration
+       ============================================================ */
+    #cmdOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 100px;
+        z-index: 20000; /* Higher than existing modal (10000) */
+        animation: cmdFadeIn 0.15s ease;
+    }
+    #cmdOverlay.active {
+        display: flex;
+    }
+    @keyframes cmdFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    #cmdPalette {
+        width: 600px;
+        max-width: 90vw;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        overflow: hidden;
+        animation: cmdSlideDown 0.2s ease;
+    }
+    @keyframes cmdSlideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    #cmdInput {
+        width: 100%;
+        padding: 20px;
+        font-size: 18px;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        outline: none;
+        border-bottom: 1px solid var(--border);
+    }
+    #cmdInput::placeholder {
+        color: var(--muted);
+    }
+    #cmdResults {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 12px;
+    }
+    .cmd-result-item {
+        padding: 14px 16px;
+        margin-bottom: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        border-left: 3px solid var(--accent);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .cmd-result-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(2px);
+    }
+    .cmd-hint {
+        padding: 20px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+    }
+    .cmd-suggestions {
+        padding: 16px;
+        border-top: 1px solid var(--border);
+    }
+    .cmd-suggestions-title {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    .cmd-tag {
+        display: inline-block;
+        padding: 6px 12px;
+        margin: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .cmd-tag:hover {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: var(--accent);
+    }
+    .cmd-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        padding: 16px;
+    }
+    .cmd-metric-card {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--border);
+    }
+    .cmd-metric-value {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .cmd-metric-value.cmd-danger { color: var(--critical); }
+    .cmd-metric-value.cmd-warning { color: var(--warning); }
+    .cmd-metric-value.cmd-success { color: var(--ok); }
+    .cmd-metric-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+    }
+    .cmd-detail-list {
+        padding: 16px;
+    }
+    .cmd-detail-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 6px;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .cmd-detail-item strong {
+        font-weight: 600;
+    }
+    .cmd-badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .cmd-badge-critical { background: var(--critical); color: white; }
+    .cmd-badge-warning { background: var(--warning); color: black; }
+    .cmd-badge-normal { background: var(--ok); color: white; }
 </style>
 </head>
 
@@ -615,7 +776,7 @@
 
                 <div class="supervisor-actions">
                     <button class="action-btn" onclick="markUnderReview()">
-                        &#128269; Mark Under Review
+                        &#128269;Â Mark Under Review
                     </button>
                     <button class="action-btn" onclick="markSupervisorAware()">
                         &#10003; Mark Supervisor Aware
@@ -789,7 +950,7 @@ function renderCriticalList(vehicles) {
             <div class="intervention-card">
                 <div class="card-left">
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
-                    <div class="card-alert">â° ${v.overdueMinutes} minutes overdue</div>
+                    <div class="card-alert">Ã¢ÂÂ° ${v.overdueMinutes} minutes overdue</div>
                     <div class="card-meta">
                         <span>&#128203; PO: ${v.po_ref || "-"}</span>
                         <span>&#128241; ${mobile}</span>
@@ -826,7 +987,7 @@ function renderWatchList(vehicles) {
             <div class="intervention-card">
                 <div class="card-left">
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
-                    <div style="font-size: 14px; color: var(--warning);">â±ï¸ ${timeUntilDue}</div>
+                    <div style="font-size: 14px; color: var(--warning);">Ã¢ÂÂ±Ã¯Â¸Â ${timeUntilDue}</div>
                     <div class="card-meta">
                         <span>&#128203; PO: ${v.po_ref || "-"}</span>
                         <span>&#128241; ${mobile}</span>
@@ -918,7 +1079,7 @@ async function openCaseModal(vehicleId) {
         
         document.getElementById("modalPO").textContent = vehicle.po_ref || "-";
         document.getElementById("modalMobile").textContent = vehicle.mobile_number || vehicle.pager_number || "-";
-        document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? "🟣 EXPORT" : "Normal";
+        document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? "ðŸŸ£ EXPORT" : "Normal";
 
         // ==================== VISUAL TIMELINE BAR ====================
         const timelineBarEl = document.getElementById("modalTimelineBar");
@@ -931,8 +1092,8 @@ async function openCaseModal(vehicleId) {
             const seg1Pct = Math.round((checkInToNotify / total) * 100);
             const seg2Pct = 100 - seg1Pct;
             segments = [
-                { label: "Check-in → Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
-                { label: "Notify → Release", mins: notifyToRelease, pct: seg2Pct, color: "var(--ok)" }
+                { label: "Check-in â†’ Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
+                { label: "Notify â†’ Release", mins: notifyToRelease, pct: seg2Pct, color: "var(--ok)" }
             ];
         } else if (notifyTime) {
             // Notified but not released
@@ -940,13 +1101,13 @@ async function openCaseModal(vehicleId) {
             const seg1Pct = Math.round((checkInToNotify / total) * 100);
             const seg2Pct = 100 - seg1Pct;
             segments = [
-                { label: "Check-in → Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
-                { label: "Notify → Now", mins: notifyToNow, pct: seg2Pct, color: "var(--accent)", active: true }
+                { label: "Check-in â†’ Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
+                { label: "Notify â†’ Now", mins: notifyToNow, pct: seg2Pct, color: "var(--accent)", active: true }
             ];
         } else {
             // Still parked
             segments = [
-                { label: "Check-in → Now", mins: totalWaitMins, pct: 100, color: "var(--warning)", active: true }
+                { label: "Check-in â†’ Now", mins: totalWaitMins, pct: 100, color: "var(--warning)", active: true }
             ];
         }
 
@@ -1008,7 +1169,7 @@ async function openCaseModal(vehicleId) {
 
         // Notify row (if exists)
         if (notifyTime) {
-            const delayFlag = checkInToNotify > quoted ? ' ⚠️' : '';
+            const delayFlag = checkInToNotify > quoted ? ' âš ï¸' : '';
             stageRows.push({
                 stage: "Notified",
                 time: formatTime(notifyTime),
@@ -1034,7 +1195,7 @@ async function openCaseModal(vehicleId) {
         // Current state row (if not released)
         if (!releaseTime) {
             const currentDuration = notifyTime ? notifyToNow : totalWaitMins;
-            const overdueFlag = variance > 0 ? ' 🔴' : '';
+            const overdueFlag = variance > 0 ? ' ðŸ”´' : '';
             stageRows.push({
                 stage: vehicle.status === "notified" ? "Waiting (notified)" : "Waiting (parked)",
                 time: "NOW",
@@ -1081,7 +1242,7 @@ async function openCaseModal(vehicleId) {
                     <tr style="background: rgba(255,255,255,0.03); font-weight: 600;">
                         <td style="padding: 12px; border-top: 2px solid var(--border);">TOTAL</td>
                         <td style="padding: 12px; border-top: 2px solid var(--border);">
-                            ${formatTime(checkInTime)} → ${releaseTime ? formatTime(releaseTime) : 'NOW'}
+                            ${formatTime(checkInTime)} â†’ ${releaseTime ? formatTime(releaseTime) : 'NOW'}
                         </td>
                         <td style="padding: 12px; border-top: 2px solid var(--border); color: ${totalColor};">
                             ${totalWaitMins}m <span style="font-size: 12px; opacity: 0.8;">(${varianceText})</span>
@@ -1463,11 +1624,535 @@ async function svSave(id) {
     await loadDashboard();
     updateClock();
 
+    // Initialize command palette after DOM is ready
+    initCommandPalette();
+
     // Auto-refresh every 30 seconds
     setInterval(loadDashboard, 30000);
     setInterval(updateClock, 1000);
 })();
+
+// ==================== COMMAND PALETTE (Ctrl+K) ====================
+let cmdOverlay, cmdInput, cmdResults;
+
+// Initialize after DOM is loaded
+function initCommandPalette() {
+    cmdOverlay = document.getElementById('cmdOverlay');
+    cmdInput = document.getElementById('cmdInput');
+    cmdResults = document.getElementById('cmdResults');
+
+    // Open palette with Cmd/Ctrl + K
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            toggleCmdPalette();
+        }
+
+        // Close with Escape
+        if (e.key === 'Escape' && cmdOverlay && cmdOverlay.classList.contains('active')) {
+            closeCmdPalette();
+        }
+    });
+
+    // Close when clicking outside
+    cmdOverlay.addEventListener('click', (e) => {
+        if (e.target === cmdOverlay) {
+            closeCmdPalette();
+        }
+    });
+
+    // Command input handler
+    cmdInput.addEventListener('input', async (e) => {
+        const query = e.target.value.trim().toLowerCase();
+
+        if (!query) {
+            showCmdSuggestions();
+            return;
+        }
+
+        // Execute command if it starts with /
+        if (query.startsWith('/')) {
+            await executeCmdCommand(query);
+        } else {
+            // Search mode - find vehicles
+            await cmdSearchVehicles(query);
+        }
+    });
+
+    // Execute on Enter
+    cmdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const query = cmdInput.value.trim().toLowerCase();
+            if (query.startsWith('/')) {
+                executeCmdCommand(query);
+            }
+        }
+    });
+}
+
+function toggleCmdPalette() {
+    cmdOverlay.classList.toggle('active');
+    if (cmdOverlay.classList.contains('active')) {
+        cmdInput.value = '';
+        cmdInput.focus();
+        showCmdSuggestions();
+    }
+}
+
+function closeCmdPalette() {
+    cmdOverlay.classList.remove('active');
+}
+
+// ==================== COMMAND IMPLEMENTATIONS ====================
+
+async function executeCmdCommand(cmd) {
+    cmd = cmd.toLowerCase();
+
+    switch(cmd) {
+        case '/status':
+            await cmdShowStatus();
+            break;
+        case '/overdue':
+            await cmdShowOverdue();
+            break;
+        case '/critical':
+            await cmdShowCritical();
+            break;
+        case '/longest':
+            await cmdShowLongest();
+            break;
+        case '/waiting':
+            await cmdShowWaiting();
+            break;
+        case '/export':
+            await cmdShowExports();
+            break;
+        case '/notified':
+            await cmdShowNotified();
+            break;
+        case '/today':
+            await cmdShowToday();
+            break;
+        default:
+            cmdResults.innerHTML = `
+                <div class="cmd-hint">
+                    Unknown command: <code>${cmd}</code><br>
+                    Try /status, /overdue, /critical, /longest, /waiting, /export, /notified, or /today
+                </div>
+            `;
+    }
+}
+
+async function cmdShowStatus() {
+    const now = Date.now();
+
+    const { data: vehicles } = await db
+        .from('vehicles')
+        .select('*')
+        .in('status', ['parked', 'notified']);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const { count: releasedCount } = await db
+        .from('vehicles')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'released')
+        .gte('release_time', todayStart.toISOString());
+
+    const inYard = vehicles?.length || 0;
+    const overdue = vehicles?.filter(v => {
+        const due = new Date(v.due_time).getTime();
+        return now > due + (30 * 60000);
+    }).length || 0;
+
+    const critical = vehicles?.filter(v => {
+        const due = new Date(v.due_time).getTime();
+        return now > due + (90 * 60000);
+    }).length || 0;
+
+    const avgWait = vehicles?.length > 0 
+        ? Math.round(vehicles.reduce((sum, v) => {
+            return sum + (now - new Date(v.check_in_time).getTime());
+        }, 0) / vehicles.length / 60000)
+        : 0;
+
+    cmdResults.innerHTML = `
+        <div class="cmd-metrics-grid">
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value">${inYard}</div>
+                <div class="cmd-metric-label">In Yard</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value ${critical > 0 ? 'cmd-danger' : ''}">${critical}</div>
+                <div class="cmd-metric-label">Critical</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value ${overdue > 0 ? 'cmd-warning' : ''}">${overdue}</div>
+                <div class="cmd-metric-label">Overdue</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value cmd-success">${releasedCount}</div>
+                <div class="cmd-metric-label">Released Today</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value">${avgWait}m</div>
+                <div class="cmd-metric-label">Avg Wait</div>
+            </div>
+        </div>
+    `;
+}
+
+async function cmdShowOverdue() {
+    const now = Date.now();
+
+    const { data: vehicles } = await db
+        .from('vehicles')
+        .select('*')
+        .in('status', ['parked', 'notified']);
+
+    const overdue = vehicles?.filter(v => {
+        const due = new Date(v.due_time).getTime();
+        return now > due + (30 * 60000);
+    }).map(v => {
+        const due = new Date(v.due_time).getTime();
+        const minsOverdue = Math.floor((now - due) / 60000);
+        return { ...v, minsOverdue };
+    }).sort((a, b) => b.minsOverdue - a.minsOverdue) || [];
+
+    if (overdue.length === 0) {
+        cmdResults.innerHTML = `
+            <div class="cmd-hint">
+                ✅ No overdue vehicles
+            </div>
+        `;
+        return;
+    }
+
+    cmdResults.innerHTML = `
+        <div class="cmd-detail-list">
+            ${overdue.map(v => `
+                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
+                    <div>
+                        <strong>${v.registration}</strong>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                            PO: ${v.po_ref || '-'} | ${v.status}
+                        </div>
+                    </div>
+                    <span class="cmd-badge ${v.minsOverdue > 90 ? 'cmd-badge-critical' : 'cmd-badge-warning'}">
+                        +${v.minsOverdue}m
+                    </span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function cmdShowCritical() {
+    const now = Date.now();
+
+    const { data: vehicles } = await db
+        .from('vehicles')
+        .select('*')
+        .in('status', ['parked', 'notified']);
+
+    const critical = vehicles?.filter(v => {
+        const due = new Date(v.due_time).getTime();
+        return now > due + (90 * 60000);
+    }).map(v => {
+        const due = new Date(v.due_time).getTime();
+        const minsOverdue = Math.floor((now - due) / 60000);
+        return { ...v, minsOverdue };
+    }).sort((a, b) => b.minsOverdue - a.minsOverdue) || [];
+
+    if (critical.length === 0) {
+        cmdResults.innerHTML = `
+            <div class="cmd-hint">
+                ✅ No critical alerts
+            </div>
+        `;
+        return;
+    }
+
+    cmdResults.innerHTML = `
+        <div class="cmd-detail-list">
+            ${critical.map(v => `
+                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
+                    <div>
+                        <strong>${v.registration}</strong>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                            PO: ${v.po_ref || '-'} | ${v.status}
+                        </div>
+                    </div>
+                    <span class="cmd-badge cmd-badge-critical">
+                        +${v.minsOverdue}m
+                    </span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function cmdShowLongest() {
+    const now = Date.now();
+
+    const { data: vehicles } = await db
+        .from('vehicles')
+        .select('*')
+        .in('status', ['parked', 'notified'])
+        .order('check_in_time', { ascending: true })
+        .limit(10);
+
+    if (!vehicles || vehicles.length === 0) {
+        cmdResults.innerHTML = `<div class="cmd-hint">No vehicles in yard</div>`;
+        return;
+    }
+
+    cmdResults.innerHTML = `
+        <div class="cmd-detail-list">
+            ${vehicles.map(v => {
+                const checkIn = new Date(v.check_in_time).getTime();
+                const waitMins = Math.floor((now - checkIn) / 60000);
+                const due = new Date(v.due_time).getTime();
+                const overdue = now > due;
+
+                return `
+                    <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
+                        <div>
+                            <strong>${v.registration}</strong>
+                            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                                PO: ${v.po_ref || '-'} | ${v.status}
+                            </div>
+                        </div>
+                        <span class="cmd-badge ${overdue ? 'cmd-badge-critical' : 'cmd-badge-normal'}">
+                            ${waitMins}m
+                        </span>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+async function cmdShowWaiting() {
+    const { count } = await db
+        .from('vehicles')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['parked', 'notified']);
+
+    cmdResults.innerHTML = `
+        <div class="cmd-metrics-grid">
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value">${count || 0}</div>
+                <div class="cmd-metric-label">Waiting Vehicles</div>
+            </div>
+        </div>
+    `;
+}
+
+async function cmdShowExports() {
+    const { data: exports } = await db
+        .from('vehicles')
+        .select('*')
+        .eq('classification', 'export')
+        .in('status', ['parked', 'notified']);
+
+    if (!exports || exports.length === 0) {
+        cmdResults.innerHTML = `<div class="cmd-hint">No export loads in yard</div>`;
+        return;
+    }
+
+    cmdResults.innerHTML = `
+        <div class="cmd-detail-list">
+            ${exports.map(v => `
+                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
+                    <div>
+                        <strong>${v.registration}</strong> 
+                        <span style="color: var(--export); font-size: 11px; margin-left: 8px;">EXPORT</span>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                            PO: ${v.po_ref || '-'} | ${v.status}
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function cmdShowNotified() {
+    const { data: notified } = await db
+        .from('vehicles')
+        .select('*')
+        .eq('status', 'notified')
+        .order('notify_time', { ascending: true });
+
+    if (!notified || notified.length === 0) {
+        cmdResults.innerHTML = `<div class="cmd-hint">No notified vehicles</div>`;
+        return;
+    }
+
+    const now = Date.now();
+
+    cmdResults.innerHTML = `
+        <div class="cmd-detail-list">
+            ${notified.map(v => {
+                const notifyTime = new Date(v.notify_time).getTime();
+                const minsSinceNotify = Math.floor((now - notifyTime) / 60000);
+
+                return `
+                    <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
+                        <div>
+                            <strong>${v.registration}</strong>
+                            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                                PO: ${v.po_ref || '-'} | Notified ${minsSinceNotify}m ago
+                            </div>
+                        </div>
+                        <span class="cmd-badge ${minsSinceNotify > 30 ? 'cmd-badge-warning' : 'cmd-badge-normal'}">
+                            ${minsSinceNotify}m
+                        </span>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+async function cmdShowToday() {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Get all checked in today
+    const { count: checkedInCount } = await db
+        .from('vehicles')
+        .select('*', { count: 'exact', head: true })
+        .gte('check_in_time', todayStart.toISOString());
+
+    // Get released today
+    const { data: released } = await db
+        .from('vehicles')
+        .select('*')
+        .eq('status', 'released')
+        .gte('release_time', todayStart.toISOString());
+
+    const releasedCount = released?.length || 0;
+
+    // Calculate average turnaround
+    let avgTurnaround = 0;
+    if (released && released.length > 0) {
+        const totalMins = released.reduce((sum, v) => {
+            const checkIn = new Date(v.check_in_time).getTime();
+            const releaseTime = new Date(v.release_time).getTime();
+            return sum + (releaseTime - checkIn) / 60000;
+        }, 0);
+        avgTurnaround = Math.round(totalMins / released.length);
+    }
+
+    // Current in yard
+    const { count: inYard } = await db
+        .from('vehicles')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['parked', 'notified']);
+
+    cmdResults.innerHTML = `
+        <div class="cmd-metrics-grid">
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value">${checkedInCount || 0}</div>
+                <div class="cmd-metric-label">Checked In Today</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value cmd-success">${releasedCount}</div>
+                <div class="cmd-metric-label">Released Today</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value">${inYard || 0}</div>
+                <div class="cmd-metric-label">Currently In Yard</div>
+            </div>
+            <div class="cmd-metric-card">
+                <div class="cmd-metric-value">${avgTurnaround}m</div>
+                <div class="cmd-metric-label">Avg Turnaround</div>
+            </div>
+        </div>
+    `;
+}
+
+async function cmdSearchVehicles(query) {
+    query = query.toUpperCase();
+
+    const { data: vehicles } = await db
+        .from('vehicles')
+        .select('*')
+        .ilike('registration', `%${query}%`)
+        .limit(10);
+
+    if (!vehicles || vehicles.length === 0) {
+        cmdResults.innerHTML = `
+            <div class="cmd-hint">
+                No vehicles found matching "${query}"
+            </div>
+        `;
+        return;
+    }
+
+    cmdResults.innerHTML = `
+        <div class="cmd-detail-list">
+            ${vehicles.map(v => `
+                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
+                    <div>
+                        <strong>${v.registration}</strong>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                            PO: ${v.po_ref || '-'} | Status: ${v.status}
+                        </div>
+                    </div>
+                    <span class="cmd-badge ${
+                        v.status === 'released' ? 'cmd-badge-normal' : 
+                        v.status === 'notified' ? 'cmd-badge-warning' : 
+                        'cmd-badge-critical'
+                    }">
+                        ${v.status}
+                    </span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function showCmdSuggestions() {
+    cmdResults.innerHTML = `
+        <div class="cmd-suggestions">
+            <div class="cmd-suggestions-title">Quick Commands</div>
+            <div>
+                <span class="cmd-tag" onclick="cmdInput.value='/status'; executeCmdCommand('/status');">/status</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/overdue'; executeCmdCommand('/overdue');">/overdue</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/critical'; executeCmdCommand('/critical');">/critical</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/longest'; executeCmdCommand('/longest');">/longest</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/waiting'; executeCmdCommand('/waiting');">/waiting</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/export'; executeCmdCommand('/export');">/export</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/notified'; executeCmdCommand('/notified');">/notified</span>
+                <span class="cmd-tag" onclick="cmdInput.value='/today'; executeCmdCommand('/today');">/today</span>
+            </div>
+        </div>
+        <div class="cmd-hint">
+            Type <code>/</code> to see commands or start typing to search vehicles
+        </div>
+    `;
+}
 </script>
+
+<!-- ============================================================
+     COMMAND PALETTE (Ctrl+K) - Invisible Until Triggered
+     ============================================================ -->
+<div id="cmdOverlay">
+    <div id="cmdPalette">
+        <input 
+            type="text" 
+            id="cmdInput" 
+            placeholder="Type a command... (e.g. /status, /overdue)" 
+            autocomplete="off"
+            spellcheck="false"
+        >
+        <div id="cmdResults"></div>
+    </div>
+</div>
 
 </body>
 </html>
