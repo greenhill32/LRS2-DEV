@@ -1,5 +1,3 @@
---- START OF FILE index.html ---
-
 <!-- START A1 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,18 +8,16 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Export Added)";
+document.getElementById("versionBanner").innerText = "v3.2.0 — OPTIMIZED";
 </script>
 
-
 <!--
-  Warehouse gatehouse dashboard.
-  Features:
-    • Real‑time queue with colour‑coded entries.
-    • Export Load handling (Blue glow/Badge).
-    • KPI tiles.
-    • Live activity feed.
-    • Supabase integration.
+  Warehouse gatehouse dashboard - OPTIMIZED VERSION
+  Changes from v3.1.2:
+    • Filtered queries - only fetch active vehicles, not entire history
+    • Supabase Realtime - instant updates, no polling
+    • Cached operators - load once, not every 15 seconds
+    • Debounced refreshes - prevent hammering DB on rapid changes
 -->
 <style>
     :root {
@@ -34,9 +30,25 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         --warn: #fbbf24;
         --danger: #ef4444;
     }
+
+    /* Export load styling */
+    .queue-export {
+        background: linear-gradient(
+            90deg,
+            rgba(14,165,233,0.25),
+            rgba(14,165,233,0.08)
+        ) !important;
+        box-shadow: 0 0 16px rgba(14,165,233,0.5);
+        animation: exportPulse 2.4s infinite ease-in-out;
+    }
+
+    @keyframes exportPulse {
+        0%, 100% { box-shadow: 0 0 16px rgba(14,165,233,0.5); }
+        50% { box-shadow: 0 0 24px rgba(14,165,233,0.8); }
+    }
     body {
         margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans‑serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: var(--bg);
         color: var(--text);
     }
@@ -48,7 +60,6 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         border-bottom: 1px solid #1e293b;
     }
 
-    /* header sections for left title, centre clock and right actions */
     .header-left {
         flex: 1;
         font-size: 24px;
@@ -71,7 +82,6 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         position: relative;
     }
 
-    /* avatar button and dropdown menu */
     #avatarBtn {
         width: 38px;
         height: 38px;
@@ -109,12 +119,10 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         color: #000;
     }
 
-    /* make queue cards clickable */
     .entry {
         cursor: pointer;
     }
 
-    /* modal overlay for editing vehicles */
     #editModalOverlay {
         position: fixed;
         top: 0;
@@ -221,14 +229,13 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
     }
     .entry {
         background: #1f2937;
-        border-left: 8px solid var(--success);
-        padding: 12px;
+        border-left: 22px solid var(--success);
+        padding: 24px;
         margin-bottom: 12px;
         border-radius: 6px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: 0.3s;
     }
     .entry.overdue {
         border-left-color: var(--warn);
@@ -236,32 +243,6 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
     .entry.critical {
         border-left-color: var(--danger);
     }
-    /* EXPORT STYLES */
-    .entry.export-card {
-        background: linear-gradient(90deg, rgba(27,140,255,0.20), rgba(27,140,255,0.05));
-        box-shadow: 0 0 12px rgba(27,140,255,0.35);
-        animation: exportPulse 1.8s infinite ease-in-out;
-    }
-    /* Ensure overdue colors override the default green border even on export cards */
-    .entry.export-card.overdue { border-left-color: var(--warn) !important; }
-    .entry.export-card.critical { border-left-color: var(--danger) !important; }
-
-    @keyframes exportPulse {
-        0%   { box-shadow: 0 0 8px rgba(27,140,255,0.25); }
-        50%  { box-shadow: 0 0 16px rgba(27,140,255,0.65); }
-        100% { box-shadow: 0 0 8px rgba(27,140,255,0.25); }
-    }
-    .export-banner {
-        display: inline-block;
-        background: var(--accent);
-        color: #fff;
-        padding: 2px 6px;
-        font-size: 11px;
-        font-weight: bold;
-        border-radius: 4px;
-        margin-bottom: 4px;
-    }
-
     .entry .info {
         flex: 1;
     }
@@ -282,7 +263,6 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         padding-bottom: 4px;
         font-size: 14px;
     }
-    /* Add Lorry Button & Panel Styles */
     .add-btn {
         background: var(--accent);
         color: #fff;
@@ -298,7 +278,7 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         top: 0;
         left: 0;
         right: 0;
-        min-height: 380px; /* Increased for export checkbox */
+        min-height: 320px;
         background: var(--card);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         padding: 20px 24px;
@@ -342,6 +322,23 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         text-align: center;
         font-weight: bold;
     }
+    
+    /* Connection status indicator */
+    .connection-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success);
+        margin-right: 8px;
+    }
+    .connection-status.disconnected {
+        background: var(--danger);
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
 </style>
 <!-- END A1 -->
  
@@ -365,26 +362,26 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
                 <option value="120">120 mins</option>
             </select>
         </div>
-        <!-- EXPORT CHECKBOX -->
-        <div class="form-row">
-            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; width:100%;">
-                <input type="checkbox" id="exportCheckbox" style="width:auto; cursor:pointer;">
-                <span style="font-size:14px; font-weight:bold; color:var(--text);">Mark as EXPORT load</span>
-            </label>
-        </div>
         <div class="form-row">
             <textarea id="notesInput" placeholder="Notes" style="width:100%;height:80px;"></textarea>
+        </div>
+        <div class="form-row">
+            <label style="color:#ccc;">
+                <input type="checkbox" id="addExport" style="margin-right:6px;">
+                Export Load
+            </label>
         </div>
         <div class="submit-btn" onclick="submitVehicle()">Submit</div>
     </div>
     <header>
-        <div class="header-left">Gatehouse Dashboard</div>
+        <div class="header-left">
+            <span class="connection-status" id="connectionStatus" title="Realtime connection"></span>
+            Gatehouse Dashboard
+        </div>
         <div id="clock" class="header-clock">--:--</div>
         <div class="header-right">
-            <!-- Add lorry button -->
             <button class="add-btn" onclick="togglePanel()">Add Lorry</button>
             <button id="refreshBtn" style="padding:8px 16px;font-size:14px;background:var(--accent);color:#fff;border:none;border-radius:4px;" onclick="manualRefresh()">Refresh</button>
-            <!-- Avatar and dropdown -->
             <div style="position: relative;">
                 <div id="avatarBtn">??</div>
                 <div id="avatarMenu">
@@ -395,6 +392,7 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         </div>
     </header>
     <!-- END A2 -->
+    
     <!-- KPI Tiles -->
     <!-- START A3 -->
     <div class="stats">
@@ -404,7 +402,7 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         </div>
         <div class="tile">
             <div class="value" id="kpiTotalOut">0</div>
-            Released
+            Released Today
         </div>
         <div class="tile">
             <div class="value" id="kpiAvgWait">0</div>
@@ -416,20 +414,20 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
         </div>
     </div>
     <!-- END A3 -->
+    
     <!-- START A4 -->
     <div class="grid">
-        <!-- Queue Section -->
         <div class="queue">
             <h2>Active Queue</h2>
             <div id="queueList">Loading…</div>
         </div>
-        <!-- Details / Timeline Section -->
         <div class="details">
             <h2>Recent Activity</h2>
             <div id="activityList">Loading…</div>
         </div>
     </div>
     <!-- END A4 -->
+    
     <!-- START A5 -->
     <canvas id="chartTrend" style="max-width:600px;height:240px;max-height:240px;margin:0 auto 24px;display:block;"></canvas>
     <!-- END A5 -->
@@ -438,127 +436,202 @@ document.getElementById("versionBanner").innerText = "v3.0.3 — DEV BUILD (Expo
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    // START A6
-    // Initialise Supabase client
+    // ============================================================
+    // SUPABASE CLIENT
+    // ============================================================
     const db = supabase.createClient(
         "https://gtixdparpjdpyhhubsfz.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
     );
-    // END A6
 
-    let vehicles = [];
-    let operators = [];
+    // ============================================================
+    // STATE
+    // ============================================================
+    let vehicles = [];          // Only ACTIVE vehicles (parked/notified)
+    let releasedToday = 0;      // Count only, not full records
+    let operators = [];         // Loaded ONCE, cached
     let logs = [];
     let chart;
-    // START A7
-    // Fetch operators from Supabase (names for activity feed)
+    let refreshTimeout = null;  // For debouncing
+
+    // ============================================================
+    // OPTIMIZED FETCH: OPERATORS (load once, cache in memory)
+    // ============================================================
     async function fetchOperators() {
+        // Only fetch if we don't have them cached
+        if (operators.length > 0) return;
+        
         const { data, error } = await db
             .from('operators')
-            .select('id, name');
+            .select('id, name')
+            .eq('active', true);
+        
         if (error) { console.error(error); return; }
         operators = data || [];
+        
+        // Also cache in localStorage for instant load on refresh
+        try {
+            localStorage.setItem('operators_cache', JSON.stringify(operators));
+        } catch (e) { /* quota exceeded, ignore */ }
     }
-    // END A7
 
-    // START A8 — Load ALL vehicles so Recents works
-async function fetchVehicles() {
-    const { data, error } = await db
-        .from('vehicles')
-        .select('*')
-        .order('check_in_time', { ascending: true });
+    // Load cached operators immediately
+    (function loadCachedOperators() {
+        try {
+            const cached = localStorage.getItem('operators_cache');
+            if (cached) operators = JSON.parse(cached);
+        } catch (e) { /* ignore */ }
+    })();
 
-    if (error) { console.error(error); return; }
+    // ============================================================
+    // OPTIMIZED FETCH: VEHICLES (only active, not entire history)
+    // ============================================================
+    async function fetchVehicles() {
+        // CHANGE: Only fetch active vehicles, not released ones
+        const { data, error } = await db
+            .from('vehicles')
+            .select('*')
+            .in('status', ['parked', 'notified'])
+            .order('check_in_time', { ascending: true });
 
-    vehicles = data || [];
+        if (error) { console.error(error); return; }
+        vehicles = data || [];
 
-    renderQueue();
-    loadKPIs();
-    loadChart();
-}
-// END A8
+        // Fetch released count separately (just the count, not all records)
+        const today = new Date().toISOString().slice(0, 10);
+        const { count } = await db
+            .from('vehicles')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'released')
+            .gte('release_time', today);
+        
+        releasedToday = count || 0;
 
-// START A9
-/* Fetch recent actions (last 24 hours, newest first) */
-async function fetchLogs() {
-    try {
-        // Load 40 latest raw actions from DB
+        renderQueue();
+        loadKPIs();
+        loadChart();
+    }
+
+    // ============================================================
+    // OPTIMIZED FETCH: LOGS (with 24hr filter in query)
+    // ============================================================
+    async function fetchLogs() {
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        
         const { data, error } = await db
             .from('actions_log')
             .select('*')
+            .gte('timestamp', cutoff)  // Filter in DB, not JS
             .order('timestamp', { ascending: false })
-            .limit(40);
+            .limit(20);
 
-        if (error) {
-            console.error("Error loading logs:", error);
-            return;
-        }
-
-        const all = data || [];
-
-        // Cutoff = last 24 hours
-        const cutoff = Date.now() - (24 * 60 * 60 * 1000);
-
-        logs = all
-            .filter(l => new Date(l.timestamp).getTime() >= cutoff)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
+        if (error) { console.error("Error loading logs:", error); return; }
+        logs = data || [];
         renderActivity();
-    } catch (err) {
-        console.error("fetchLogs fatal:", err);
     }
-}
-// END A9
 
+    // ============================================================
+    // REALTIME SUBSCRIPTIONS (replaces polling)
+    // ============================================================
+    function setupRealtime() {
+        const statusEl = document.getElementById('connectionStatus');
+        
+        // Subscribe to vehicles changes
+        const vehicleChannel = db
+            .channel('vehicles-changes')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'vehicles' },
+                (payload) => {
+                    console.log('Vehicle change:', payload.eventType);
+                    debouncedRefresh();
+                }
+            )
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    statusEl.classList.remove('disconnected');
+                    statusEl.title = 'Connected - Live updates';
+                } else {
+                    statusEl.classList.add('disconnected');
+                    statusEl.title = 'Disconnected - Reconnecting...';
+                }
+            });
 
+        // Subscribe to actions_log changes
+        const logsChannel = db
+            .channel('logs-changes')
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'actions_log' },
+                (payload) => {
+                    console.log('New log entry');
+                    debouncedRefresh();
+                }
+            )
+            .subscribe();
+    }
 
-    // START A10
-    // KPI calculations
+    // Debounce rapid changes (e.g., if 5 tabs open)
+    function debouncedRefresh() {
+        if (refreshTimeout) clearTimeout(refreshTimeout);
+        refreshTimeout = setTimeout(() => {
+            fetchVehicles();
+            fetchLogs();
+        }, 500); // Wait 500ms for changes to settle
+    }
+
+    // ============================================================
+    // KPI CALCULATIONS (now simpler - vehicles only has active)
+    // ============================================================
     function loadKPIs() {
-        const totalIn = vehicles.filter(v => v.status !== 'released').length;
-        const totalOut = vehicles.filter(v => v.status === 'released').length;
-        const waits = vehicles.filter(v => v.status === 'parked' || v.status === 'waiting' || v.status === 'notified').map(v => {
-            return Math.floor((Date.now() - new Date(v.check_in_time)) / 60000);
-        });
-        const avgWait = waits.length ? (waits.reduce((a,b)=>a+b,0)/waits.length).toFixed(0) : 0;
+        const totalIn = vehicles.length;
+        
+        const waits = vehicles.map(v => 
+            Math.floor((Date.now() - new Date(v.check_in_time)) / 60000)
+        );
+        const avgWait = waits.length 
+            ? Math.round(waits.reduce((a,b) => a+b, 0) / waits.length) 
+            : 0;
+        
         const overdue = vehicles.filter(v => {
-            const due = new Date(v.due_time || v.check_in_time).getTime() + 30*60000;
-            return Date.now() > due && v.status !== 'released';
+            const due = new Date(v.due_time).getTime();
+            return Date.now() > due + (30 * 60000);
         }).length;
+
         document.getElementById('kpiTotalIn').textContent = totalIn;
-        document.getElementById('kpiTotalOut').textContent = totalOut;
+        document.getElementById('kpiTotalOut').textContent = releasedToday;
         document.getElementById('kpiAvgWait').textContent = avgWait;
         document.getElementById('kpiOverdue').textContent = overdue;
     }
-    // END A10
 
-    // Render queue list
+    // ============================================================
+    // RENDER QUEUE (unchanged logic, but faster data)
+    // ============================================================
     function renderQueue() {
         const container = document.getElementById('queueList');
         container.innerHTML = '';
-        vehicles.filter(v => v.status !== "released").forEach(v => {
+        
+        if (vehicles.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;">No vehicles in queue</div>';
+            return;
+        }
+        
+        vehicles.forEach(v => {
             const li = document.createElement('div');
-            // Determine overdue/critical status based on due time
             const now = Date.now();
             const dueTime = new Date(v.due_time).getTime();
-            const minsLate = Math.floor((now - dueTime)/60000);
+            const minsLate = Math.floor((now - dueTime) / 60000);
             
-            let statusClass = '';
-            if (minsLate > 0 && v.status !== 'released') statusClass = minsLate > 90 ? 'critical' : 'overdue';
+            let cls = '';
+            if (minsLate > 0) cls = minsLate > 90 ? 'critical' : 'overdue';
             
-            // Check for export classification
             const isExport = v.classification === 'export';
-            const exportClass = isExport ? 'export-card' : '';
-
-            li.className = `entry ${statusClass} ${exportClass}`;
-            // When clicking anywhere on the card (except buttons) open edit modal
+            li.className = `entry ${cls} ${isExport ? 'queue-export' : ''}`;
             li.onclick = () => openEditModal(v.id);
+            
             li.innerHTML = `
                 <div class="info">
-                    ${isExport ? '<div class="export-banner">EXPORT LOAD</div><br>' : ''}
-                    <strong>${v.registration || '–'}</strong> — ${v.status}<br>
+                    <strong>${v.registration || '—'}</strong> — ${v.status}<br>
                     PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
-                    In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-' }
+                    In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-'}
                 </div>
                 <div class="actions">
                     <button class="notify" onclick="event.stopPropagation(); notify('${v.id}')">Notify</button>
@@ -570,134 +643,183 @@ async function fetchLogs() {
         });
     }
 
-    // Render recent activity
+    // ============================================================
+    // RENDER ACTIVITY
+    // ============================================================
     function renderActivity() {
         const container = document.getElementById('activityList');
         container.innerHTML = '';
+        
+        if (logs.length === 0) {
+            container.innerHTML = '<div style="color:var(--muted);">No recent activity</div>';
+            return;
+        }
+        
         logs.forEach(l => {
             const item = document.createElement('div');
             item.className = 'activity-item';
-            // find registration and PO from vehicles array
+            
             const veh = vehicles.find(v => v.id === l.vehicle_id) || {};
-            const reg = veh.registration || '';
+            const reg = veh.registration || l.vehicle_id?.slice(0, 8) || '';
             const po = veh.po_ref || '';
-            // find operator name
+            
             const op = operators.find(o => o.id === l.operator_id) || {};
             const name = op.name || 'Unknown';
-            // humanise action
+            
             let actionVerb = '';
             switch(l.action) {
                 case 'check_in': actionVerb = 'checked in'; break;
                 case 'notified': actionVerb = 'notified'; break;
                 case 'released': actionVerb = 'completed'; break;
                 case 'undo': actionVerb = 'reverted'; break;
+                case 'edit': actionVerb = 'edited'; break;
                 default: actionVerb = l.action; break;
             }
+            
             const dt = new Date(l.timestamp);
-            const timeStr = dt.toLocaleString('en-GB', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-            item.textContent = `${reg || l.vehicle_id} ${po} ${actionVerb} by ${name} — ${timeStr}`.trim();
+            const timeStr = dt.toLocaleString('en-GB', { 
+                day:'2-digit', month:'2-digit', 
+                hour:'2-digit', minute:'2-digit', second:'2-digit' 
+            });
+            
+            item.textContent = `${reg} ${po} ${actionVerb} by ${name} — ${timeStr}`.trim();
             container.appendChild(item);
         });
     }
 
-    // START A11
-    // Chart for check‑ins per hour
+    // ============================================================
+    // CHART (simplified - only uses active vehicles)
+    // ============================================================
     function loadChart() {
         const ctx = document.getElementById('chartTrend').getContext('2d');
         const hours = [];
         const counts = [];
         const now = new Date();
-        for (let i=0; i<12; i++) {
-            const h = new Date(now.getTime() - (11-i)*60*60*1000);
-            const label = h.getHours().toString().padStart(2,'0')+':00';
+        
+        for (let i = 0; i < 12; i++) {
+            const h = new Date(now.getTime() - (11 - i) * 60 * 60 * 1000);
+            const label = h.getHours().toString().padStart(2, '0') + ':00';
             hours.push(label);
-            // count vehicles checked in within that hour
+            
             const count = vehicles.filter(v => {
                 const ci = new Date(v.check_in_time);
-                return ci.getHours() === h.getHours();
+                return ci.getHours() === h.getHours() && 
+                       ci.toDateString() === h.toDateString();
             }).length;
             counts.push(count);
         }
+        
         if (chart) chart.destroy();
+        
         const computedStyles = getComputedStyle(document.documentElement);
         const accent = computedStyles.getPropertyValue('--accent').trim() || '#0ea5e9';
+        
         chart = new Chart(ctx, {
             type: 'line',
-            data: { labels: hours, datasets: [{ label: 'Check‑ins per hour', data: counts, borderColor: accent, backgroundColor: accent + '33', borderWidth: 2, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            data: { 
+                labels: hours, 
+                datasets: [{ 
+                    label: 'Active vehicles by check-in hour', 
+                    data: counts, 
+                    borderColor: accent, 
+                    backgroundColor: accent + '33', 
+                    borderWidth: 2, 
+                    tension: 0.3 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { y: { beginAtZero: true } } 
+            }
         });
     }
-    // END A11
 
-    // START A12
-    // Action handlers
+    // ============================================================
+    // ACTION HANDLERS
+    // ============================================================
     async function notify(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
-        const { error } = await db.from('vehicles').update({ status: 'notified', notify_time: now }).eq('id', id);
+        
+        const { error } = await db.from('vehicles')
+            .update({ status: 'notified', notify_time: now })
+            .eq('id', id);
+        
         if (!error) {
-            await db.from('actions_log').insert({ vehicle_id: id, action: 'notified', timestamp: now, operator_id: operator });
-            await fetchVehicles();
-            await fetchLogs();
+            await db.from('actions_log').insert({ 
+                vehicle_id: id, 
+                action: 'notified', 
+                timestamp: now, 
+                operator_id: operator 
+            });
+            // Realtime will trigger refresh, but do it immediately for responsiveness
+            fetchVehicles();
+            fetchLogs();
         }
     }
+
     async function release(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
-        const { error } = await db.from('vehicles').update({ status: 'released', release_time: now }).eq('id', id);
+        
+        const { error } = await db.from('vehicles')
+            .update({ status: 'released', release_time: now })
+            .eq('id', id);
+        
         if (!error) {
-            await db.from('actions_log').insert({ vehicle_id: id, action: 'released', timestamp: now, operator_id: operator });
-            await fetchVehicles();
-            await fetchLogs();
+            await db.from('actions_log').insert({ 
+                vehicle_id: id, 
+                action: 'released', 
+                timestamp: now, 
+                operator_id: operator 
+            });
+            fetchVehicles();
+            fetchLogs();
         }
     }
+
     async function undo(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
-        const { data: v } = await db.from('vehicles').select('status').eq('id', id).single();
-        // revert statuses: notified -> parked, released -> notified? For simplicity, set to parked
-        const newStatus = 'parked';
-        const { error } = await db.from('vehicles').update({ status: newStatus }).eq('id', id);
+        
+        const { error } = await db.from('vehicles')
+            .update({ status: 'parked', notify_time: null })
+            .eq('id', id);
+        
         if (!error) {
-            await db.from('actions_log').insert({ vehicle_id: id, action: 'undo', timestamp: now, operator_id: operator });
-            await fetchVehicles();
-            await fetchLogs();
+            await db.from('actions_log').insert({ 
+                vehicle_id: id, 
+                action: 'undo', 
+                timestamp: now, 
+                operator_id: operator 
+            });
+            fetchVehicles();
+            fetchLogs();
         }
     }
 
-    // Toggle the visibility of the add panel
+    // ============================================================
+    // ADD VEHICLE
+    // ============================================================
     function togglePanel() {
         const panel = document.getElementById('addPanel');
-        if (panel) {
-            panel.classList.toggle('panel-visible');
-            // If opening (implied by visible class), reset form if needed or on close
-            if (!panel.classList.contains('panel-visible')) {
-                // reset checkbox when closing
-                document.getElementById('exportCheckbox').checked = false;
-            }
-        }
+        if (panel) panel.classList.toggle('panel-visible');
     }
 
-    // Submit a new lorry to the database
     async function submitVehicle() {
         const btn = document.querySelector('#addPanel .submit-btn');
         if (!btn) return;
-        // disable button to avoid double submissions
+        
         btn.style.pointerEvents = 'none';
         btn.style.opacity = '0.6';
 
-        // Gather form values
         let reg = document.getElementById('regInput').value.trim().replace(/\s+/g, '').toUpperCase();
         let po = document.getElementById('poInput').value.trim();
-        // If pager input is blank, store null so Supabase won't attempt to parse an empty string as an integer
         let pagerInput = document.getElementById('pagerInput').value.trim();
         let pager = pagerInput === '' ? null : pagerInput;
         let notes = document.getElementById('notesInput').value.trim();
         let quoted = parseInt(document.getElementById('quotedInput').value, 10);
-        
-        // EXPORT LOGIC
-        const isExport = document.getElementById('exportCheckbox').checked;
-        const classification = isExport ? 'export' : 'normal';
 
         if (!reg) {
             alert('Registration required');
@@ -709,13 +831,12 @@ async function fetchLogs() {
         const operatorId = localStorage.getItem('operator_id') || null;
         const nowIso = new Date().toISOString();
         const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
+        const isExport = document.getElementById('addExport').checked;
 
         try {
-            // Insert into vehicles table
             const { data, error } = await db.from('vehicles').insert({
                 registration: reg,
                 po_ref: po || null,
-                // pager_number is nullable; pass null if empty to avoid invalid integer parsing
                 pager_number: pager,
                 notes: notes || null,
                 quoted_minutes: quoted,
@@ -723,78 +844,72 @@ async function fetchLogs() {
                 due_time: dueIso,
                 status: 'parked',
                 operator_id: operatorId,
-                classification: classification
+                classification: isExport ? 'export' : 'normal'
             }).select();
+            
             if (error) {
                 alert('Error: ' + error.message);
                 btn.style.pointerEvents = 'auto';
                 btn.style.opacity = '1';
                 return;
             }
+            
             const vehicleId = data && data[0] && data[0].id;
-            // Log check in action
+            window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
+            
             await db.from('actions_log').insert({
                 vehicle_id: vehicleId,
                 action: 'check_in',
                 timestamp: nowIso,
                 operator_id: operatorId
             });
-            // Refresh lists
+            
+            // Realtime will trigger, but refresh immediately
             await fetchVehicles();
             await fetchLogs();
-            await fetchOperators();
-            // Close panel and reset form
+            
             togglePanel();
             document.getElementById('regInput').value = '';
             document.getElementById('poInput').value = '';
             document.getElementById('pagerInput').value = '';
             document.getElementById('notesInput').value = '';
             document.getElementById('quotedInput').value = '60';
-            document.getElementById('exportCheckbox').checked = false;
+            document.getElementById('addExport').checked = false;
         } finally {
             btn.style.pointerEvents = 'auto';
             btn.style.opacity = '1';
         }
     }
-    // END A12
 
-    // START A13
+    // ============================================================
+    // MANUAL REFRESH (fallback)
+    // ============================================================
     function manualRefresh() {
         fetchVehicles();
         fetchOperators();
         fetchLogs();
     }
 
-    // Initial load and periodic refresh
-    fetchVehicles();
-    fetchOperators();
-    fetchLogs();
-    setInterval(() => {
-        fetchVehicles();
-        fetchOperators();
-        fetchLogs();
-    }, 15000);
-    // END A13
-
-    // BEGIN - added clock update and avatar/menu logic and edit modal
-
-    // Live clock update
+    // ============================================================
+    // CLOCK
+    // ============================================================
     function updateClock() {
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const timeStr = now.toLocaleTimeString('en-GB', { 
+            hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
         const clk = document.getElementById('clock');
         if (clk) clk.textContent = timeStr;
     }
-    updateClock();
-    setInterval(updateClock, 1000);
 
-    // Logout handler
+    // ============================================================
+    // AVATAR / LOGOUT
+    // ============================================================
     function logoutUser() {
         localStorage.removeItem('operator_id');
         window.location.href = 'login.html';
     }
 
-    // Avatar dropdown toggle
     document.addEventListener('click', (e) => {
         const btn = document.getElementById('avatarBtn');
         const menu = document.getElementById('avatarMenu');
@@ -806,7 +921,6 @@ async function fetchLogs() {
         }
     });
 
-    // Populate avatar with operator initials/name
     (async () => {
         const opId = localStorage.getItem('operator_id');
         if (!opId) return;
@@ -825,39 +939,37 @@ async function fetchLogs() {
         }
     })();
 
-    // Show edit modal with fields prefilled
+    // ============================================================
+    // EDIT MODAL
+    // ============================================================
     let currentEditId = null;
+    
     function openEditModal(id) {
         const veh = vehicles.find(v => v.id === id);
         if (!veh) return;
         currentEditId = id;
-        const reg = document.getElementById('editReg');
-        const po = document.getElementById('editPO');
-        const pager = document.getElementById('editPager');
-        const notes = document.getElementById('editNotes');
-        if (reg) reg.value = veh.registration || '';
-        if (po) po.value = veh.po_ref || '';
-        if (pager) pager.value = veh.pager_number || '';
-        if (notes) notes.value = veh.notes || '';
-        const overlay = document.getElementById('editModalOverlay');
-        if (overlay) overlay.style.display = 'block';
+        
+        document.getElementById('editReg').value = veh.registration || '';
+        document.getElementById('editPO').value = veh.po_ref || '';
+        document.getElementById('editPager').value = veh.pager_number || '';
+        document.getElementById('editNotes').value = veh.notes || '';
+        document.getElementById('editModalOverlay').style.display = 'block';
     }
 
-    // Hide edit modal
     function closeEditModal() {
-        const overlay = document.getElementById('editModalOverlay');
-        if (overlay) overlay.style.display = 'none';
+        document.getElementById('editModalOverlay').style.display = 'none';
         currentEditId = null;
     }
 
-    // Save edits back to Supabase
     async function saveEditModal() {
         if (!currentEditId) { closeEditModal(); return; }
+        
         const regVal = document.getElementById('editReg').value.trim().toUpperCase();
         const poVal = document.getElementById('editPO').value.trim();
         const pagerVal = document.getElementById('editPager').value.trim();
         const notesVal = document.getElementById('editNotes').value.trim();
         const operatorId = localStorage.getItem('operator_id') || null;
+        
         const updates = {
             registration: regVal,
             po_ref: poVal || null,
@@ -865,13 +977,14 @@ async function fetchLogs() {
             notes: notesVal || null,
             operator_id: operatorId
         };
+        
         try {
             const { error } = await db.from('vehicles').update(updates).eq('id', currentEditId);
             if (error) {
                 alert('Error updating record: ' + error.message);
                 return;
             }
-            // Log edit action
+            
             const nowIso = new Date().toISOString();
             await db.from('actions_log').insert({
                 vehicle_id: currentEditId,
@@ -879,6 +992,7 @@ async function fetchLogs() {
                 timestamp: nowIso,
                 operator_id: operatorId
             });
+            
             await fetchVehicles();
             await fetchLogs();
             closeEditModal();
@@ -888,7 +1002,27 @@ async function fetchLogs() {
         }
     }
 
-    // END - added clock update and avatar/menu logic and edit modal
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    (async function init() {
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        // Initial data load
+        await fetchOperators();
+        await fetchVehicles();
+        await fetchLogs();
+        
+        // Setup realtime (replaces setInterval polling)
+        setupRealtime();
+        
+        // Fallback: light polling every 60s in case realtime disconnects
+        setInterval(() => {
+            fetchVehicles();
+            fetchLogs();
+        }, 60000);
+    })();
     </script>
 
     <!-- Modal overlay for editing vehicles -->
