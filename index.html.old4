@@ -8,7 +8,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FIX";
+document.getElementById("versionBanner").innerText = "v3.2.3 - RELEASED TODAY FIX";
 </script>
 
 <!--
@@ -429,11 +429,11 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
     <div class="grid">
         <div class="queue">
             <h2>Active Queue</h2>
-            <div id="queueList">Loading...</div>
+            <div id="queueList">Loading…</div>
         </div>
         <div class="details">
             <h2>Recent Activity</h2>
-            <div id="activityList">Loading...</div>
+            <div id="activityList">Loading…</div>
         </div>
     </div>
     <!-- END A4 -->
@@ -472,11 +472,25 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
     let prebookExportFlag = false;
 
     // ============================================================
-    // REMOVED: Old multi-query fetch functions
+    // OPTIMIZED FETCH: OPERATORS (load once, cache in memory)
     // ============================================================
-    // async function fetchOperators() { ... }
-    // async function fetchVehicles() { ... }
-    // async function fetchLogs() { ... }
+    async function fetchOperators() {
+        // Only fetch if we don't have them cached
+        if (operators.length > 0) return;
+        
+        const { data, error } = await db
+            .from('operators')
+            .select('id, name')
+            .eq('active', true);
+        
+        if (error) { console.error(error); return; }
+        operators = data || [];
+        
+        // Also cache in localStorage for instant load on refresh
+        try {
+            localStorage.setItem('operators_cache', JSON.stringify(operators));
+        } catch (e) { /* quota exceeded, ignore */ }
+    }
 
     // Load cached operators immediately
     (function loadCachedOperators() {
@@ -486,37 +500,74 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
         } catch (e) { /* ignore */ }
     })();
 
+    // ============================================================
+    // OPTIMIZED FETCH: VEHICLES (only active, not entire history)
+    // ============================================================
+    async function fetchVehicles() {
+        // Fetch active vehicles for the queue
+        const { data, error } = await db
+            .from('vehicles')
+            .select('*')
+            .in('status', ['parked', 'notified'])
+            .order('check_in_time', { ascending: true });
+
+        if (error) { console.error(error); return; }
+        vehicles = data || [];
+
+        // Fetch released count for TODAY only (matches Supervisor dashboard)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const { count } = await db
+            .from('vehicles')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'released')
+            .gte('release_time', todayStart.toISOString());
+        
+        releasedCount = count || 0;
+
+        renderQueue();
+        loadKPIs();
+        loadChart();
+    }
+
+    // ============================================================
+    // OPTIMIZED FETCH: LOGS (with 24hr filter in query)
+    // ============================================================
     let vehicleCache = {}; // Cache for vehicle lookups (including released)
+    
+    async function fetchLogs() {
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        
+        const { data, error } = await db
+            .from('actions_log')
+            .select('*')
+            .gte('timestamp', cutoff)  // Filter in DB, not JS
+            .order('timestamp', { ascending: false })
+            .limit(20);
 
-    // ============================================================
-    // NEW: Single RPC call to load all dashboard data
-    // ============================================================
-    async function loadDashboardRPC() {
-        try {
-            const start = performance.now();
-            const { data, error } = await db.rpc("get_dashboard");
-
-            if (error) {
-                console.error("RPC error:", error);
-                return;
+        if (error) { console.error("Error loading logs:", error); return; }
+        logs = data || [];
+        
+        // Fetch vehicle details for any vehicles not in our active list
+        const missingIds = logs
+            .map(l => l.vehicle_id)
+            .filter(id => id && !vehicles.find(v => v.id === id) && !vehicleCache[id]);
+        
+        if (missingIds.length > 0) {
+            const { data: missingVehicles } = await db
+                .from('vehicles')
+                .select('id, registration, po_ref')
+                .in('id', [...new Set(missingIds)]);
+            
+            if (missingVehicles) {
+                missingVehicles.forEach(v => {
+                    vehicleCache[v.id] = v;
+                });
             }
-
-            // unpack
-            vehicles  = data.vehicles     || [];
-            operators = data.operators    || [];
-            logs      = data.recent_logs  || [];
-
-            // existing rendering functions (unchanged)
-            renderQueue();
-            loadKPIs();
-            renderActivity();
-            loadChart();
-
-            console.log("RPC ms:", performance.now() - start);
-
-        } catch (e) {
-            console.error("loadDashboardRPC failed:", e);
         }
+        
+        renderActivity();
     }
 
     // ============================================================
@@ -562,7 +613,8 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
     function debouncedRefresh() {
         if (refreshTimeout) clearTimeout(refreshTimeout);
         refreshTimeout = setTimeout(() => {
-            loadDashboardRPC();
+            fetchVehicles();
+            fetchLogs();
         }, 500); // Wait 500ms for changes to settle
     }
 
@@ -617,7 +669,7 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             
             li.innerHTML = `
                 <div class="info">
-                    <strong>${v.registration || '-'}</strong> - ${v.status}<br>
+                    <strong>${v.registration || '—'}</strong> — ${v.status}<br>
                     PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
                     In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-'}
                 </div>
@@ -671,7 +723,7 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
                 hour:'2-digit', minute:'2-digit', second:'2-digit' 
             });
             
-            item.textContent = reg + " " + po + " " + actionVerb + " by " + name + " - " + timeStr;
+            item.textContent = `${reg} ${po} ${actionVerb} by ${name} — ${timeStr}`.trim();
             container.appendChild(item);
         });
     }
@@ -756,7 +808,8 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             }
 
             // Realtime will trigger refresh, but do it immediately for responsiveness
-            loadDashboardRPC();
+            fetchVehicles();
+            fetchLogs();
         }
     }
 
@@ -792,7 +845,8 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
                     "width=400,height=700");
             }
 
-            loadDashboardRPC();
+            fetchVehicles();
+            fetchLogs();
         }
     }
 
@@ -805,13 +859,14 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             .eq('id', id);
         
         if (!error) {
-            await db.from('actions_log').insert({
-                vehicle_id: id,
-                action: 'undo',
-                timestamp: now,
-                operator_id: operator
+            await db.from('actions_log').insert({ 
+                vehicle_id: id, 
+                action: 'undo', 
+                timestamp: now, 
+                operator_id: operator 
             });
-            loadDashboardRPC();
+            fetchVehicles();
+            fetchLogs();
         }
     }
 
@@ -892,7 +947,7 @@ function togglePanel() {
             const vehicleId = data && data[0] && data[0].id;
             // Open QR code in a new window so the gatehouse can scan it
             window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-            // Open SMS simulator to send the check-in notification if a
+            // Open SMS simulator to send the check‑in notification if a
             // mobile number was provided. This mirrors the functionality
             // implemented in ref_index.html.
             if (mobile) {
@@ -916,10 +971,11 @@ function togglePanel() {
             if (selectedPrebookId) {
                 await db.from('prebookings').update({ consumed: true }).eq('id', selectedPrebookId);
             }
-
+            
             // Realtime will trigger, but refresh immediately
-            await loadDashboardRPC();
-
+            await fetchVehicles();
+            await fetchLogs();
+            
             togglePanel();
             // Reset form fields to prepare for the next entry
             document.getElementById('regInput').value = '';
@@ -961,8 +1017,8 @@ function togglePanel() {
             if (!data) return;
             prebookCache = data;
             data.forEach(p => {
-                const label = (p.po_ref || 'No PO') + ' - ' + (p.registration || 'No Reg') + ' - ' + (p.expected_date || '') + ' ' + (p.expected_time ? p.expected_time.slice(0,5) : '') + (p.is_export ? ' - EXPORT' : '');
-                sel.innerHTML += '<option value="' + p.id + '">' + label + '</option>';
+                const label = `${p.po_ref || 'No PO'} — ${p.registration || 'No Reg'} — ${p.expected_date || ''} ${p.expected_time?.slice(0,5) || ''}${p.is_export ? ' — EXPORT' : ''}`;
+                sel.innerHTML += `<option value="${p.id}">${label}</option>`;
             });
         } catch (err) {
             console.error('Failed to load prebooks', err);
@@ -984,12 +1040,10 @@ function togglePanel() {
         const regInput = document.getElementById('regInput');
         const notesInput = document.getElementById('notesInput');
         const haulierInput = document.getElementById('haulierInput');
-        const mobileInput = document.getElementById('mobileInput');
         if (poInput) poInput.value = pb.po_ref || '';
         if (regInput) regInput.value = pb.registration || '';
         if (notesInput) notesInput.value = pb.notes || '';
         if (haulierInput) haulierInput.value = pb.haulier || '';
-        if (mobileInput) mobileInput.value = pb.mobile_number || '';
         // remember if this prebooking is an export load and reflect that on
         // the checkbox. some prebookings may specify is_export on the row.
         prebookExportFlag = pb.is_export === true;
@@ -1000,8 +1054,10 @@ function togglePanel() {
     // ============================================================
     // MANUAL REFRESH (fallback)
     // ============================================================
-    async function manualRefresh() {
-        await loadDashboardRPC();
+    function manualRefresh() {
+        fetchVehicles();
+        fetchOperators();
+        fetchLogs();
     }
 
     // ============================================================
@@ -1108,8 +1164,9 @@ function togglePanel() {
                 timestamp: nowIso,
                 operator_id: operatorId
             });
-
-            await loadDashboardRPC();
+            
+            await fetchVehicles();
+            await fetchLogs();
             closeEditModal();
         } catch (err) {
             console.error('Edit save failed:', err);
@@ -1123,16 +1180,19 @@ function togglePanel() {
     (async function init() {
         updateClock();
         setInterval(updateClock, 1000);
-
+        
         // Initial data load
-        await loadDashboardRPC();
-
+        await fetchOperators();
+        await fetchVehicles();
+        await fetchLogs();
+        
         // Setup realtime (replaces setInterval polling)
         setupRealtime();
-
+        
         // Fallback: light polling every 60s in case realtime disconnects
         setInterval(() => {
-            loadDashboardRPC();
+            fetchVehicles();
+            fetchLogs();
         }, 60000);
     })();
     </script>
