@@ -1128,6 +1128,37 @@
 
     .cmd-badge-normal { background: var(--ok); color: white; }
 
+    /* Navigation bar */
+    .main-nav {
+        background: #1e3a5f;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid #1f2937;
+    }
+    .main-nav a {
+        color: #e6e8eb;
+        text-decoration: none;
+        padding: 14px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+    }
+    .main-nav a:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    .main-nav a.active {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+    .nav-divider {
+        color: #64748b;
+        font-size: 18px;
+        user-select: none;
+    }
+
 </style>
 
 </head>
@@ -1187,6 +1218,15 @@
     </div>
 
 </div>
+
+<!-- Navigation -->
+<nav class="main-nav">
+    <a href="index.html">QUEUE</a>
+    <span class="nav-divider">|</span>
+    <a href="arrivals.html">ARRIVALS</a>
+    <span class="nav-divider">|</span>
+    <a href="supervisor.html" class="active">SUPERVISOR</a>
+</nav>
 
 
 
@@ -2175,7 +2215,7 @@ async function openCaseModal(vehicleId) {
         document.getElementById("modalMobile").textContent = vehicle.mobile_number || vehicle.pager_number || "-";
 
         // Set classification text. Use a simple emoji for export to avoid encoding issues
-        document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? "🚢 EXPORT" : "Normal";
+        document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? " EXPORT" : "Normal";
 
         // If a change status dropdown exists, set its value to the current status
         const statusSelect = document.getElementById("changeStatusSelect");
@@ -2205,8 +2245,8 @@ async function openCaseModal(vehicleId) {
 
             segments = [
                 // Use a plain arrow to avoid mangled characters
-                { label: "Check-in → Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
-                { label: "Notify → Release", mins: notifyToRelease, pct: seg2Pct, color: "var(--ok)" }
+                { label: "Check-in  Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
+                { label: "Notify  Release", mins: notifyToRelease, pct: seg2Pct, color: "var(--ok)" }
             ];
 
         } else if (notifyTime) {
@@ -2220,8 +2260,8 @@ async function openCaseModal(vehicleId) {
             const seg2Pct = 100 - seg1Pct;
 
             segments = [
-                { label: "Check-in → Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
-                { label: "Notify → Now", mins: notifyToNow, pct: seg2Pct, color: "var(--accent)", active: true }
+                { label: "Check-in  Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
+                { label: "Notify  Now", mins: notifyToNow, pct: seg2Pct, color: "var(--accent)", active: true }
             ];
 
         } else {
@@ -2229,7 +2269,7 @@ async function openCaseModal(vehicleId) {
             // Still parked
 
             segments = [
-                { label: "Check-in → Now", mins: totalWaitMins, pct: 100, color: "var(--warning)", active: true }
+                { label: "Check-in  Now", mins: totalWaitMins, pct: 100, color: "var(--warning)", active: true }
             ];
 
         }
@@ -2353,7 +2393,7 @@ async function openCaseModal(vehicleId) {
         if (notifyTime) {
 
             // Show a simple warning triangle when the notify delay exceeds the quoted time
-            const delayFlag = checkInToNotify > quoted ? ' ⚠' : '';
+            const delayFlag = checkInToNotify > quoted ? ' ' : '';
 
             stageRows.push({
 
@@ -2406,7 +2446,7 @@ async function openCaseModal(vehicleId) {
             const currentDuration = notifyTime ? notifyToNow : totalWaitMins;
 
             // Use a red circle to indicate overdue when the variance is positive
-            const overdueFlag = variance > 0 ? ' 🔴' : '';
+            const overdueFlag = variance > 0 ? ' ' : '';
 
             stageRows.push({
 
@@ -2500,7 +2540,7 @@ async function openCaseModal(vehicleId) {
 
                         <td style="padding: 12px; border-top: 2px solid var(--border);">
 
-                            ${formatTime(checkInTime)} → ${releaseTime ? formatTime(releaseTime) : 'NOW'}
+                            ${formatTime(checkInTime)}  ${releaseTime ? formatTime(releaseTime) : 'NOW'}
 
                         </td>
 
@@ -3697,7 +3737,7 @@ async function cmdShowOverdue() {
 
             <div class="cmd-hint">
 
-                ✅ No overdue vehicles
+                 No overdue vehicles
 
             </div>
 
@@ -3787,7 +3827,7 @@ async function cmdShowCritical() {
 
             <div class="cmd-hint">
 
-                ✅ No critical alerts
+                 No critical alerts
 
             </div>
 
