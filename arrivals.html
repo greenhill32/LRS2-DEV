@@ -504,6 +504,37 @@
         font-weight: 600;
         z-index: 9999;
     }
+
+    /* Navigation bar */
+    .main-nav {
+        background: #1e3a5f;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--border);
+    }
+    .main-nav a {
+        color: var(--text);
+        text-decoration: none;
+        padding: 14px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+    }
+    .main-nav a:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    .main-nav a.active {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+    .nav-divider {
+        color: #64748b;
+        font-size: 18px;
+        user-select: none;
+    }
 </style>
 </head>
 <body>
@@ -517,30 +548,39 @@
     </div>
     <div class="header-clock" id="clock">14:32</div>
     <div class="header-right">
-        <button class="btn btn-primary" onclick="window.location.href='index.html'">Switch to Queue View</button>
+        <span id="operatorName" style="color: var(--muted);">Operator</span>
     </div>
 </header>
+
+<!-- Navigation -->
+<nav class="main-nav">
+    <a href="index.html">QUEUE</a>
+    <span class="nav-divider">|</span>
+    <a href="arrivals.html" class="active">ARRIVALS</a>
+    <span class="nav-divider">|</span>
+    <a href="supervisor.html">SUPERVISOR</a>
+</nav>
 
 <!-- Stats bar -->
 <div class="stats-bar">
     <div class="stat-item">
-        <div class="stat-value">12</div>
+        <div class="stat-value" id="statExpected">0</div>
         <div class="stat-label">Expected Today</div>
     </div>
     <div class="stat-item">
-        <div class="stat-value success">5</div>
+        <div class="stat-value success" id="statArrived">0</div>
         <div class="stat-label">Arrived</div>
     </div>
     <div class="stat-item">
-        <div class="stat-value">4</div>
+        <div class="stat-value" id="statRemaining">0</div>
         <div class="stat-label">Remaining</div>
     </div>
     <div class="stat-item">
-        <div class="stat-value warn">1</div>
+        <div class="stat-value warn" id="statLate">0</div>
         <div class="stat-label">Late / No Show</div>
     </div>
     <div class="stat-item">
-        <div class="stat-value">386</div>
+        <div class="stat-value" id="statPallets">0</div>
         <div class="stat-label">Total Pallets</div>
     </div>
 </div>
@@ -559,192 +599,10 @@
             </div>
         </div>
 
-        <div class="arrivals-list">
-
-            <!-- 08:00 slot -->
-            <div class="time-slot">
-                <div class="slot-header">
-                    <span>08:00 - 09:00</span>
-                    <span>2 bookings - 78 pallets</span>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)">
-                    <div class="booking-status complete"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819801 <span>Farmfoods</span></div>
-                        <div class="booking-details">
-                            <span>PRO001</span>
-                            <span>Slot: 08:00-08:30</span>
-                            <span>Arrived: 07:52</span>
-                        </div>
-                        <div class="booking-orders">1000078930</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">52 <small>pallets</small></div>
-                    </div>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)">
-                    <div class="booking-status complete"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819802 <span>United Foods</span></div>
-                        <div class="booking-details">
-                            <span>UFO001</span>
-                            <span>Slot: 08:30-09:00</span>
-                            <span>Arrived: 08:41</span>
-                        </div>
-                        <div class="booking-orders">1000078931 - POPS0000131870</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">26 <small>pallets</small></div>
-                    </div>
-                </div>
+        <div class="arrivals-list" id="arrivalsList">
+            <div style="text-align: center; padding: 40px; color: var(--muted);">
+                Loading bookings...
             </div>
-
-            <!-- 09:00 slot -->
-            <div class="time-slot">
-                <div class="slot-header">
-                    <span>09:00 - 10:00</span>
-                    <span>2 bookings - 62 pallets</span>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)">
-                    <div class="booking-status arrived"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819803 <span>DCS Internal</span> <span class="badge badge-meds">MEDS</span></div>
-                        <div class="booking-details">
-                            <span>DCS007</span>
-                            <span>Slot: 09:00-09:30</span>
-                            <span>Arrived: 09:05</span>
-                        </div>
-                        <div class="booking-orders">1000078932 | 1000078933 | 1000078934</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">38 <small>pallets</small></div>
-                    </div>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)">
-                    <div class="booking-status late"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819804 <span>Generic Foods Ltd</span> <span class="badge badge-late">45m LATE</span></div>
-                        <div class="booking-details">
-                            <span>GEN00653G</span>
-                            <span>Slot: 09:30-10:00</span>
-                            <span style="color: var(--danger);">Not arrived</span>
-                        </div>
-                        <div class="booking-orders">1000078935 - POPS0000131871</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">24 <small>pallets</small></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 10:00 slot -->
-            <div class="time-slot">
-                <div class="slot-header">
-                    <span>10:00 - 11:00</span>
-                    <span>2 bookings - 60 pallets</span>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)">
-                    <div class="booking-status arrived"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819805 <span>Premier Foods</span></div>
-                        <div class="booking-details">
-                            <span>PRO004</span>
-                            <span>Slot: 10:00-10:30</span>
-                            <span>Arrived: 09:58</span>
-                        </div>
-                        <div class="booking-orders">1000078936</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">34 <small>pallets</small></div>
-                    </div>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)">
-                    <div class="booking-status arrived"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819806 <span>United Foods</span></div>
-                        <div class="booking-details">
-                            <span>UFO001</span>
-                            <span>Slot: 10:30-11:00</span>
-                            <span>Arrived: 10:22</span>
-                        </div>
-                        <div class="booking-orders">1000078937 - POPS0000131872</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">26 <small>pallets</small></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 14:00 slot - Current -->
-            <div class="time-slot">
-                <div class="slot-header now">
-                    <span>14:00 - 15:00 (NOW)</span>
-                    <span>2 bookings - 52 pallets</span>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)" data-ref="819810" data-customer="DCS Internal" data-account="DCS007" data-orders="1000078942" data-pallets="22">
-                    <div class="booking-status booked"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819810 <span>DCS Internal</span> <span class="badge badge-arriving">DUE NOW</span></div>
-                        <div class="booking-details">
-                            <span>DCS007</span>
-                            <span>Slot: 14:00-14:30</span>
-                            <span style="color: var(--warn);">Awaiting arrival</span>
-                        </div>
-                        <div class="booking-orders">1000078942</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">22 <small>pallets</small></div>
-                    </div>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)" data-ref="819811" data-customer="Generic Foods Ltd" data-account="GEN00653G" data-orders="1000078943" data-pallets="30">
-                    <div class="booking-status booked"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819811 <span>Generic Foods Ltd</span></div>
-                        <div class="booking-details">
-                            <span>GEN00653G</span>
-                            <span>Slot: 14:30-15:00</span>
-                            <span>Awaiting arrival</span>
-                        </div>
-                        <div class="booking-orders">1000078943 - POPS0000131875</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">30 <small>pallets</small></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 15:00 slot -->
-            <div class="time-slot">
-                <div class="slot-header">
-                    <span>15:00 - 16:00</span>
-                    <span>1 booking - 36 pallets</span>
-                </div>
-
-                <div class="booking-card" onclick="selectBooking(this)" data-ref="819812" data-customer="United Foods" data-account="UFO001" data-orders="1000078944 | 1000078945" data-pallets="36">
-                    <div class="booking-status booked"></div>
-                    <div class="booking-main">
-                        <div class="booking-ref">#819812 <span>United Foods</span></div>
-                        <div class="booking-details">
-                            <span>UFO001</span>
-                            <span>Slot: 15:00-15:30</span>
-                            <span>Awaiting arrival</span>
-                        </div>
-                        <div class="booking-orders">1000078944 | 1000078945 - POPS0000131876</div>
-                    </div>
-                    <div class="booking-meta">
-                        <div class="booking-pallets">36 <small>pallets</small></div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -798,8 +656,52 @@
 
 </div>
 
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-// Clock
+// ============================================================
+// SUPABASE CONNECTION
+// ============================================================
+const db = supabase.createClient(
+    "https://gtixdparpjdpyhhubsfz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+
+// ============================================================
+// OPERATOR CHECK
+// ============================================================
+(async function checkOperator() {
+    const opId = localStorage.getItem('operator_id');
+    if (!opId) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    try {
+        const { data: op } = await db
+            .from('operators')
+            .select('name')
+            .eq('id', opId)
+            .single();
+
+        if (!op) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const nameEl = document.getElementById('operatorName');
+        if (nameEl) {
+            nameEl.textContent = op.name;
+        }
+    } catch (err) {
+        console.error('Operator check failed:', err);
+    }
+})();
+
+// ============================================================
+// CLOCK
+// ============================================================
 function updateClock() {
     const now = new Date();
     document.getElementById('clock').textContent = 
@@ -807,6 +709,145 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+// ============================================================
+// BOOKINGS DATA
+// ============================================================
+let bookingsData = [];
+let selectedBookingData = null;
+
+// Load bookings from mock JSON (swap URL for real API later)
+async function loadBookings() {
+    try {
+        // Mock data URL - replace with real API endpoint when ready
+        const response = await fetch('mock_bookings.json');
+        const data = await response.json();
+        bookingsData = data.bookings || [];
+        renderBookings();
+        updateStats();
+    } catch (err) {
+        console.error('Failed to load bookings:', err);
+        document.getElementById('arrivalsList').innerHTML = 
+            '<div style="text-align:center;padding:40px;color:var(--danger);">Failed to load bookings</div>';
+    }
+}
+
+// Group bookings by hour slot
+function groupByHour(bookings) {
+    const groups = {};
+    bookings.forEach(b => {
+        const hour = b.slot_start.slice(0, 2) + ':00';
+        if (!groups[hour]) {
+            groups[hour] = [];
+        }
+        groups[hour].push(b);
+    });
+    return groups;
+}
+
+// Calculate next hour label (e.g. "08:00" -> "09:00")
+function nextHour(hourStr) {
+    const h = parseInt(hourStr.slice(0, 2), 10);
+    return String(h + 1).padStart(2, '0') + ':00';
+}
+
+// Get status class for booking
+function getStatusClass(booking) {
+    // For now all mock data is "booked" - in production check arrived time
+    if (booking.status === 'complete' || booking.status === 'arrived') return 'complete';
+    if (booking.status === 'arrived') return 'arrived';
+    if (booking.status === 'late') return 'late';
+    return 'booked';
+}
+
+// Check if slot is current hour
+function isCurrentHour(hourStr) {
+    const now = new Date();
+    const currentHour = String(now.getHours()).padStart(2, '0') + ':00';
+    return hourStr === currentHour;
+}
+
+// Render all bookings grouped by time slot
+function renderBookings() {
+    const container = document.getElementById('arrivalsList');
+    
+    if (!bookingsData.length) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">No bookings for today</div>';
+        return;
+    }
+
+    const groups = groupByHour(bookingsData);
+    const sortedHours = Object.keys(groups).sort();
+    
+    let html = '';
+    
+    sortedHours.forEach(hour => {
+        const bookings = groups[hour];
+        const totalPallets = bookings.reduce((sum, b) => sum + (b.pallets || 0), 0);
+        const isCurrent = isCurrentHour(hour);
+        
+        html += '<div class="time-slot">';
+        html += '<div class="slot-header' + (isCurrent ? ' now' : '') + '">';
+        html += '<span>' + hour + ' - ' + nextHour(hour) + (isCurrent ? ' (NOW)' : '') + '</span>';
+        html += '<span>' + bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '') + ' - ' + totalPallets + ' pallets</span>';
+        html += '</div>';
+        
+        bookings.forEach(b => {
+            const statusClass = getStatusClass(b);
+            const orders = Array.isArray(b.orders) ? b.orders.join(' | ') : b.orders;
+            const ordersDisplay = b.pop_ref ? orders + ' - ' + b.pop_ref : orders;
+            
+            html += '<div class="booking-card" onclick="selectBooking(this)"';
+            html += ' data-ref="' + b.ref + '"';
+            html += ' data-customer="' + (b.customer || '') + '"';
+            html += ' data-account="' + (b.account || '') + '"';
+            html += ' data-orders="' + orders + '"';
+            html += ' data-pallets="' + (b.pallets || 0) + '">';
+            
+            html += '<div class="booking-status ' + statusClass + '"></div>';
+            html += '<div class="booking-main">';
+            html += '<div class="booking-ref">#' + b.ref + ' <span>' + (b.customer || '') + '</span>';
+            if (b.contains_meds) {
+                html += ' <span class="badge badge-meds">MEDS</span>';
+            }
+            html += '</div>';
+            html += '<div class="booking-details">';
+            html += '<span>' + (b.account || '') + '</span>';
+            html += '<span>Slot: ' + b.slot_start + '-' + b.slot_end + '</span>';
+            html += '<span>Awaiting arrival</span>';
+            html += '</div>';
+            html += '<div class="booking-orders">' + ordersDisplay + '</div>';
+            html += '</div>';
+            html += '<div class="booking-meta">';
+            html += '<div class="booking-pallets">' + (b.pallets || 0) + ' <small>pallets</small></div>';
+            html += '</div>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+// Update stats from data
+function updateStats() {
+    const total = bookingsData.length;
+    // For mock data, count by status (all currently "booked")
+    const arrived = bookingsData.filter(b => b.status === 'arrived' || b.status === 'complete').length;
+    const remaining = total - arrived;
+    const late = bookingsData.filter(b => b.status === 'late').length;
+    const pallets = bookingsData.reduce((sum, b) => sum + (b.pallets || 0), 0);
+    
+    document.getElementById('statExpected').textContent = total;
+    document.getElementById('statArrived').textContent = arrived;
+    document.getElementById('statRemaining').textContent = remaining;
+    document.getElementById('statLate').textContent = late;
+    document.getElementById('statPallets').textContent = pallets;
+}
+
+// Load bookings on page load
+loadBookings();
 
 // Select booking from list
 function selectBooking(card) {
@@ -820,6 +861,15 @@ function selectBooking(card) {
         alert('This booking has already been processed');
         return;
     }
+
+    // Store selected booking data
+    selectedBookingData = {
+        ref: ref,
+        customer: customer,
+        account: account,
+        orders: orders,
+        pallets: pallets
+    };
 
     document.getElementById('selectedRef').textContent = '#' + ref;
     document.getElementById('selectedCustomer').textContent = customer;
@@ -846,34 +896,40 @@ function searchBookings(query) {
 
     query = query.toUpperCase();
 
-    // Mock search results
-    const mockResults = [
-        { ref: '819810', customer: 'DCS Internal', account: 'DCS007', orders: '1000078942', pallets: 22 },
-        { ref: '819811', customer: 'Generic Foods Ltd', account: 'GEN00653G', orders: '1000078943', pallets: 30 },
-        { ref: '819812', customer: 'United Foods', account: 'UFO001', orders: '1000078944 | 1000078945', pallets: 36 }
-    ];
-
-    const matches = mockResults.filter(b => 
-        b.ref.includes(query) || 
-        b.orders.includes(query) ||
-        b.customer.toUpperCase().includes(query)
-    );
+    // Search actual bookings data
+    const matches = bookingsData.filter(b => {
+        const ordersStr = Array.isArray(b.orders) ? b.orders.join(' ') : (b.orders || '');
+        return b.ref.toUpperCase().includes(query) || 
+               ordersStr.toUpperCase().includes(query) ||
+               (b.customer || '').toUpperCase().includes(query) ||
+               (b.account || '').toUpperCase().includes(query);
+    });
 
     if (matches.length === 0) {
         results.innerHTML = '<div class="search-result-item"><span style="color: var(--muted);">No matching bookings</span></div>';
     } else {
-        results.innerHTML = matches.map(m => `
-            <div class="search-result-item" onclick="selectFromSearch('${m.ref}', '${m.customer}', '${m.account}', '${m.orders}', ${m.pallets})">
-                <div class="result-ref">#${m.ref}</div>
-                <div class="result-detail">${m.customer} - ${m.orders}</div>
-            </div>
-        `).join('');
+        results.innerHTML = matches.map(m => {
+            const orders = Array.isArray(m.orders) ? m.orders.join(' | ') : m.orders;
+            return '<div class="search-result-item" onclick="selectFromSearch(\'' + m.ref + '\', \'' + (m.customer || '') + '\', \'' + (m.account || '') + '\', \'' + orders + '\', ' + (m.pallets || 0) + ')">' +
+                '<div class="result-ref">#' + m.ref + '</div>' +
+                '<div class="result-detail">' + (m.customer || '') + ' - ' + orders + '</div>' +
+            '</div>';
+        }).join('');
     }
 
     results.style.display = 'block';
 }
 
 function selectFromSearch(ref, customer, account, orders, pallets) {
+    // Store selected booking data
+    selectedBookingData = {
+        ref: ref,
+        customer: customer,
+        account: account,
+        orders: orders,
+        pallets: pallets
+    };
+
     document.getElementById('selectedRef').textContent = '#' + ref;
     document.getElementById('selectedCustomer').textContent = customer;
     document.getElementById('selectedAccount').textContent = account;
