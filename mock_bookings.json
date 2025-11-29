@@ -13,6 +13,19 @@
       "contains_meds": true,
       "status": "booked",
       "created_by": "Sync"
+    },
+    {
+      "ref": "90000",
+      "account": "WAI101",
+      "customer": "Waitrose",
+      "orders": ["1000079200"],
+      "pop_ref": "POPS0000132100",
+      "slot_start": "15:00",
+      "slot_end": "15:30",
+      "pallets": 24,
+      "contains_meds": false,
+      "status": "booked",
+      "created_by": "Sync"
     }
   ]
 }
