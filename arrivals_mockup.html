@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gatehouse - Expected Arrivals</title>
+
+<style>
+    :root {
+        --bg: #0e1420;
+        --card: #1f2937;
+        --accent: #0ea5e9;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --success: #22c55e;
+        --warn: #fbbf24;
+        --danger: #ef4444;
+        --purple: #8b5cf6;
+        --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+        background: var(--card);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-left h1 {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .live-dot {
+        width: 10px;
+        height: 10px;
+        background: var(--success);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .header-clock {
+        font-size: 32px;
+        font-weight: 700;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .btn {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0284c7;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+        display: flex;
+        gap: 16px;
+        padding: 20px 24px;
+        background: var(--card);
+        margin: 20px 24px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+    }
+
+    .stat-item {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        border-right: 1px solid var(--border);
+    }
+
+    .stat-item:last-child {
+        border-right: none;
+    }
+
+    .stat-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .stat-value.warn { color: var(--warn); }
+    .stat-value.danger { color: var(--danger); }
+    .stat-value.success { color: var(--success); }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+
+    /* Main layout */
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+        padding: 0 24px 24px;
+    }
+
+    /* Arrivals timeline */
+    .arrivals-panel {
+        background: var(--card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .time-filter {
+        display: flex;
+        gap: 8px;
+    }
+
+    .filter-btn {
+        padding: 6px 12px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .filter-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    .arrivals-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    /* Time slot group */
+    .time-slot {
+        border-bottom: 1px solid var(--border);
+    }
+
+    .time-slot:last-child {
+        border-bottom: none;
+    }
+
+    .slot-header {
+        padding: 10px 20px;
+        background: rgba(255,255,255,0.02);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .slot-header.now {
+        background: rgba(14, 165, 233, 0.1);
+        color: var(--accent);
+    }
+
+    /* Booking card */
+    .booking-card {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .booking-card:hover {
+        background: rgba(255,255,255,0.03);
+    }
+
+    .booking-card:last-child {
+        border-bottom: none;
+    }
+
+    .booking-status {
+        width: 8px;
+        height: 60px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .booking-status.booked { background: var(--accent); }
+    .booking-status.arrived { background: var(--purple); }
+    .booking-status.complete { background: var(--success); }
+    .booking-status.late { background: var(--danger); animation: pulse 1s infinite; }
+
+    .booking-main {
+        flex: 1;
+    }
+
+    .booking-ref {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .booking-ref span {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 14px;
+        margin-left: 8px;
+    }
+
+    .booking-details {
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .booking-orders {
+        font-size: 12px;
+        color: var(--text);
+        margin-top: 6px;
+        font-family: monospace;
+        background: rgba(0,0,0,0.2);
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .booking-meta {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .booking-pallets {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .booking-pallets small {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--muted);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-left: 8px;
+    }
+
+    .badge-meds {
+        background: var(--danger);
+        color: white;
+    }
+
+    .badge-late {
+        background: var(--danger);
+        color: white;
+    }
+
+    .badge-arriving {
+        background: var(--warn);
+        color: #000;
+    }
+
+    /* Check-in panel */
+    .checkin-panel {
+        background: var(--card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 20px;
+        height: fit-content;
+    }
+
+    .checkin-panel h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 16px;
+    }
+
+    .search-box {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 16px;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .search-box input::placeholder {
+        color: var(--muted);
+    }
+
+    .search-results {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .search-result-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .search-result-item:hover {
+        background: rgba(14, 165, 233, 0.1);
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .result-ref {
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .result-detail {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    /* Selected booking for check-in */
+    .selected-booking {
+        background: rgba(14, 165, 233, 0.1);
+        border: 2px solid var(--accent);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .selected-booking h3 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+
+    .selected-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .selected-info span {
+        color: var(--muted);
+    }
+
+    .checkin-form label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        margin-top: 12px;
+    }
+
+    .checkin-form input {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 14px;
+    }
+
+    .checkin-form input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .checkin-btn {
+        width: 100%;
+        padding: 16px;
+        background: var(--success);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: all 0.2s;
+    }
+
+    .checkin-btn:hover {
+        background: #16a34a;
+    }
+
+    /* Upcoming summary */
+    .upcoming-summary {
+        background: rgba(0,0,0,0.2);
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 20px;
+    }
+
+    .upcoming-summary h4 {
+        font-size: 13px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+
+    .upcoming-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+    }
+
+    .upcoming-item:last-child {
+        border-bottom: none;
+    }
+
+    /* Version banner */
+    .version-banner {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--purple);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        z-index: 9999;
+    }
+</style>
+</head>
+<body>
+
+<div class="version-banner">MOCKUP - Booking System Integration</div>
+
+<header>
+    <div class="header-left">
+        <div class="live-dot"></div>
+        <h1>Gatehouse Dashboard</h1>
+    </div>
+    <div class="header-clock" id="clock">14:32</div>
+    <div class="header-right">
+        <button class="btn btn-primary" onclick="window.location.href='index.html'">Switch to Queue View</button>
+    </div>
+</header>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Expected Today</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value success">5</div>
+        <div class="stat-label">Arrived</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value">4</div>
+        <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value warn">1</div>
+        <div class="stat-label">Late / No Show</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value">386</div>
+        <div class="stat-label">Total Pallets</div>
+    </div>
+</div>
+
+<!-- Main grid -->
+<div class="main-grid">
+
+    <!-- Arrivals timeline -->
+    <div class="arrivals-panel">
+        <div class="panel-header">
+            <div class="panel-title">Expected Arrivals</div>
+            <div class="time-filter">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Pending</button>
+                <button class="filter-btn">Arrived</button>
+            </div>
+        </div>
+
+        <div class="arrivals-list">
+
+            <!-- 08:00 slot -->
+            <div class="time-slot">
+                <div class="slot-header">
+                    <span>08:00 - 09:00</span>
+                    <span>2 bookings - 78 pallets</span>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)">
+                    <div class="booking-status complete"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819801 <span>Farmfoods</span></div>
+                        <div class="booking-details">
+                            <span>PRO001</span>
+                            <span>Slot: 08:00-08:30</span>
+                            <span>Arrived: 07:52</span>
+                        </div>
+                        <div class="booking-orders">1000078930</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">52 <small>pallets</small></div>
+                    </div>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)">
+                    <div class="booking-status complete"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819802 <span>United Foods</span></div>
+                        <div class="booking-details">
+                            <span>UFO001</span>
+                            <span>Slot: 08:30-09:00</span>
+                            <span>Arrived: 08:41</span>
+                        </div>
+                        <div class="booking-orders">1000078931 - POPS0000131870</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">26 <small>pallets</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 09:00 slot -->
+            <div class="time-slot">
+                <div class="slot-header">
+                    <span>09:00 - 10:00</span>
+                    <span>2 bookings - 62 pallets</span>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)">
+                    <div class="booking-status arrived"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819803 <span>DCS Internal</span> <span class="badge badge-meds">MEDS</span></div>
+                        <div class="booking-details">
+                            <span>DCS007</span>
+                            <span>Slot: 09:00-09:30</span>
+                            <span>Arrived: 09:05</span>
+                        </div>
+                        <div class="booking-orders">1000078932 | 1000078933 | 1000078934</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">38 <small>pallets</small></div>
+                    </div>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)">
+                    <div class="booking-status late"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819804 <span>Generic Foods Ltd</span> <span class="badge badge-late">45m LATE</span></div>
+                        <div class="booking-details">
+                            <span>GEN00653G</span>
+                            <span>Slot: 09:30-10:00</span>
+                            <span style="color: var(--danger);">Not arrived</span>
+                        </div>
+                        <div class="booking-orders">1000078935 - POPS0000131871</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">24 <small>pallets</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10:00 slot -->
+            <div class="time-slot">
+                <div class="slot-header">
+                    <span>10:00 - 11:00</span>
+                    <span>2 bookings - 60 pallets</span>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)">
+                    <div class="booking-status arrived"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819805 <span>Premier Foods</span></div>
+                        <div class="booking-details">
+                            <span>PRO004</span>
+                            <span>Slot: 10:00-10:30</span>
+                            <span>Arrived: 09:58</span>
+                        </div>
+                        <div class="booking-orders">1000078936</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">34 <small>pallets</small></div>
+                    </div>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)">
+                    <div class="booking-status arrived"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819806 <span>United Foods</span></div>
+                        <div class="booking-details">
+                            <span>UFO001</span>
+                            <span>Slot: 10:30-11:00</span>
+                            <span>Arrived: 10:22</span>
+                        </div>
+                        <div class="booking-orders">1000078937 - POPS0000131872</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">26 <small>pallets</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 14:00 slot - Current -->
+            <div class="time-slot">
+                <div class="slot-header now">
+                    <span>14:00 - 15:00 (NOW)</span>
+                    <span>2 bookings - 52 pallets</span>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)" data-ref="819810" data-customer="DCS Internal" data-account="DCS007" data-orders="1000078942" data-pallets="22">
+                    <div class="booking-status booked"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819810 <span>DCS Internal</span> <span class="badge badge-arriving">DUE NOW</span></div>
+                        <div class="booking-details">
+                            <span>DCS007</span>
+                            <span>Slot: 14:00-14:30</span>
+                            <span style="color: var(--warn);">Awaiting arrival</span>
+                        </div>
+                        <div class="booking-orders">1000078942</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">22 <small>pallets</small></div>
+                    </div>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)" data-ref="819811" data-customer="Generic Foods Ltd" data-account="GEN00653G" data-orders="1000078943" data-pallets="30">
+                    <div class="booking-status booked"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819811 <span>Generic Foods Ltd</span></div>
+                        <div class="booking-details">
+                            <span>GEN00653G</span>
+                            <span>Slot: 14:30-15:00</span>
+                            <span>Awaiting arrival</span>
+                        </div>
+                        <div class="booking-orders">1000078943 - POPS0000131875</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">30 <small>pallets</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 15:00 slot -->
+            <div class="time-slot">
+                <div class="slot-header">
+                    <span>15:00 - 16:00</span>
+                    <span>1 booking - 36 pallets</span>
+                </div>
+
+                <div class="booking-card" onclick="selectBooking(this)" data-ref="819812" data-customer="United Foods" data-account="UFO001" data-orders="1000078944 | 1000078945" data-pallets="36">
+                    <div class="booking-status booked"></div>
+                    <div class="booking-main">
+                        <div class="booking-ref">#819812 <span>United Foods</span></div>
+                        <div class="booking-details">
+                            <span>UFO001</span>
+                            <span>Slot: 15:00-15:30</span>
+                            <span>Awaiting arrival</span>
+                        </div>
+                        <div class="booking-orders">1000078944 | 1000078945 - POPS0000131876</div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="booking-pallets">36 <small>pallets</small></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Check-in panel -->
+    <div class="checkin-panel">
+        <h2>Quick Check-In</h2>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search booking ref or order number..." oninput="searchBookings(this.value)">
+        </div>
+
+        <div class="search-results" id="searchResults" style="display: none;">
+            <!-- Populated by search -->
+        </div>
+
+        <div class="selected-booking" id="selectedBooking" style="display: none;">
+            <h3 id="selectedRef">#819810</h3>
+            <div class="selected-info">
+                <div><span>Customer:</span> <span id="selectedCustomer">DCS Internal</span></div>
+                <div><span>Account:</span> <span id="selectedAccount">DCS007</span></div>
+                <div><span>Orders:</span> <span id="selectedOrders">1000078942</span></div>
+                <div><span>Pallets:</span> <span id="selectedPallets">22</span></div>
+            </div>
+        </div>
+
+        <div class="checkin-form">
+            <label>Registration *</label>
+            <input type="text" id="regInput" placeholder="e.g. AB12 CDE" oninput="this.value = this.value.toUpperCase().replace(/\s+/g, '')">
+
+            <label>Driver Mobile</label>
+            <input type="text" id="mobileInput" placeholder="e.g. 07700 900123">
+
+            <label>Notes</label>
+            <input type="text" id="notesInput" placeholder="Optional notes...">
+
+            <button class="checkin-btn" onclick="checkInDriver()">Check In Driver</button>
+        </div>
+
+        <div class="upcoming-summary">
+            <h4>Next 2 Hours</h4>
+            <div class="upcoming-item">
+                <span>14:00 - 15:00</span>
+                <span>2 bookings (52 pallets)</span>
+            </div>
+            <div class="upcoming-item">
+                <span>15:00 - 16:00</span>
+                <span>1 booking (36 pallets)</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Clock
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = 
+        now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Select booking from list
+function selectBooking(card) {
+    const ref = card.dataset.ref;
+    const customer = card.dataset.customer;
+    const account = card.dataset.account;
+    const orders = card.dataset.orders;
+    const pallets = card.dataset.pallets;
+
+    if (!ref) {
+        alert('This booking has already been processed');
+        return;
+    }
+
+    document.getElementById('selectedRef').textContent = '#' + ref;
+    document.getElementById('selectedCustomer').textContent = customer;
+    document.getElementById('selectedAccount').textContent = account;
+    document.getElementById('selectedOrders').textContent = orders;
+    document.getElementById('selectedPallets').textContent = pallets;
+
+    document.getElementById('selectedBooking').style.display = 'block';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+
+    // Focus registration input
+    document.getElementById('regInput').focus();
+}
+
+// Search bookings
+function searchBookings(query) {
+    const results = document.getElementById('searchResults');
+    
+    if (query.length < 2) {
+        results.style.display = 'none';
+        return;
+    }
+
+    query = query.toUpperCase();
+
+    // Mock search results
+    const mockResults = [
+        { ref: '819810', customer: 'DCS Internal', account: 'DCS007', orders: '1000078942', pallets: 22 },
+        { ref: '819811', customer: 'Generic Foods Ltd', account: 'GEN00653G', orders: '1000078943', pallets: 30 },
+        { ref: '819812', customer: 'United Foods', account: 'UFO001', orders: '1000078944 | 1000078945', pallets: 36 }
+    ];
+
+    const matches = mockResults.filter(b => 
+        b.ref.includes(query) || 
+        b.orders.includes(query) ||
+        b.customer.toUpperCase().includes(query)
+    );
+
+    if (matches.length === 0) {
+        results.innerHTML = '<div class="search-result-item"><span style="color: var(--muted);">No matching bookings</span></div>';
+    } else {
+        results.innerHTML = matches.map(m => `
+            <div class="search-result-item" onclick="selectFromSearch('${m.ref}', '${m.customer}', '${m.account}', '${m.orders}', ${m.pallets})">
+                <div class="result-ref">#${m.ref}</div>
+                <div class="result-detail">${m.customer} - ${m.orders}</div>
+            </div>
+        `).join('');
+    }
+
+    results.style.display = 'block';
+}
+
+function selectFromSearch(ref, customer, account, orders, pallets) {
+    document.getElementById('selectedRef').textContent = '#' + ref;
+    document.getElementById('selectedCustomer').textContent = customer;
+    document.getElementById('selectedAccount').textContent = account;
+    document.getElementById('selectedOrders').textContent = orders;
+    document.getElementById('selectedPallets').textContent = pallets;
+
+    document.getElementById('selectedBooking').style.display = 'block';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('regInput').focus();
+}
+
+// Check in
+function checkInDriver() {
+    const reg = document.getElementById('regInput').value.trim();
+    const selectedRef = document.getElementById('selectedRef').textContent;
+
+    if (!reg) {
+        alert('Please enter registration');
+        return;
+    }
+
+    if (selectedRef === '#819810') {
+        alert('This is a mockup!\n\nIn the real system this would:\n\n1. Create vehicle in your queue\n2. Mark booking as "Arrived" in booking system\n3. Send SMS to driver\n4. Open QR code screen');
+    } else {
+        alert('Check-in complete for ' + reg);
+    }
+
+    // Reset form
+    document.getElementById('regInput').value = '';
+    document.getElementById('mobileInput').value = '';
+    document.getElementById('notesInput').value = '';
+    document.getElementById('selectedBooking').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

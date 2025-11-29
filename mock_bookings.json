@@ -1,0 +1,83 @@
+{
+  "date": "2025-12-04",
+  "bookings": [
+    {
+      "ref": "820100",
+      "account": "COO606",
+      "customer": "Co-op",
+      "orders": ["1000079200"],
+      "pop_ref": "POPS0000132200",
+      "slot_start": "08:00",
+      "slot_end": "08:30",
+      "pallets": 12,
+      "contains_meds": false,
+      "status": "booked",
+      "created_by": "Manual"
+    },
+    {
+      "ref": "820101",
+      "account": "TES101",
+      "customer": "Tesco",
+      "orders": ["1000079201", "1000079202"],
+      "pop_ref": "POPS0000132201",
+      "slot_start": "09:00",
+      "slot_end": "09:30",
+      "pallets": 20,
+      "contains_meds": true,
+      "status": "checked_in",
+      "created_by": "Sync"
+    },
+    {
+      "ref": "820102",
+      "account": "MOR202",
+      "customer": "Morrisons",
+      "orders": ["1000079203"],
+      "pop_ref": "POPS0000132202",
+      "slot_start": "10:00",
+      "slot_end": "10:30",
+      "pallets": 28,
+      "contains_meds": false,
+      "status": "released",
+      "created_by": "Manual"
+    },
+    {
+      "ref": "820103",
+      "account": "ASD303",
+      "customer": "Asda",
+      "orders": ["1000079204", "1000079205"],
+      "pop_ref": "POPS0000132203",
+      "slot_start": "11:00",
+      "slot_end": "11:30",
+      "pallets": 16,
+      "contains_meds": true,
+      "status": "booked",
+      "created_by": "Sync"
+    },
+    {
+      "ref": "820104",
+      "account": "ALD404",
+      "customer": "Aldi",
+      "orders": ["1000079206"],
+      "pop_ref": "POPS0000132204",
+      "slot_start": "12:00",
+      "slot_end": "12:30",
+      "pallets": 24,
+      "contains_meds": false,
+      "status": "checked_in",
+      "created_by": "Manual"
+    },
+    {
+      "ref": "820105",
+      "account": "LID505",
+      "customer": "Lidl",
+      "orders": ["1000079207", "1000079208"],
+      "pop_ref": "POPS0000132205",
+      "slot_start": "13:00",
+      "slot_end": "13:30",
+      "pallets": 19,
+      "contains_meds": false,
+      "status": "booked",
+      "created_by": "Sync"
+    }
+  ]
+}

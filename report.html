@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vehicle Movement Reports</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- jsPDF for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+    :root {
+        --bg: #0a0e14;
+        --card: #151a23;
+        --text: #e6e8eb;
+        --muted: #6b7280;
+        --accent: #3b82f6;
+        --border: #1f2937;
+        --success: #10b981;
+        --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        padding: 24px;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .header {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    h1 {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .filters {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    label {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+    }
+
+    select, input[type="date"] {
+        padding: 10px 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 14px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+
+    .btn-secondary {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #059669;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .btn-outline:hover {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .report-table {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    th {
+        padding: 14px 12px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    td {
+        padding: 12px;
+        font-size: 14px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr:hover {
+        background: rgba(255,255,255,0.02);
+    }
+
+    .export-badge {
+        display: inline-block;
+        background: #8b5cf6;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .duration-good {
+        color: var(--success);
+        font-weight: 600;
+    }
+
+    .duration-warning {
+        color: var(--warning);
+        font-weight: 600;
+    }
+
+    .duration-bad {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--muted);
+        font-size: 16px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    
+    <div class="header">
+        <h1>📊 Vehicle Movement Reports</h1>
+        <div style="font-size: 14px; color: var(--muted);" id="reportTimestamp"></div>
+    </div>
+
+    <div class="filters">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Date Range</label>
+                <select id="dateRange" onchange="updateCustomDates()">
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="last7">Last 7 Days</option>
+                    <option value="last30">Last 30 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+
+            <div class="filter-group" id="customDatesGroup" style="display:none;">
+                <label>From Date</label>
+                <input type="date" id="dateFrom">
+            </div>
+
+            <div class="filter-group" id="customDatesGroup2" style="display:none;">
+                <label>To Date</label>
+                <input type="date" id="dateTo">
+            </div>
+
+            <div class="filter-group">
+                <label>Status</label>
+                <select id="statusFilter">
+                    <option value="all">All Vehicles</option>
+                    <option value="released">Released Only</option>
+                    <option value="active">Still In Yard</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Classification</label>
+                <select id="classFilter">
+                    <option value="all">All</option>
+                    <option value="export">Export Only</option>
+                    <option value="normal">Normal Only</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="runReport()">🔍 Generate Report</button>
+            <button class="btn btn-secondary" onclick="downloadPDF()">📄 Download PDF</button>
+            <button class="btn btn-outline" onclick="downloadCSV()">📊 Download CSV</button>
+        </div>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none;"></div>
+
+    <div class="report-table">
+        <div id="reportContent" class="loading">Select filters and click Generate Report</div>
+    </div>
+
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ==================== SUPABASE ====================
+const db = supabase.createClient(
+    "https://gtixdparpjdpyhhubsfz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+
+let reportData = [];
+let operators = [];
+
+// ==================== LOAD OPERATORS ====================
+async function loadOperators() {
+    const { data } = await db.from("operators").select("id, name");
+    operators = data || [];
+}
+
+// ==================== DATE HANDLING ====================
+function updateCustomDates() {
+    const range = document.getElementById("dateRange").value;
+    const customGroup = document.getElementById("customDatesGroup");
+    const customGroup2 = document.getElementById("customDatesGroup2");
+    
+    if (range === "custom") {
+        customGroup.style.display = "block";
+        customGroup2.style.display = "block";
+        
+        // Set defaults
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("dateTo").value = today;
+        
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        document.getElementById("dateFrom").value = weekAgo.toISOString().split('T')[0];
+    } else {
+        customGroup.style.display = "none";
+        customGroup2.style.display = "none";
+    }
+}
+
+function getDateRange() {
+    const range = document.getElementById("dateRange").value;
+    const now = new Date();
+    let fromDate, toDate;
+
+    switch(range) {
+        case "today":
+            fromDate = new Date(now.setHours(0,0,0,0));
+            toDate = new Date(now.setHours(23,59,59,999));
+            break;
+        case "yesterday":
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            fromDate = new Date(yesterday.setHours(0,0,0,0));
+            toDate = new Date(yesterday.setHours(23,59,59,999));
+            break;
+        case "last7":
+            toDate = new Date();
+            fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 7);
+            fromDate.setHours(0,0,0,0);
+            break;
+        case "last30":
+            toDate = new Date();
+            fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30);
+            fromDate.setHours(0,0,0,0);
+            break;
+        case "custom":
+            fromDate = new Date(document.getElementById("dateFrom").value);
+            toDate = new Date(document.getElementById("dateTo").value);
+            toDate.setHours(23,59,59,999);
+            break;
+    }
+
+    return {
+        from: fromDate.toISOString(),
+        to: toDate.toISOString()
+    };
+}
+
+// ==================== RUN REPORT ====================
+async function runReport() {
+    document.getElementById("reportContent").innerHTML = '<div class="loading">Loading report data...</div>';
+    
+    try {
+        const dateRange = getDateRange();
+        const statusFilter = document.getElementById("statusFilter").value;
+        const classFilter = document.getElementById("classFilter").value;
+
+        // Build query
+        let query = db
+            .from("vehicles")
+            .select("*")
+            .gte("check_in_time", dateRange.from)
+            .lte("check_in_time", dateRange.to)
+            .order("check_in_time", { ascending: false });
+
+        // Apply status filter
+        if (statusFilter === "released") {
+            query = query.eq("status", "released");
+        } else if (statusFilter === "active") {
+            query = query.in("status", ["parked", "notified"]);
+        }
+
+        // Apply classification filter
+        if (classFilter !== "all") {
+            query = query.eq("classification", classFilter);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        reportData = data || [];
+
+        // Get operator names for all vehicles
+        for (let vehicle of reportData) {
+            if (vehicle.operator_id) {
+                const op = operators.find(o => o.id === vehicle.operator_id);
+                vehicle.operator_name = op?.name || "Unknown";
+            } else {
+                vehicle.operator_name = "Unknown";
+            }
+        }
+
+        renderReport();
+        updateStats();
+        updateTimestamp();
+
+    } catch (error) {
+        console.error("Error generating report:", error);
+        document.getElementById("reportContent").innerHTML = 
+            '<div class="empty-state">❌ Error loading report. Please try again.</div>';
+    }
+}
+
+// ==================== RENDER REPORT ====================
+function renderReport() {
+    const container = document.getElementById("reportContent");
+
+    if (reportData.length === 0) {
+        container.innerHTML = '<div class="empty-state">📋 No vehicles found for selected filters</div>';
+        return;
+    }
+
+    const rows = reportData.map(v => {
+        const checkIn = new Date(v.check_in_time);
+        const notifyTime = v.notify_time ? new Date(v.notify_time) : null;
+        const releaseTime = v.release_time ? new Date(v.release_time) : null;
+
+        // Calculate duration
+        let duration = "-";
+        let durationClass = "";
+        
+        if (releaseTime) {
+            const mins = Math.floor((releaseTime - checkIn) / 60000);
+            duration = mins + "m";
+            
+            const quoted = v.quoted_minutes || 60;
+            const variance = mins - quoted;
+            
+            if (variance <= 0) {
+                durationClass = "duration-good";
+            } else if (variance <= 30) {
+                durationClass = "duration-warning";
+            } else {
+                durationClass = "duration-bad";
+            }
+        } else {
+            const mins = Math.floor((Date.now() - checkIn) / 60000);
+            duration = mins + "m (in progress)";
+            durationClass = "duration-warning";
+        }
+
+        const exportBadge = v.classification === "export" 
+            ? '<span class="export-badge">EXPORT</span>' 
+            : '';
+
+        const formatTime = (date) => {
+            if (!date) return "-";
+            return date.toLocaleString("en-GB", { 
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit", 
+                minute: "2-digit"
+            });
+        };
+
+        return `
+            <tr>
+                <td><strong>${v.registration}</strong> ${exportBadge}</td>
+                <td>${v.po_ref || "-"}</td>
+                <td>${formatTime(checkIn)}</td>
+                <td>${formatTime(notifyTime)}</td>
+                <td>${formatTime(releaseTime)}</td>
+                <td class="${durationClass}">${duration}</td>
+                <td>${v.operator_name}</td>
+            </tr>
+        `;
+    }).join("");
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Registration</th>
+                    <th>PO Reference</th>
+                    <th>Check-In Time</th>
+                    <th>Notified Time</th>
+                    <th>Release Time</th>
+                    <th>Total Duration</th>
+                    <th>Operator</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+    `;
+}
+
+// ==================== UPDATE STATS ====================
+function updateStats() {
+    const statsRow = document.getElementById("statsRow");
+    
+    if (reportData.length === 0) {
+        statsRow.style.display = "none";
+        return;
+    }
+
+    const total = reportData.length;
+    const released = reportData.filter(v => v.status === "released").length;
+    const inProgress = total - released;
+    const exports = reportData.filter(v => v.classification === "export").length;
+
+    // Calculate average duration for completed vehicles
+    const completedVehicles = reportData.filter(v => v.release_time);
+    let avgDuration = 0;
+    
+    if (completedVehicles.length > 0) {
+        const totalMins = completedVehicles.reduce((sum, v) => {
+            const checkIn = new Date(v.check_in_time);
+            const release = new Date(v.release_time);
+            return sum + Math.floor((release - checkIn) / 60000);
+        }, 0);
+        avgDuration = Math.round(totalMins / completedVehicles.length);
+    }
+
+    statsRow.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-value">${total}</div>
+            <div class="stat-label">Total Vehicles</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${released}</div>
+            <div class="stat-label">Released</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${inProgress}</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${exports}</div>
+            <div class="stat-label">Export Loads</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">${avgDuration}m</div>
+            <div class="stat-label">Avg Duration</div>
+        </div>
+    `;
+
+    statsRow.style.display = "grid";
+}
+
+// ==================== UPDATE TIMESTAMP ====================
+function updateTimestamp() {
+    const now = new Date();
+    const timestamp = now.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+    document.getElementById("reportTimestamp").textContent = `Generated: ${timestamp}`;
+}
+
+// ==================== DOWNLOAD PDF ====================
+function downloadPDF() {
+    if (reportData.length === 0) {
+        alert("Please generate a report first");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4'); // landscape
+
+    // Title
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text("Vehicle Movement Report", 14, 15);
+
+    // Timestamp
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const now = new Date().toLocaleString("en-GB");
+    doc.text(`Generated: ${now}`, 14, 22);
+
+    // Date range
+    const range = document.getElementById("dateRange").value;
+    let rangeText = range.charAt(0).toUpperCase() + range.slice(1);
+    if (range === "custom") {
+        const from = document.getElementById("dateFrom").value;
+        const to = document.getElementById("dateTo").value;
+        rangeText = `${from} to ${to}`;
+    }
+    doc.text(`Period: ${rangeText}`, 14, 27);
+
+    // Prepare table data
+    const tableData = reportData.map(v => {
+        const checkIn = new Date(v.check_in_time);
+        const notifyTime = v.notify_time ? new Date(v.notify_time) : null;
+        const releaseTime = v.release_time ? new Date(v.release_time) : null;
+
+        const formatTime = (date) => {
+            if (!date) return "-";
+            return date.toLocaleString("en-GB", { 
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit", 
+                minute: "2-digit"
+            });
+        };
+
+        let duration = "-";
+        if (releaseTime) {
+            const mins = Math.floor((releaseTime - checkIn) / 60000);
+            duration = mins + "m";
+        } else {
+            const mins = Math.floor((Date.now() - checkIn) / 60000);
+            duration = mins + "m*";
+        }
+
+        const reg = v.classification === "export" ? v.registration + " [EXP]" : v.registration;
+
+        return [
+            reg,
+            v.po_ref || "-",
+            formatTime(checkIn),
+            formatTime(notifyTime),
+            formatTime(releaseTime),
+            duration,
+            v.operator_name
+        ];
+    });
+
+    // Generate table
+    doc.autoTable({
+        startY: 32,
+        head: [['Registration', 'PO Ref', 'Check-In', 'Notified', 'Released', 'Duration', 'Operator']],
+        body: tableData,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        margin: { top: 32 }
+    });
+
+    // Footer note
+    const finalY = doc.lastAutoTable.finalY + 5;
+    doc.setFontSize(8);
+    doc.text("* = Vehicle still in yard", 14, finalY);
+
+    // Save
+    const filename = `vehicle-report-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(filename);
+}
+
+// ==================== DOWNLOAD CSV ====================
+function downloadCSV() {
+    if (reportData.length === 0) {
+        alert("Please generate a report first");
+        return;
+    }
+
+    const formatTime = (date) => {
+        if (!date) return "";
+        const d = new Date(date);
+        return d.toLocaleString("en-GB", { 
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit", 
+            minute: "2-digit"
+        });
+    };
+
+    // CSV header
+    let csv = "Registration,PO Reference,Classification,Check-In Time,Notified Time,Release Time,Duration (mins),Status,Operator\n";
+
+    // CSV rows
+    reportData.forEach(v => {
+        const checkIn = new Date(v.check_in_time);
+        const releaseTime = v.release_time ? new Date(v.release_time) : null;
+        
+        let durationMins = "";
+        if (releaseTime) {
+            durationMins = Math.floor((releaseTime - checkIn) / 60000);
+        } else {
+            durationMins = Math.floor((Date.now() - checkIn) / 60000) + " (in progress)";
+        }
+
+        csv += `"${v.registration}","${v.po_ref || ""}","${v.classification || "normal"}","${formatTime(v.check_in_time)}","${formatTime(v.notify_time)}","${formatTime(v.release_time)}","${durationMins}","${v.status}","${v.operator_name}"\n`;
+    });
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vehicle-report-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// ==================== INIT ====================
+(async () => {
+    await loadOperators();
+    
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("dateTo").value = today;
+})();
+</script>
+
+</body>
+</html>
