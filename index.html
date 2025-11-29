@@ -1,4 +1,3 @@
-<!-- START A1 --> good
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
+document.getElementById("versionBanner").innerText = "v3.6.0 - PERFORMANCE OPTIMIZED";
 </script>
 
 <style>
@@ -23,13 +22,8 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         --danger: #ef4444;
     }
 
-    /* Export load styling */
     .queue-export {
-        background: linear-gradient(
-            90deg,
-            rgba(14,165,233,0.25),
-            rgba(14,165,233,0.08)
-        ) !important;
+        background: linear-gradient(90deg, rgba(14,165,233,0.25), rgba(14,165,233,0.08)) !important;
         box-shadow: 0 0 16px rgba(14,165,233,0.5);
         animation: exportPulse 2.4s infinite ease-in-out;
     }
@@ -38,12 +32,14 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         0%, 100% { box-shadow: 0 0 16px rgba(14,165,233,0.5); }
         50% { box-shadow: 0 0 24px rgba(14,165,233,0.8); }
     }
+    
     body {
         margin: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: var(--bg);
         color: var(--text);
     }
+    
     header {
         background: var(--card);
         padding: 16px 24px;
@@ -58,6 +54,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         font-weight: bold;
         color: var(--accent);
     }
+    
     .header-clock {
         flex: 1;
         font-size: 32px;
@@ -65,6 +62,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         text-align: center;
         color: var(--text);
     }
+    
     .header-right {
         flex: 1;
         display: flex;
@@ -88,6 +86,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         cursor: pointer;
         user-select: none;
     }
+    
     #avatarMenu {
         position: absolute;
         top: 48px;
@@ -100,12 +99,14 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         display: none;
         z-index: 10000;
     }
+    
     #avatarMenu > div {
         padding: 8px 12px;
         cursor: pointer;
         font-size: 14px;
         color: var(--text);
     }
+    
     #avatarMenu > div:hover {
         background: var(--accent);
         color: #000;
@@ -125,6 +126,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         display: none;
         z-index: 10000;
     }
+    
     #editModal {
         background: var(--card);
         color: var(--text);
@@ -134,12 +136,14 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         border-radius: 8px;
         border: 1px solid #334155;
     }
+    
     #editModal label {
         display: block;
         margin-top: 12px;
         margin-bottom: 4px;
         font-size: 14px;
     }
+    
     #editModal input,
     #editModal textarea {
         width: 100%;
@@ -150,16 +154,19 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         color: var(--text);
         font-size: 14px;
     }
+    
     #editModal textarea {
         resize: vertical;
         height: 80px;
     }
+    
     #editModal .modal-actions {
         display: flex;
         justify-content: flex-end;
         gap: 12px;
         margin-top: 16px;
     }
+    
     #editModal .modal-actions button {
         padding: 8px 16px;
         border: none;
@@ -168,20 +175,24 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         font-weight: bold;
         font-size: 14px;
     }
+    
     #editModal .modal-actions .cancel-btn {
         background: #475569;
         color: #fff;
     }
+    
     #editModal .modal-actions .save-btn {
         background: var(--accent);
         color: #000;
     }
+    
     .stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
         gap: 16px;
         padding: 24px;
     }
+    
     .tile {
         background: var(--card);
         padding: 16px;
@@ -193,18 +204,21 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         justify-content: center;
         text-align: center;
     }
+    
     .tile .value {
         font-size: 32px;
         font-weight: bold;
         margin-bottom: 4px;
         color: var(--accent);
     }
+    
     .grid {
         display: flex;
         flex-direction: row;
         gap: 24px;
         padding: 0 24px 24px;
     }
+    
     .queue, .details {
         flex: 1;
         background: var(--card);
@@ -214,11 +228,13 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         min-height: 420px;
         overflow-y: auto;
     }
+    
     .queue h2, .details h2 {
         margin-top: 0;
         color: var(--accent);
         font-size: 20px;
     }
+    
     .entry {
         background: #1f2937;
         border-left: 22px solid var(--success);
@@ -229,15 +245,19 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         justify-content: space-between;
         align-items: center;
     }
+    
     .entry.overdue {
         border-left-color: var(--warn);
     }
+    
     .entry.critical {
         border-left-color: var(--danger);
     }
+    
     .entry .info {
         flex: 1;
     }
+    
     .entry .actions button {
         margin-left: 6px;
         padding: 6px 10px;
@@ -246,15 +266,18 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         cursor: pointer;
         font-size: 14px;
     }
+    
     .entry .actions .notify { background: var(--warn); color: #000; }
     .entry .actions .release { background: var(--success); color: #000; }
     .entry .actions .undo { background: var(--danger); color: #fff; }
+    
     .activity-item {
         margin-bottom: 8px;
         border-bottom: 1px solid #334155;
         padding-bottom: 4px;
         font-size: 14px;
     }
+    
     .add-btn {
         background: var(--accent);
         color: #fff;
@@ -265,6 +288,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         cursor: pointer;
         margin-right: 8px;
     }
+    
     .slide-panel {
         position: fixed;
         top: 0;
@@ -279,20 +303,24 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         z-index: 1000;
         color: var(--text);
     }
+    
     .panel-visible {
         transform: translateY(0);
     }
+    
     .panel-title {
         font-size: 20px;
         color: var(--accent);
         font-weight: bold;
         margin-bottom: 10px;
     }
+    
     .form-row {
         display: flex;
         gap: 12px;
         margin-top: 10px;
     }
+    
     .slide-panel input,
     .slide-panel textarea,
     .slide-panel select {
@@ -304,6 +332,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         background: var(--bg);
         color: var(--text);
     }
+    
     .submit-btn {
         padding: 10px 16px;
         background: var(--accent);
@@ -315,7 +344,6 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         font-weight: bold;
     }
     
-    /* Connection status indicator */
     .connection-status {
         width: 8px;
         height: 8px;
@@ -323,16 +351,17 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         background: var(--success);
         margin-right: 8px;
     }
+    
     .connection-status.disconnected {
         background: var(--danger);
         animation: pulse 1s infinite;
     }
+    
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
     }
 
-    /* Navigation bar */
     .main-nav {
         background: #1e3a5f;
         padding: 0;
@@ -341,6 +370,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         justify-content: center;
         border-bottom: 1px solid #334155;
     }
+    
     .main-nav a {
         color: #e2e8f0;
         text-decoration: none;
@@ -350,32 +380,30 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         letter-spacing: 0.5px;
         transition: all 0.2s;
     }
+    
     .main-nav a:hover {
         background: rgba(255,255,255,0.1);
     }
+    
     .main-nav a.active {
         background: rgba(255,255,255,0.15);
         color: #fff;
     }
+    
     .nav-divider {
         color: #64748b;
         font-size: 18px;
         user-select: none;
     }
 </style>
-<!-- END A1 -->
  
 </head>
 <body>
-    <!-- START A2 -->
-    <!-- Hidden Add Lorry Panel -->
     <div id="addPanel" class="slide-panel">
         <div class="panel-title">Add New Lorry</div>
-        <!-- Haulier/Lorry field -->
         <div class="form-row">
             <input type="text" id="haulierInput" placeholder="Haulier / Lorry Company" style="width:100%;">
         </div>
-        <!-- Expected Loads Dropdown -->
         <div class="form-row">
             <select id="prebookSelect" onchange="applyPrebook()" style="width:100%;">
                 <option value="">-- Select Expected Load --</option>
@@ -406,6 +434,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         </div>
         <div class="submit-btn" onclick="submitVehicle()">Submit</div>
     </div>
+    
     <header>
         <div class="header-left">
             <span class="connection-status" id="connectionStatus" title="Realtime connection"></span>
@@ -424,7 +453,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
             </div>
         </div>
     </header>
-    <!-- Navigation -->
+    
     <nav class="main-nav">
         <a href="arrivals.html">ARRIVALS</a>
         <span class="nav-divider">|</span>
@@ -432,10 +461,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         <span class="nav-divider">|</span>
         <a href="supervisor.html">SUPERVISOR</a>
     </nav>
-    <!-- END A2 -->
     
-    <!-- KPI Tiles -->
-    <!-- START A3 -->
     <div class="stats">
         <div class="tile">
             <div class="value" id="kpiTotalIn">0</div>
@@ -454,9 +480,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
             Overdue >30m
         </div>
     </div>
-    <!-- END A3 -->
     
-    <!-- START A4 -->
     <div class="grid">
         <div class="queue">
             <h2>Active Queue</h2>
@@ -467,149 +491,119 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
             <div id="activityList">Loading...</div>
         </div>
     </div>
-    <!-- END A4 -->
     
-    <!-- START A5 -->
     <canvas id="chartTrend" style="max-width:600px;height:240px;max-height:240px;margin:0 auto 24px;display:block;"></canvas>
-    <!-- END A5 -->
 
-    <!-- Supabase & Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    // ============================================================
-    // SUPABASE CLIENT
-    // ============================================================
     const db = supabase.createClient(
         "https://gtixdparpjdpyhhubsfz.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
     );
 
-    // ============================================================
-    // STATE
-    // ============================================================
-    let vehicles = [];          // Only ACTIVE vehicles (parked/notified)
-    let releasedCount = 0;      // Total released (all time)
-    let operators = [];         // Loaded ONCE, cached
+    let vehicles = [];
+    let operators = [];
     let logs = [];
     let chart;
-    let refreshTimeout = null;  // For debouncing
-
-    // Additional state for prebookings and export flag. These are used by the
-    // Add Lorry form to preload expected loads (prebookings) and preserve
-    // whether a selected prebooking is marked as an export. Without this,
-    // the prebooking selection would not populate the form fields correctly.
+    let refreshTimeout = null;
     let prebookCache = [];
     let prebookExportFlag = false;
+    let vehicleCache = {};
 
-    // ============================================================
-    // OPTIMIZED FETCH: OPERATORS (load once, cache in memory)
-    // ============================================================
-    async function fetchOperators() {
-        // Only fetch if we don't have them cached
-        if (operators.length > 0) return;
-        
-        const { data, error } = await db
-            .from('operators')
-            .select('id, name')
-            .eq('active', true);
-        
-        if (error) { console.error(error); return; }
-        operators = data || [];
-        
-        // Also cache in localStorage for instant load on refresh
-        try {
-            localStorage.setItem('operators_cache', JSON.stringify(operators));
-        } catch (e) { /* quota exceeded, ignore */ }
-    }
-
-    // Load cached operators immediately
     (function loadCachedOperators() {
         try {
             const cached = localStorage.getItem('operators_cache');
             if (cached) operators = JSON.parse(cached);
-        } catch (e) { /* ignore */ }
+        } catch (e) {}
     })();
 
-    // ============================================================
-    // OPTIMIZED FETCH: VEHICLES (only active, not entire history)
-    // ============================================================
-    async function fetchVehicles() {
-        // Fetch active vehicles for the queue
-        const { data, error } = await db
-            .from('vehicles')
-            .select('*')
-            .in('status', ['parked', 'notified'])
-            .order('check_in_time', { ascending: true });
-
-        if (error) { console.error(error); return; }
-        vehicles = data || [];
-
-        // Fetch released count for TODAY only (matches Supervisor dashboard)
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+    // PARALLEL FETCH - ALL DATA LOADS SIMULTANEOUSLY
+    async function fetchAllData() {
+        const performanceStart = performance.now();
         
-        const { count } = await db
-            .from('vehicles')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'released')
-            .gte('release_time', todayStart.toISOString());
-        
-        releasedCount = count || 0;
-
-        renderQueue();
-        loadKPIs();
-        loadChart();
-    }
-
-    // ============================================================
-    // OPTIMIZED FETCH: LOGS (with 24hr filter in query)
-    // ============================================================
-    let vehicleCache = {}; // Cache for vehicle lookups (including released)
-    
-    async function fetchLogs() {
-        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        
-        const { data, error } = await db
-            .from('actions_log')
-            .select('*')
-            .gte('timestamp', cutoff)  // Filter in DB, not JS
-            .order('timestamp', { ascending: false })
-            .limit(20);
-
-        if (error) { console.error("Error loading logs:", error); return; }
-        logs = data || [];
-        
-        // Fetch vehicle details for any vehicles not in our active list
-        const missingIds = logs
-            .map(l => l.vehicle_id)
-            .filter(id => id && !vehicles.find(v => v.id === id) && !vehicleCache[id]);
-        
-        if (missingIds.length > 0) {
-            const { data: missingVehicles } = await db
-                .from('vehicles')
-                .select('id, registration, po_ref')
-                .in('id', [new Set(missingIds)]);
+        // Execute all fetches in parallel using Promise.all
+        const [statsResult, vehiclesResult, logsResult, operatorsResult] = await Promise.all([
+            // 1. RPC for stats (single query)
+            db.rpc('get_dashboard_stats'),
             
-            if (missingVehicles) {
-                missingVehicles.forEach(v => {
-                    vehicleCache[v.id] = v;
-                });
-            }
+            // 2. Vehicles with logs prefetched
+            db.from('vehicles')
+                .select('*')
+                .in('status', ['parked', 'notified'])
+                .order('check_in_time', { ascending: true }),
+            
+            // 3. Recent logs (24hr)
+            db.from('actions_log')
+                .select('*')
+                .gte('timestamp', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                .order('timestamp', { ascending: false })
+                .limit(20),
+            
+            // 4. Operators (only if cache empty)
+            operators.length === 0 
+                ? db.from('operators').select('id, name').eq('active', true)
+                : Promise.resolve({ data: operators, error: null })
+        ]);
+
+        const performanceEnd = performance.now();
+        console.log(`Data fetch completed in ${Math.round(performanceEnd - performanceStart)}ms`);
+
+        // Handle results
+        if (statsResult.data) {
+            updateKPIsFromRPC(statsResult.data);
         }
-        
-        renderActivity();
+
+        if (vehiclesResult.data) {
+            vehicles = vehiclesResult.data;
+            renderQueue();
+            loadChart();
+        }
+
+        if (logsResult.data) {
+            logs = logsResult.data;
+            
+            // Prefetch missing vehicle details
+            const missingIds = logs
+                .map(l => l.vehicle_id)
+                .filter(id => id && !vehicles.find(v => v.id === id) && !vehicleCache[id]);
+            
+            if (missingIds.length > 0) {
+                const { data: missingVehicles } = await db
+                    .from('vehicles')
+                    .select('id, registration, po_ref')
+                    .in('id', [...new Set(missingIds)]);
+                
+                if (missingVehicles) {
+                    missingVehicles.forEach(v => {
+                        vehicleCache[v.id] = v;
+                    });
+                }
+            }
+            
+            renderActivity();
+        }
+
+        if (operatorsResult.data && operators.length === 0) {
+            operators = operatorsResult.data;
+            try {
+                localStorage.setItem('operators_cache', JSON.stringify(operators));
+            } catch (e) {}
+        }
     }
 
-    // ============================================================
-    // REALTIME SUBSCRIPTIONS (replaces polling)
-    // ============================================================
+    // Update KPIs from RPC response
+    function updateKPIsFromRPC(stats) {
+        document.getElementById('kpiTotalIn').textContent = stats.in_yard || 0;
+        document.getElementById('kpiTotalOut').textContent = stats.released_today || 0;
+        document.getElementById('kpiAvgWait').textContent = stats.avg_wait_mins || 0;
+        document.getElementById('kpiOverdue').textContent = stats.overdue_count || 0;
+    }
+
     function setupRealtime() {
         const statusEl = document.getElementById('connectionStatus');
         
-        // Subscribe to vehicles changes
-        const vehicleChannel = db
-            .channel('vehicles-changes')
+        db.channel('vehicles-changes')
             .on('postgres_changes', 
                 { event: '*', schema: 'public', table: 'vehicles' },
                 (payload) => {
@@ -627,9 +621,7 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
                 }
             });
 
-        // Subscribe to actions_log changes
-        const logsChannel = db
-            .channel('logs-changes')
+        db.channel('logs-changes')
             .on('postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'actions_log' },
                 (payload) => {
@@ -640,42 +632,13 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
             .subscribe();
     }
 
-    // Debounce rapid changes (e.g., if 5 tabs open)
     function debouncedRefresh() {
         if (refreshTimeout) clearTimeout(refreshTimeout);
         refreshTimeout = setTimeout(() => {
-            fetchVehicles();
-            fetchLogs();
-        }, 500); // Wait 500ms for changes to settle
+            fetchAllData();
+        }, 500);
     }
 
-    // ============================================================
-    // KPI CALCULATIONS (now simpler - vehicles only has active)
-    // ============================================================
-    function loadKPIs() {
-        const totalIn = vehicles.length;
-        
-        const waits = vehicles.map(v => 
-            Math.floor((Date.now() - new Date(v.check_in_time)) / 60000)
-        );
-        const avgWait = waits.length 
-            ? Math.round(waits.reduce((a,b) => a+b, 0) / waits.length) 
-            : 0;
-        
-        const overdue = vehicles.filter(v => {
-            const due = new Date(v.due_time).getTime();
-            return Date.now() > due + (30 * 60000);
-        }).length;
-
-        document.getElementById('kpiTotalIn').textContent = totalIn;
-        document.getElementById('kpiTotalOut').textContent = releasedCount;
-        document.getElementById('kpiAvgWait').textContent = avgWait;
-        document.getElementById('kpiOverdue').textContent = overdue;
-    }
-
-    // ============================================================
-    // RENDER QUEUE (unchanged logic, but faster data)
-    // ============================================================
     function renderQueue() {
         const container = document.getElementById('queueList');
         container.innerHTML = '';
@@ -714,9 +677,6 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         });
     }
 
-    // ============================================================
-    // RENDER ACTIVITY
-    // ============================================================
     function renderActivity() {
         const container = document.getElementById('activityList');
         container.innerHTML = '';
@@ -730,7 +690,6 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
             const item = document.createElement('div');
             item.className = 'activity-item';
             
-            // Check active vehicles first, then cache for released ones
             const veh = vehicles.find(v => v.id === l.vehicle_id) || vehicleCache[l.vehicle_id] || {};
             const reg = veh.registration || '';
             const po = veh.po_ref || '';
@@ -759,9 +718,6 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         });
     }
 
-    // ============================================================
-    // CHART (simplified - only uses active vehicles)
-    // ============================================================
     function loadChart() {
         const ctx = document.getElementById('chartTrend').getContext('2d');
         const hours = [];
@@ -807,9 +763,6 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         });
     }
 
-    // ============================================================
-    // ACTION HANDLERS
-    // ============================================================
     async function notify(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
@@ -826,21 +779,17 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
                 operator_id: operator 
             });
 
-            // Get vehicle details for SMS notification
             const { data: vehicle } = await db.from('vehicles').select('po_ref, mobile_number').eq('id', id).single();
             const phone = vehicle?.mobile_number || 'N/A';
             const po = vehicle?.po_ref || 'N/A';
 
-            // Open SMS simulator for notification
             if (phone && phone !== 'N/A') {
                 window.open(`sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}`,
                     "_blank",
                     "width=400,height=700");
             }
 
-            // Realtime will trigger refresh, but do it immediately for responsiveness
-            fetchVehicles();
-            fetchLogs();
+            fetchAllData();
         }
     }
 
@@ -848,7 +797,6 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
         
-        // Get vehicle for duration calculation and contact info BEFORE updating
         const { data: vehicle } = await db.from('vehicles').select('*').eq('id', id).single();
         
         const { error } = await db.from('vehicles')
@@ -863,21 +811,18 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
                 operator_id: operator 
             });
 
-            // Calculate duration and get contact info
             const checkIn = new Date(vehicle.check_in_time);
             const duration = Math.floor((new Date(now) - checkIn) / 60000);
             const phone = vehicle?.mobile_number || 'N/A';
             const po = vehicle?.po_ref || 'N/A';
 
-            // Open SMS simulator for departure confirmation
             if (phone && phone !== 'N/A') {
                 window.open(`sms_simulator.html?type=released&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}&duration=${duration} mins`,
                     "_blank",
                     "width=400,height=700");
             }
 
-            fetchVehicles();
-            fetchLogs();
+            fetchAllData();
         }
     }
 
@@ -896,24 +841,18 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
                 timestamp: now, 
                 operator_id: operator 
             });
-            fetchVehicles();
-            fetchLogs();
+            fetchAllData();
         }
     }
 
-    // ============================================================
-    // ADD VEHICLE
-    // ============================================================
-function togglePanel() {
-    const panel = document.getElementById('addPanel');
-    if (!panel) return;
-    panel.classList.toggle('panel-visible');
-    // When the panel becomes visible, load any expected prebookings
-    if (panel.classList.contains('panel-visible')) {
-        // Populate the expected loads dropdown
-        loadPrebooks();
+    function togglePanel() {
+        const panel = document.getElementById('addPanel');
+        if (!panel) return;
+        panel.classList.toggle('panel-visible');
+        if (panel.classList.contains('panel-visible')) {
+            loadPrebooks();
+        }
     }
-}
 
     async function submitVehicle() {
         const btn = document.querySelector('#addPanel .submit-btn');
@@ -922,10 +861,6 @@ function togglePanel() {
         btn.style.pointerEvents = 'none';
         btn.style.opacity = '0.6';
 
-        // Normalise registration and fetch form values. Trim whitespace and
-        // uppercase the registration, pull in the PO reference, haulier,
-        // mobile number and notes. Mobile number is stored as null when
-        // blank so Supabase won't parse an empty string as an integer.
         let reg = document.getElementById('regInput').value.trim().replace(/\s+/g, '').toUpperCase();
         let po = document.getElementById('poInput').value.trim();
         let haulier = document.getElementById('haulierInput').value.trim();
@@ -944,16 +879,9 @@ function togglePanel() {
         const operatorId = localStorage.getItem('operator_id') || null;
         const nowIso = new Date().toISOString();
         const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
-        // Determine if the user has flagged this load as export. When
-        // applying a prebooking, prebookExportFlag synchronises the
-        // checkbox state; reading it here suffices to set classification.
         const isExport = document.getElementById('addExport').checked;
 
         try {
-            // Insert new vehicle with haulier and mobile details. Use
-            // mobile_number column instead of pager_number to align with
-            // ref_index implementation. Empty mobile values are passed as
-            // null to prevent invalid integer parsing in Supabase.
             const { data, error } = await db.from('vehicles').insert({
                 registration: reg,
                 po_ref: po || null,
@@ -976,11 +904,8 @@ function togglePanel() {
             }
             
             const vehicleId = data && data[0] && data[0].id;
-            // Open QR code in a new window so the gatehouse can scan it
             window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
-            // Open SMS simulator to send the check-in notification if a
-            // mobile number was provided. This mirrors the functionality
-            // implemented in ref_index.html.
+            
             if (mobile) {
                 window.open(
                     `sms_simulator.html?type=check_in&phone=${encodeURIComponent(mobile)}&po=${encodeURIComponent(po || 'N/A')}&quoted=${quoted}`,
@@ -996,19 +921,14 @@ function togglePanel() {
                 operator_id: operatorId
             });
 
-            // If a prebooking was used, mark it as consumed so it no longer
-            // appears in the expected loads dropdown on subsequent adds.
             const selectedPrebookId = document.getElementById('prebookSelect').value;
             if (selectedPrebookId) {
                 await db.from('prebookings').update({ consumed: true }).eq('id', selectedPrebookId);
             }
             
-            // Realtime will trigger, but refresh immediately
-            await fetchVehicles();
-            await fetchLogs();
+            await fetchAllData();
             
             togglePanel();
-            // Reset form fields to prepare for the next entry
             document.getElementById('regInput').value = '';
             document.getElementById('poInput').value = '';
             const hInp = document.getElementById('haulierInput');
@@ -1021,22 +941,15 @@ function togglePanel() {
             const pbSel = document.getElementById('prebookSelect');
             if (pbSel) pbSel.value = '';
             prebookExportFlag = false;
-    } finally {
+        } finally {
             btn.style.pointerEvents = 'auto';
             btn.style.opacity = '1';
         }
     }
 
-    // ----------------------------------------------------------------------
-    // PREBOOKING HELPERS
-    // ----------------------------------------------------------------------
-    // Load expected loads from the prebookings table. This populates the
-    // dropdown with any unconsumed prebooked loads so operators can pick
-    // them when adding a new lorry. Results are cached in prebookCache.
     async function loadPrebooks() {
         const sel = document.getElementById('prebookSelect');
         if (!sel) return;
-        // Reset options to the default placeholder
         sel.innerHTML = `<option value="">-- Select Expected Load --</option>`;
         try {
             const { data } = await db
@@ -1056,15 +969,11 @@ function togglePanel() {
         }
     }
 
-    // Apply selected prebook values to the Add Lorry form. When a
-    // prebooked load is chosen, copy its PO, registration, notes and haulier
-    // into the corresponding input fields and set the export flag if needed.
     function applyPrebook() {
         const sel = document.getElementById('prebookSelect');
         if (!sel) return;
         const id = sel.value;
         if (!id) return;
-        // convert to number for comparison; some IDs may be strings
         const pb = prebookCache.find(x => String(x.id) === String(id));
         if (!pb) return;
         const poInput = document.getElementById('poInput');
@@ -1075,25 +984,15 @@ function togglePanel() {
         if (regInput) regInput.value = pb.registration || '';
         if (notesInput) notesInput.value = pb.notes || '';
         if (haulierInput) haulierInput.value = pb.haulier || '';
-        // remember if this prebooking is an export load and reflect that on
-        // the checkbox. some prebookings may specify is_export on the row.
         prebookExportFlag = pb.is_export === true;
         const exportChk = document.getElementById('addExport');
         if (exportChk) exportChk.checked = prebookExportFlag;
     }
 
-    // ============================================================
-    // MANUAL REFRESH (fallback)
-    // ============================================================
     function manualRefresh() {
-        fetchVehicles();
-        fetchOperators();
-        fetchLogs();
+        fetchAllData();
     }
 
-    // ============================================================
-    // CLOCK
-    // ============================================================
     function updateClock() {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-GB', { 
@@ -1103,9 +1002,6 @@ function togglePanel() {
         if (clk) clk.textContent = timeStr;
     }
 
-    // ============================================================
-    // AVATAR / LOGOUT
-    // ============================================================
     function logoutUser() {
         localStorage.removeItem('operator_id');
         window.location.href = 'login.html';
@@ -1140,9 +1036,6 @@ function togglePanel() {
         }
     })();
 
-    // ============================================================
-    // EDIT MODAL
-    // ============================================================
     let currentEditId = null;
     
     function openEditModal(id) {
@@ -1152,7 +1045,6 @@ function togglePanel() {
         
         document.getElementById('editReg').value = veh.registration || '';
         document.getElementById('editPO').value = veh.po_ref || '';
-        // Prefer mobile_number on the record; fallback to pager_number for older rows
         const editMobile = document.getElementById('editMobile');
         if (editMobile) editMobile.value = veh.mobile_number || veh.pager_number || '';
         document.getElementById('editNotes').value = veh.notes || '';
@@ -1196,8 +1088,7 @@ function togglePanel() {
                 operator_id: operatorId
             });
             
-            await fetchVehicles();
-            await fetchLogs();
+            await fetchAllData();
             closeEditModal();
         } catch (err) {
             console.error('Edit save failed:', err);
@@ -1205,27 +1096,18 @@ function togglePanel() {
         }
     }
     
-    // ============================================================
-    // CHECK INCOMING BOOKING (URL PARAMS)
-    // ============================================================
     function checkIncomingBooking() {
-        // Read the URL
         const params = new URLSearchParams(window.location.search);
         
-        // If there is a reference number in the URL, run this logic
         if (params.has('ref')) {
-            // 1. Force the Add Panel to open
             const panel = document.getElementById('addPanel');
             panel.classList.add('panel-visible');
             
-            // 2. Fill in the boxes
             document.getElementById('poInput').value = params.get('ref');
             
-            // Handle the Haulier/Customer field
             const haulierBox = document.getElementById('haulierInput');
             if (haulierBox) haulierBox.value = params.get('customer') || '';
             
-            // Create the notes
             let notes = `Booking: #${params.get('ref')}`;
             if (params.get('orders')) notes += `\nOrders: ${params.get('orders')}`;
             if (params.get('pallets')) notes += `\nExpected Pallets: ${params.get('pallets')}`;
@@ -1233,43 +1115,30 @@ function togglePanel() {
             
             document.getElementById('notesInput').value = notes;
             
-            // 3. Put the cursor in the Registration box so I can type immediately
             setTimeout(() => {
                 document.getElementById('regInput').focus();
             }, 500);
             
-            // 4. Clean the URL so if I refresh, it doesn't do it again
             window.history.replaceState({}, document.title, "index.html");
         }
     }
 
-    // ============================================================
-    // INITIALIZATION
-    // ============================================================
     (async function init() {
         updateClock();
         setInterval(updateClock, 1000);
         
-        // Initial data load
-        await fetchOperators();
-        await fetchVehicles();
-        await fetchLogs();
+        await fetchAllData();
         
-        // Check for incoming bookings from arrivals.html
         checkIncomingBooking();
         
-        // Setup realtime (replaces setInterval polling)
         setupRealtime();
         
-        // Fallback: light polling every 60s in case realtime disconnects
         setInterval(() => {
-            fetchVehicles();
-            fetchLogs();
+            fetchAllData();
         }, 60000);
     })();
     </script>
 
-    <!-- Modal overlay for editing vehicles -->
     <div id="editModalOverlay">
         <div id="editModal">
             <h3 style="margin-top:0; margin-bottom:8px; font-size:20px; color: var(--accent);">Edit Vehicle</h3>
