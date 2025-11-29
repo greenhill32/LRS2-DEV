@@ -475,35 +475,49 @@ setInterval(() => {
 }, 1000);
 
 // ============================================================
-// DATA LOGIC
+// SMART DATA LOADING (JSON + DATABASE)
 // ============================================================
-let bookingsData = [];
-let selectedBookingData = null;
-
 async function loadBookings() {
     try {
+        // 1. Load the PLAN (Expected Bookings from JSON)
         const response = await fetch('mock_bookings.json');
         const data = await response.json();
+        bookingsData = data.bookings || [];
+
+        // 2. Load the REALITY (Live Vehicles from Supabase)
+        // We fetch any vehicle from today that has a PO Reference
+        const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         
-        // Date Check (YYYY-MM-DD)
-        const todayStr = new Date().toLocaleDateString('en-CA');
-        if (data.date !== todayStr) {
-            document.getElementById('arrivalsList').innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);"><h3>No Bookings for Today (${todayStr})</h3><p>File date: ${data.date}</p></div>`;
-            return;
+        const { data: liveVehicles } = await db
+            .from('vehicles')
+            .select('po_ref, status')
+            .not('po_ref', 'is', null) // Only care about vehicles with a PO
+            .gte('check_in_time', todayStr); // Optimization: Only fetch today's data
+
+        // 3. MERGE THEM (Cross-reference Plan vs Reality)
+        if (liveVehicles && liveVehicles.length > 0) {
+            bookingsData.forEach(booking => {
+                // Check if this booking ref exists in our live database
+                const match = liveVehicles.find(v => v.po_ref === booking.ref);
+                
+                if (match) {
+                    // It is in the DB! Update the visual status.
+                    if (match.status === 'released') {
+                        booking.status = 'complete'; // Green
+                    } else {
+                        booking.status = 'arrived';  // Purple
+                    }
+                }
+            });
         }
 
-        bookingsData = data.bookings || [];
-        
-        // Initialize local 'actual' tracker
-        bookingsData.forEach(b => {
-            b.actual_pallets = 0; 
-        });
-
         renderBookings();
-        await syncWithDatabase();
-        setupRealtime();
-
-    } catch (err) { console.error(err); }
+        updateStats();
+    } catch (err) {
+        console.error('Failed to load bookings:', err);
+        document.getElementById('arrivalsList').innerHTML = 
+            '<div style="text-align:center;padding:40px;color:var(--danger);">Failed to sync data</div>';
+    }
 }
 
 async function syncWithDatabase() {
