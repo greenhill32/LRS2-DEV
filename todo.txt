@@ -1,5 +1,14 @@
-supervisor modal actions require sql entries? under review,supervisor aware?
+which ever page you are on it will alsway be greyed out over arrivals.
 
-arrivals.html how to check it has been delivered? not local storage as other users wont see it
-is there  a bd entry?
-are the html aware?
+the page shows arrivals | queue | supervisor. the other pages do load but it only looks like it in arrivals grey shading.
+
+on arrivals page it feeds from json unitl an api is used.
+ the whole days schedule should stay on the page. as we work thorugh the day we will get completions. these will still be visible in arrivals page NOT index page.
+
+so it should be lorry arrives (expected) gatehouse checks them in a qr code and sms simulation pop up.
+they get sent to lorry park (parked status)
+they get notified to move to loading area (notifed status)
+when complete they get markerd complete.
+
+the lorry should show in the arrivals page all day (cleansed before the following day)
+lorry should disappear from index (queue) once complete
