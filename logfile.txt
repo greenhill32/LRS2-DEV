@@ -684,3 +684,39 @@ Arrived: Sum of SQL pallet_count (where po_ref matches).
 Remaining: Sum of JSON pallets (where no matching SQL record exists).
 Reactivity:
 Implemented Supabase Realtime (db.channel(...).on('postgres_changes'...)). When a vehicle is inserted into the database, the client immediately re-runs the synchronization logic to update the UI without a page refresh.
+
+29/11/25
+Add the prefetch optimization script to index.html, arrivals.html, and supervisor.html. Place it just before the closing </body> tag in each file.
+I'll help you add the prefetch optimization script to those three HTML files. Let me first read them to see their current structure.
+Read c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\index.html
+Read c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\arrivals.html, c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html
+I can see that [index.html](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\index.html) and [supervisor.html](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html) already have the prefetch optimization script (lines 1257-1278 in index.html and lines 1392-1413 in supervisor.html), but [arrivals.html](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\arrivals.html) is missing it. Let me add the prefetch optimization script to arrivals.html just before the closing </body> tag:
+Edit c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\arrivals.html
+Added 22 lines
+Perfect! I've successfully added the prefetch optimization script to all three HTML files: ✅ [index.html](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\index.html:1257-1278) - Already had the script
+✅ [arrivals.html](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\arrivals.html:788-809) - Script now added
+✅ [supervisor.html](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html:1392-1413) - Already had the script The prefetch optimization script is now consistently placed just before the closing </body> tag in all three files. This script will:
+Use requestIdleCallback to run when the browser is idle
+Prefetch the other two HTML pages that the user isn't currently viewing
+Improve navigation performance by loading pages in the background
+Log prefetch activity to the console for debugging
+All three pages now have identical prefetch functionality for faster page transitions across your application.
+FOUND THE BUG:
+Arrivals.html only listens for INSERT events on the vehicles table. When supervisor UPDATES a vehicle status to released, arrivals.html doesn't hear about it!
+The Fix:
+Change line 784 in arrivals.html from:
+javascriptdb.channel('arrivals').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vehicles' }, syncWithDatabase).subscribe();
+To:
+javascriptdb.channel('arrivals')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vehicles' }, syncWithDatabase)
+  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'vehicles' }, syncWithDatabase)
+  .subscribe();
+This way arrivals.html will hear when vehicles are released and automatically update the booking status to complete.
+Want me to make that fix?
+Excellent catch! You're absolutely right - arrivals.html is only listening for INSERT events, so when a supervisor updates a vehicle status to "released", the arrivals page doesn't update automatically. Let me fix that:
+Edit c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\arrivals.html
+Added 3 lines
+Perfect! ✅ Bug fixed! Now [arrivals.html:783-788](c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\arrivals.html#L783-L788) will listen for both:
+INSERT events - when new vehicles are checked in
+UPDATE events - when vehicle statuses change (including released)
+This means when a supervisor releases a vehicle in the supervisor dashboard, the arrivals page will automatically sync and update the booking status from "arrived" to "complete" in real-time, without needing a manual refresh.
