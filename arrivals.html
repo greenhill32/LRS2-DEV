@@ -8,7 +8,7 @@
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
     background: #8b5cf6; color: white; padding: 4px 12px;
     border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
-">v3.4.1 - SYNC FIX</div>
+">v3.5.0 - LAUNCHER MODE</div>
 
 <style>
     :root {
@@ -121,10 +121,12 @@
     .stat-value.success { color: var(--success); }
     .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-    /* LAYOUT */
+    /* LAYOUT - UPDATED for Task 1 */
     .main-grid {
-        display: grid; grid-template-columns: 1fr 420px;
-        gap: 20px; padding: 0 24px 24px;
+        display: block; /* Removed Grid */
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px 24px;
     }
 
     /* ARRIVALS LIST */
@@ -198,48 +200,6 @@
     .badge-notified { background: var(--purple); color: white; }
     .badge-released { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
 
-    /* CHECK-IN FORM */
-    .checkin-panel {
-        background: var(--card); border-radius: 12px;
-        border: 1px solid var(--border); padding: 20px;
-        height: fit-content;
-    }
-    .checkin-panel h2 { font-size: 18px; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
-    .search-box { position: relative; margin-bottom: 20px; }
-    .search-box input {
-        width: 100%; padding: 14px 16px; background: var(--bg);
-        border: 1px solid var(--border); border-radius: 8px;
-        color: var(--text); font-size: 16px;
-    }
-    .search-results {
-        background: var(--bg); border: 1px solid var(--border);
-        border-radius: 8px; margin-bottom: 20px;
-        max-height: 300px; overflow-y: auto; display: none;
-    }
-    .search-result-item { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
-    .search-result-item:hover { background: rgba(14, 165, 233, 0.1); }
-    
-    .selected-booking {
-        background: rgba(14, 165, 233, 0.1); border: 2px solid var(--accent);
-        border-radius: 8px; padding: 16px; margin-bottom: 20px; display: none;
-    }
-    .selected-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
-    .selected-info span { color: var(--muted); }
-
-    .form-row { margin-bottom: 12px; }
-    .checkin-form label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .checkin-form input, .checkin-form select, .checkin-form textarea {
-        width: 100%; padding: 10px; background: var(--bg);
-        border: 1px solid var(--border); border-radius: 6px;
-        color: var(--text); font-size: 14px;
-    }
-    .checkin-btn {
-        width: 100%; padding: 14px; background: var(--success);
-        color: white; border: none; border-radius: 8px;
-        font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 12px;
-    }
-    .checkin-btn:hover { background: #16a34a; }
-
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
 </head>
@@ -285,78 +245,22 @@
     </div>
     <div class="stat-item">
         <div class="stat-value" id="statPallets">0</div>
-        <div class="stat-label">Total Pallets</div>
+        <div class="stat-label">Remaining Pallets</div>
     </div>
 </div>
 
 <div class="main-grid">
-
     <!-- ARRIVALS LIST -->
     <div class="arrivals-panel">
         <div class="panel-header">
             <div class="panel-title">Todays Schedule</div>
-            <div style="font-size:12px; color:var(--muted);">Syncing with Live Queue...</div>
+            <div style="font-size:12px; color:var(--muted);">Select a booking to Check In</div>
         </div>
         <div class="arrivals-list" id="arrivalsList">
             <div style="padding:40px; text-align:center; color:var(--muted);">Loading Schedule...</div>
         </div>
     </div>
-
-    <!-- CHECK-IN FORM -->
-    <div class="checkin-panel">
-        <h2>Booking Check-In</h2>
-        
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search ref, order, or customer..." oninput="searchBookings(this.value)">
-        </div>
-        <div class="search-results" id="searchResults"></div>
-
-        <div class="selected-booking" id="selectedBooking">
-            <h3 id="selectedRef">#------</h3>
-            <div class="selected-info">
-                <div><span>Customer:</span> <span id="selectedCustomer">-</span></div>
-                <div><span>Orders:</span> <span id="selectedOrders">-</span></div>
-                <div><span>Pallets:</span> <span id="selectedPallets">-</span></div>
-            </div>
-        </div>
-
-        <div class="checkin-form">
-            <div class="form-row">
-                <label>Registration *</label>
-                <input type="text" id="regInput" placeholder="e.g. AB12 CDE" oninput="this.value = this.value.toUpperCase().replace(/\s+/g, '')">
-            </div>
-            <div class="form-row">
-                <label>Haulier</label>
-                <input type="text" id="haulierInput">
-            </div>
-            <div class="form-row">
-                <label>PO / Ref (Auto-filled)</label>
-                <input type="text" id="poInput" readonly style="background:#0f172a; color:#94a3b8;">
-            </div>
-            <div class="form-row">
-                <label>Mobile</label>
-                <input type="text" id="mobileInput">
-            </div>
-            <div class="form-row">
-                <label>Quoted Wait (Mins)</label>
-                <select id="quotedInput">
-                    <option value="30">30 mins</option>
-                    <option value="60" selected>60 mins</option>
-                    <option value="90">90 mins</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label>Notes</label>
-                <textarea id="notesInput"></textarea>
-            </div>
-            <div class="form-row">
-                <label style="color:#ccc; display:flex; align-items:center;">
-                    <input type="checkbox" id="addExport" style="margin-right:8px;"> Export Load
-                </label>
-            </div>
-            <button class="checkin-btn" id="submitBtn" onclick="checkInDriver()">Confirm Arrival</button>
-        </div>
-    </div>
+    <!-- CHECK-IN PANEL REMOVED -->
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -447,7 +351,7 @@ function syncData() {
     updateStats();
 }
 
-// 5. Render (FIXED CRASH HERE)
+// 5. Render
 function renderBoard() {
     const container = document.getElementById('arrivalsList');
     container.innerHTML = '';
@@ -518,7 +422,11 @@ function updateStats() {
     const total = mergedData.length;
     const inQueue = mergedData.filter(x => x.syncStatus === 'waiting').length;
     const complete = mergedData.filter(x => x.syncStatus === 'complete').length;
-    const pallets = mergedData.reduce((sum, x) => sum + (x.actualPallets || x.pallets || 0), 0);
+    
+    // UPDATED LINE: Filter out 'complete' items before summing
+    const pallets = mergedData
+        .filter(x => x.syncStatus !== 'complete') // This removes the completed ones
+        .reduce((sum, x) => sum + (x.actualPallets || x.pallets || 0), 0);
 
     document.getElementById('statExpected').textContent = total;
     document.getElementById('statInQueue').textContent = inQueue;
@@ -542,92 +450,23 @@ function setupRealtime() {
         });
 }
 
-// 7. Check-in Form Logic
+// 7. Check-in Launcher (UPDATED)
 function selectForCheckin(ref) {
+    // Find the booking details in the existing data
     const b = mergedData.find(x => x.ref === ref);
     if (!b) return;
 
-    if (b.syncStatus !== 'booked') {
-        alert("This booking is already " + b.syncStatus);
-        return;
-    }
+    // Prepare the data to send to the queue page
+    const params = new URLSearchParams({
+        ref: b.ref,
+        customer: b.customer,
+        orders: Array.isArray(b.orders) ? b.orders.join(', ') : (b.orders || ''),
+        pallets: b.pallets || '',
+        meds: b.contains_meds || false
+    });
 
-    document.getElementById('selectedBooking').style.display = 'block';
-    document.getElementById('selectedRef').textContent = '#' + b.ref;
-    document.getElementById('selectedCustomer').textContent = b.customer;
-    document.getElementById('selectedOrders').textContent = Array.isArray(b.orders) ? b.orders.join(', ') : (b.orders || '-');
-    document.getElementById('selectedPallets').textContent = b.pallets || 0;
-    
-    document.getElementById('searchResults').style.display = 'none';
-
-    // Auto-fill form
-    document.getElementById('poInput').value = b.ref;
-    document.getElementById('haulierInput').value = b.customer || '';
-    document.getElementById('notesInput').value = `Booking #${b.ref}`;
-    if (b.account) document.getElementById('notesInput').value += `\nAccount: ${b.account}`;
-    
-    document.getElementById('regInput').focus();
-}
-
-function searchBookings(val) {
-    const box = document.getElementById('searchResults');
-    if (val.length < 2) { box.style.display = 'none'; return; }
-    
-    const matches = mergedData.filter(b => 
-        (b.ref && b.ref.includes(val)) || 
-        (b.customer && b.customer.toLowerCase().includes(val.toLowerCase()))
-    );
-    
-    if (matches.length === 0) {
-        box.innerHTML = '<div style="padding:10px;">No match</div>';
-    } else {
-        box.innerHTML = matches.map(b => `
-            <div class="search-result-item" onclick="selectForCheckin('${b.ref}')">
-                <strong>#${b.ref}</strong> - ${b.customer} (${b.syncStatus})
-            </div>
-        `).join('');
-    }
-    box.style.display = 'block';
-}
-
-async function checkInDriver() {
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = "Processing...";
-
-    const reg = document.getElementById('regInput').value.trim().toUpperCase().replace(/\s+/g,'');
-    const po = document.getElementById('poInput').value;
-    const haulier = document.getElementById('haulierInput').value;
-    const mobile = document.getElementById('mobileInput').value || null;
-    const notes = document.getElementById('notesInput').value;
-    const quoted = document.getElementById('quotedInput').value;
-    const isExport = document.getElementById('addExport').checked;
-
-    if (!reg) { alert("Registration required"); btn.disabled = false; btn.textContent = "Confirm Arrival"; return; }
-    if (!po) { alert("Select a booking first"); btn.disabled = false; btn.textContent = "Confirm Arrival"; return; }
-
-    const opId = localStorage.getItem('operator_id');
-    const now = new Date().toISOString();
-    const due = new Date(Date.now() + quoted*60000).toISOString();
-
-    const { data, error } = await db.from('vehicles').insert({
-        registration: reg, po_ref: po, haulier: haulier, mobile_number: mobile,
-        notes: notes, quoted_minutes: quoted, check_in_time: now, due_time: due,
-        status: 'parked', classification: isExport ? 'export' : 'normal', operator_id: opId
-    }).select();
-
-    if (error) { alert("Error: " + error.message); }
-    else {
-        await db.from('actions_log').insert({
-             vehicle_id: data[0].id, action: 'check_in', timestamp: now, operator_id: opId 
-        });
-        
-        document.getElementById('regInput').value = '';
-        document.getElementById('selectedBooking').style.display = 'none';
-        
-        await loadLiveVehicles();
-        syncData();
-    }
-    btn.disabled = false; btn.textContent = "Confirm Arrival";
+    // Redirect to index.html with the data in the URL
+    window.location.href = `index.html?${params.toString()}`;
 }
 
 function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
