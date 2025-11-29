@@ -785,6 +785,28 @@ function setupRealtime() {
 }
 </script>
 
+<!-- START: PRELOADER OPTIMIZATION -->
+<script>
+(function() {
+    const appPages = ['index.html', 'arrivals.html', 'supervisor.html'];
+    const currentPath = window.location.pathname;
+    const currentPage = currentPath.substring(currentPath.lastIndexOf('/') + 1) || 'index.html';
+    const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 1000));
+
+    idleCallback(() => {
+        appPages.forEach(page => {
+            if (page === currentPage) return;
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = page;
+            link.as = 'document';
+            document.head.appendChild(link);
+            console.log(`[System] Prefetching ${page}`);
+        });
+    });
+})();
+</script>
+<!-- END: PRELOADER OPTIMIZATION -->
 
 </body>
 </html>
