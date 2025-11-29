@@ -28,482 +28,68 @@
         min-height: 100vh;
     }
 
-    /* Header */
+    /* HEADER LAYOUT (Standardized) */
     header {
         background: var(--card);
         padding: 16px 24px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid #1e293b;
     }
 
     .header-left {
+        flex: 1;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--accent);
         display: flex;
         align-items: center;
         gap: 12px;
     }
-
-    .header-left h1 {
-        font-size: 22px;
-        font-weight: 600;
-        color: var(--accent);
-    }
-
-    .live-dot {
-        width: 10px;
-        height: 10px;
-        background: var(--success);
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
+    
     .header-clock {
+        flex: 1;
         font-size: 32px;
-        font-weight: 700;
+        font-weight: bold;
+        text-align: center;
+        color: var(--text);
     }
 
     .header-right {
+        flex: 1;
         display: flex;
+        justify-content: flex-end;
+        align-items: center;
         gap: 12px;
-        align-items: center;
-    }
-
-    .btn {
-        padding: 10px 18px;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-primary {
-        background: var(--accent);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background: #0284c7;
-    }
-
-    /* Stats bar */
-    .stats-bar {
-        display: flex;
-        gap: 16px;
-        padding: 20px 24px;
-        background: var(--card);
-        margin: 20px 24px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-    }
-
-    .stat-item {
-        flex: 1;
-        text-align: center;
-        padding: 12px;
-        border-right: 1px solid var(--border);
-    }
-
-    .stat-item:last-child {
-        border-right: none;
-    }
-
-    .stat-value {
-        font-size: 36px;
-        font-weight: 700;
-        color: var(--accent);
-    }
-
-    .stat-value.warn { color: var(--warn); }
-    .stat-value.danger { color: var(--danger); }
-    .stat-value.success { color: var(--success); }
-
-    .stat-label {
-        font-size: 13px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
-    }
-
-    /* Main layout */
-    .main-grid {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 20px;
-        padding: 0 24px 24px;
-    }
-
-    /* Arrivals timeline */
-    .arrivals-panel {
-        background: var(--card);
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        overflow: hidden;
-    }
-
-    .panel-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .panel-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--accent);
-    }
-
-    .time-filter {
-        display: flex;
-        gap: 8px;
-    }
-
-    .filter-btn {
-        padding: 6px 12px;
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--muted);
-        border-radius: 4px;
-        font-size: 12px;
-        cursor: pointer;
-    }
-
-    .filter-btn.active {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: white;
-    }
-
-    .arrivals-list {
-        max-height: 600px;
-        overflow-y: auto;
-    }
-
-    /* Time slot group */
-    .time-slot {
-        border-bottom: 1px solid var(--border);
-    }
-
-    .time-slot:last-child {
-        border-bottom: none;
-    }
-
-    .slot-header {
-        padding: 10px 20px;
-        background: rgba(255,255,255,0.02);
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--muted);
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .slot-header.now {
-        background: rgba(14, 165, 233, 0.1);
-        color: var(--accent);
-    }
-
-    /* Booking card */
-    .booking-card {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .booking-card:hover {
-        background: rgba(255,255,255,0.03);
-    }
-
-    .booking-card:last-child {
-        border-bottom: none;
-    }
-
-    .booking-status {
-        width: 8px;
-        height: 60px;
-        border-radius: 4px;
-        flex-shrink: 0;
-    }
-
-    .booking-status.booked { background: var(--accent); }
-    .booking-status.arrived { background: var(--purple); }
-    .booking-status.complete { background: var(--success); }
-    .booking-status.late { background: var(--danger); animation: pulse 1s infinite; }
-
-    .booking-main {
-        flex: 1;
-    }
-
-    .booking-ref {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .booking-ref span {
-        font-weight: 400;
-        color: var(--muted);
-        font-size: 14px;
-        margin-left: 8px;
-    }
-
-    .booking-details {
-        font-size: 13px;
-        color: var(--muted);
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .booking-orders {
-        font-size: 12px;
-        color: var(--text);
-        margin-top: 6px;
-        font-family: monospace;
-        background: rgba(0,0,0,0.2);
-        padding: 4px 8px;
-        border-radius: 4px;
-        display: inline-block;
-    }
-
-    .booking-meta {
-        text-align: right;
-        flex-shrink: 0;
-    }
-
-    .booking-pallets {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    .booking-pallets small {
-        font-size: 12px;
-        font-weight: 400;
-        color: var(--muted);
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        margin-left: 8px;
-    }
-
-    .badge-meds {
-        background: var(--danger);
-        color: white;
-    }
-
-    .badge-late {
-        background: var(--danger);
-        color: white;
-    }
-
-    .badge-arriving {
-        background: var(--warn);
-        color: #000;
-    }
-
-    /* Check-in panel */
-    .checkin-panel {
-        background: var(--card);
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        padding: 20px;
-        height: fit-content;
-    }
-
-    .checkin-panel h2 {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--accent);
-        margin-bottom: 16px;
-    }
-
-    .search-box {
         position: relative;
-        margin-bottom: 20px;
     }
 
-    .search-box input {
-        width: 100%;
-        padding: 14px 16px;
+    .live-dot {
+        width: 10px; height: 10px; background: var(--success);
+        border-radius: 50%; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Avatar + menu */
+    #avatarBtn {
+        width: 38px; height: 38px; border-radius: 50%;
         background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        color: var(--text);
-        font-size: 16px;
+        border: 1px solid #334155;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; color: var(--accent);
+        cursor: pointer; user-select: none;
     }
-
-    .search-box input:focus {
-        outline: none;
-        border-color: var(--accent);
+    #avatarMenu {
+        position: absolute; top: 48px; right: 0;
+        background: var(--card);
+        border: 1px solid #334155;
+        border-radius: 6px; min-width: 150px;
+        padding: 4px 0; display: none; z-index: 10000;
     }
-
-    .search-box input::placeholder {
-        color: var(--muted);
+    #avatarMenu > div {
+        padding: 8px 12px; cursor: pointer; font-size: 14px; color: var(--text);
     }
-
-    .search-results {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        margin-bottom: 20px;
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    .search-result-item {
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--border);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .search-result-item:hover {
-        background: rgba(14, 165, 233, 0.1);
-    }
-
-    .search-result-item:last-child {
-        border-bottom: none;
-    }
-
-    .result-ref {
-        font-weight: 700;
-        font-size: 16px;
-    }
-
-    .result-detail {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 4px;
-    }
-
-    /* Selected booking for check-in */
-    .selected-booking {
-        background: rgba(14, 165, 233, 0.1);
-        border: 2px solid var(--accent);
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-
-    .selected-booking h3 {
-        font-size: 20px;
-        margin-bottom: 12px;
-    }
-
-    .selected-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        font-size: 13px;
-    }
-
-    .selected-info span {
-        color: var(--muted);
-    }
-
-    .checkin-form label {
-        display: block;
-        font-size: 13px;
-        color: var(--muted);
-        margin-bottom: 6px;
-        margin-top: 12px;
-    }
-
-    .checkin-form input {
-        width: 100%;
-        padding: 12px;
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--text);
-        font-size: 14px;
-    }
-
-    .checkin-form input:focus {
-        outline: none;
-        border-color: var(--accent);
-    }
-
-    .checkin-btn {
-        width: 100%;
-        padding: 16px;
-        background: var(--success);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        margin-top: 20px;
-        transition: all 0.2s;
-    }
-
-    .checkin-btn:hover {
-        background: #16a34a;
-    }
-
-    /* Upcoming summary */
-    .upcoming-summary {
-        background: rgba(0,0,0,0.2);
-        border-radius: 8px;
-        padding: 16px;
-        margin-top: 20px;
-    }
-
-    .upcoming-summary h4 {
-        font-size: 13px;
-        color: var(--muted);
-        text-transform: uppercase;
-        margin-bottom: 12px;
-    }
-
-    .upcoming-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--border);
-        font-size: 13px;
-    }
-
-    .upcoming-item:last-child {
-        border-bottom: none;
-    }
-
-    /* Version banner */
-    .version-banner {
-        position: fixed;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--purple);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 600;
-        z-index: 9999;
-    }
+    #avatarMenu > div:hover { background: var(--accent); color: #000; }
 
     /* Navigation bar */
     .main-nav {
@@ -523,32 +109,175 @@
         letter-spacing: 0.5px;
         transition: all 0.2s;
     }
-    .main-nav a:hover {
-        background: rgba(255,255,255,0.1);
+    .main-nav a:hover { background: rgba(255,255,255,0.1); }
+    .main-nav a.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .nav-divider { color: #64748b; font-size: 18px; user-select: none; }
+
+    /* Stats bar */
+    .stats-bar {
+        display: flex; gap: 16px; padding: 20px 24px;
+        background: var(--card); margin: 20px 24px;
+        border-radius: 12px; border: 1px solid var(--border);
     }
-    .main-nav a.active {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
+    .stat-item { flex: 1; text-align: center; padding: 12px; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-value { font-size: 36px; font-weight: 700; color: var(--accent); }
+    .stat-value.warn { color: var(--warn); }
+    .stat-value.danger { color: var(--danger); }
+    .stat-value.success { color: var(--success); }
+    .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    /* Main layout */
+    .main-grid {
+        display: grid; grid-template-columns: 1fr 420px;
+        gap: 20px; padding: 0 24px 24px;
     }
-    .nav-divider {
-        color: #64748b;
-        font-size: 18px;
-        user-select: none;
+
+    /* Arrivals timeline */
+    .arrivals-panel {
+        background: var(--card); border-radius: 12px;
+        border: 1px solid var(--border); overflow: hidden;
+    }
+    .panel-header {
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-title { font-size: 18px; font-weight: 600; color: var(--accent); }
+    .time-filter { display: flex; gap: 8px; }
+    .filter-btn {
+        padding: 6px 12px; background: transparent;
+        border: 1px solid var(--border); color: var(--muted);
+        border-radius: 4px; font-size: 12px; cursor: pointer;
+    }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .arrivals-list { max-height: 600px; overflow-y: auto; }
+    .time-slot { border-bottom: 1px solid var(--border); }
+    .time-slot:last-child { border-bottom: none; }
+    .slot-header {
+        padding: 10px 20px; background: rgba(255,255,255,0.02);
+        font-size: 13px; font-weight: 600; color: var(--muted);
+        display: flex; justify-content: space-between;
+    }
+    .slot-header.now { background: rgba(14, 165, 233, 0.1); color: var(--accent); }
+
+    /* Booking card */
+    .booking-card {
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 16px;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .booking-card:hover { background: rgba(255,255,255,0.03); }
+    .booking-card:last-child { border-bottom: none; }
+    .booking-status { width: 8px; height: 60px; border-radius: 4px; flex-shrink: 0; }
+    .booking-status.booked { background: var(--accent); }
+    .booking-status.arrived { background: var(--purple); }
+    .booking-status.complete { background: var(--success); }
+    .booking-status.late { background: var(--danger); animation: pulse 1s infinite; }
+    .booking-main { flex: 1; }
+    .booking-ref { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .booking-ref span { font-weight: 400; color: var(--muted); font-size: 14px; margin-left: 8px; }
+    .booking-details { font-size: 13px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+    .booking-orders {
+        font-size: 12px; color: var(--text); margin-top: 6px;
+        font-family: monospace; background: rgba(0,0,0,0.2);
+        padding: 4px 8px; border-radius: 4px; display: inline-block;
+    }
+    .booking-meta { text-align: right; flex-shrink: 0; }
+    .booking-pallets { font-size: 24px; font-weight: 700; color: var(--text); }
+    .booking-pallets small { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .badge {
+        display: inline-block; padding: 3px 8px; border-radius: 4px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase; margin-left: 8px;
+    }
+    .badge-meds { background: var(--danger); color: white; }
+
+    /* Check-in panel */
+    .checkin-panel {
+        background: var(--card); border-radius: 12px;
+        border: 1px solid var(--border); padding: 20px;
+        height: fit-content;
+    }
+    .checkin-panel h2 { font-size: 18px; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
+    
+    .search-box { position: relative; margin-bottom: 20px; }
+    .search-box input {
+        width: 100%; padding: 14px 16px; background: var(--bg);
+        border: 1px solid var(--border); border-radius: 8px;
+        color: var(--text); font-size: 16px;
+    }
+    .search-box input:focus { outline: none; border-color: var(--accent); }
+    
+    .search-results {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: 8px; margin-bottom: 20px;
+        max-height: 300px; overflow-y: auto;
+    }
+    .search-result-item {
+        padding: 14px 16px; border-bottom: 1px solid var(--border);
+        cursor: pointer; transition: all 0.2s;
+    }
+    .search-result-item:hover { background: rgba(14, 165, 233, 0.1); }
+    
+    /* Selected booking for check-in */
+    .selected-booking {
+        background: rgba(14, 165, 233, 0.1); border: 2px solid var(--accent);
+        border-radius: 8px; padding: 16px; margin-bottom: 20px;
+    }
+    .selected-booking h3 { font-size: 20px; margin-bottom: 12px; }
+    .selected-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
+    .selected-info span { color: var(--muted); }
+
+    /* Form Styles matching Index */
+    .form-row { margin-bottom: 12px; }
+    .checkin-form label {
+        display: block; font-size: 13px; color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .checkin-form input, .checkin-form select, .checkin-form textarea {
+        width: 100%; padding: 10px; background: var(--bg);
+        border: 1px solid var(--border); border-radius: 6px;
+        color: var(--text); font-size: 14px;
+    }
+    .checkin-form textarea { resize: vertical; height: 80px; }
+    .checkin-form input:focus, .checkin-form select:focus, .checkin-form textarea:focus {
+        outline: none; border-color: var(--accent);
+    }
+    
+    .checkin-btn {
+        width: 100%; padding: 14px; background: var(--success);
+        color: white; border: none; border-radius: 8px;
+        font-size: 16px; font-weight: 700; cursor: pointer;
+        margin-top: 12px; transition: all 0.2s;
+    }
+    .checkin-btn:hover { background: #16a34a; }
+
+    /* Version banner */
+    .version-banner {
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+        background: var(--purple); color: white; padding: 4px 12px;
+        border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
     }
 </style>
 </head>
 <body>
 
-<div class="version-banner">MOCKUP - Booking System Integration</div>
+<div class="version-banner">BOOKING INTEGRATION - LIVE</div>
 
 <header>
     <div class="header-left">
         <div class="live-dot"></div>
-        <h1>Gatehouse Dashboard</h1>
+        <h1>Gatehouse - Arrivals</h1>
     </div>
-    <div class="header-clock" id="clock">14:32</div>
+    <div class="header-clock" id="clock">--:--</div>
     <div class="header-right">
-        <span id="operatorName" style="color: var(--muted);">Operator</span>
+        <!-- Avatar + dropdown -->
+        <div style="position: relative;">
+            <div id="avatarBtn">??</div>
+            <div id="avatarMenu">
+                <div id="menuName">Loading...</div>
+                <div onclick="logoutUser()">Logout</div>
+            </div>
+        </div>
     </div>
 </header>
 
@@ -608,54 +337,78 @@
 
     <!-- Check-in panel -->
     <div class="checkin-panel">
-        <h2>Quick Check-In</h2>
+        <h2>Booking Check-In</h2>
 
+        <!-- Search / Booking Selection -->
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Search booking ref or order number..." oninput="searchBookings(this.value)">
         </div>
 
-        <div class="search-results" id="searchResults" style="display: none;">
-            <!-- Populated by search -->
-        </div>
+        <div class="search-results" id="searchResults" style="display: none;"></div>
 
+        <!-- Selected Booking Summary -->
         <div class="selected-booking" id="selectedBooking" style="display: none;">
-            <h3 id="selectedRef">#819810</h3>
+            <h3 id="selectedRef">#------</h3>
             <div class="selected-info">
-                <div><span>Customer:</span> <span id="selectedCustomer">DCS Internal</span></div>
-                <div><span>Account:</span> <span id="selectedAccount">DCS007</span></div>
-                <div><span>Orders:</span> <span id="selectedOrders">1000078942</span></div>
-                <div><span>Pallets:</span> <span id="selectedPallets">22</span></div>
+                <div><span>Customer:</span> <span id="selectedCustomer">-</span></div>
+                <div><span>Account:</span> <span id="selectedAccount">-</span></div>
+                <div><span>Orders:</span> <span id="selectedOrders">-</span></div>
+                <div><span>Pallets:</span> <span id="selectedPallets">-</span></div>
             </div>
         </div>
 
+        <!-- Entry Form (Matching Index + Pre-population) -->
         <div class="checkin-form">
-            <label>Registration *</label>
-            <input type="text" id="regInput" placeholder="e.g. AB12 CDE" oninput="this.value = this.value.toUpperCase().replace(/\s+/g, '')">
-
-            <label>Driver Mobile</label>
-            <input type="text" id="mobileInput" placeholder="e.g. 07700 900123">
-
-            <label>Notes</label>
-            <input type="text" id="notesInput" placeholder="Optional notes...">
-
-            <button class="checkin-btn" onclick="checkInDriver()">Check In Driver</button>
-        </div>
-
-        <div class="upcoming-summary">
-            <h4>Next 2 Hours</h4>
-            <div class="upcoming-item">
-                <span>14:00 - 15:00</span>
-                <span>2 bookings (52 pallets)</span>
+            <div class="form-row">
+                <label>Registration *</label>
+                <input type="text" id="regInput" placeholder="e.g. AB12 CDE" oninput="this.value = this.value.toUpperCase().replace(/\s+/g, '')">
             </div>
-            <div class="upcoming-item">
-                <span>15:00 - 16:00</span>
-                <span>1 booking (36 pallets)</span>
+
+            <div class="form-row">
+                <label>Haulier / Lorry Company</label>
+                <input type="text" id="haulierInput" placeholder="Company Name">
             </div>
+
+            <div class="form-row">
+                <label>PO / Reference</label>
+                <input type="text" id="poInput" placeholder="Auto-populated from booking">
+            </div>
+
+            <div class="form-row">
+                <label>Driver Mobile</label>
+                <input type="text" id="mobileInput" placeholder="e.g. 07700 900123">
+            </div>
+
+            <div class="form-row" style="display:flex; gap:12px;">
+                <div style="flex:1;">
+                    <label>Quoted Wait</label>
+                    <select id="quotedInput">
+                        <option value="30">30 mins</option>
+                        <option value="45">45 mins</option>
+                        <option value="60" selected>60 mins</option>
+                        <option value="90">90 mins</option>
+                        <option value="120">120 mins</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>Notes</label>
+                <textarea id="notesInput" placeholder="Additional notes..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <label style="color:#ccc; display:flex; align-items:center; cursor:pointer;">
+                    <input type="checkbox" id="addExport" style="margin-right:8px; width:auto;">
+                    Export Load
+                </label>
+            </div>
+
+            <button class="checkin-btn" id="submitBtn" onclick="checkInDriver()">Check In Driver</button>
         </div>
     </div>
 
 </div>
-
 <!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -669,302 +422,367 @@ const db = supabase.createClient(
 );
 
 // ============================================================
-// OPERATOR CHECK
+// SETUP & AUTH
 // ============================================================
-(async function checkOperator() {
+(async function init() {
+    // 1. Check Auth
     const opId = localStorage.getItem('operator_id');
-    if (!opId) {
-        window.location.href = 'login.html';
-        return;
-    }
+    if (!opId) { window.location.href = 'login.html'; return; }
 
     try {
-        const { data: op } = await db
-            .from('operators')
-            .select('name')
-            .eq('id', opId)
-            .single();
-
-        if (!op) {
-            window.location.href = 'login.html';
-            return;
+        const { data: op } = await db.from('operators').select('name').eq('id', opId).single();
+        if (op) {
+            document.getElementById('menuName').textContent = op.name;
+            const initials = op.name.split(' ').map(x => (x[0] || '').toUpperCase()).join('').slice(0, 2);
+            document.getElementById('avatarBtn').textContent = initials || '??';
         }
+    } catch (e) {}
 
-        const nameEl = document.getElementById('operatorName');
-        if (nameEl) {
-            nameEl.textContent = op.name;
-        }
-    } catch (err) {
-        console.error('Operator check failed:', err);
+    // 2. Inject the "Pallets" Input Field into the Form dynamically
+    const poRow = document.getElementById('poInput').parentElement;
+    if (!document.getElementById('palletInput')) {
+        const div = document.createElement('div');
+        div.className = 'form-row';
+        div.innerHTML = `
+            <label>Pallet Count (Actual)</label>
+            <input type="number" id="palletInput" placeholder="Confirm actual pallets...">
+        `;
+        poRow.parentNode.insertBefore(div, poRow.nextSibling);
     }
+
+    // 3. Start Data Load
+    loadBookings();
 })();
 
-// ============================================================
-// CLOCK
-// ============================================================
-function updateClock() {
-    const now = new Date();
-    document.getElementById('clock').textContent = 
-        now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+// Avatar Menu
+document.addEventListener('click', (e) => {
+    const btn = document.getElementById('avatarBtn');
+    const menu = document.getElementById('avatarMenu');
+    if (btn && menu) {
+        if (btn.contains(e.target)) menu.style.display = (menu.style.display === 'block' ? 'none' : 'block');
+        else if (!menu.contains(e.target)) menu.style.display = 'none';
+    }
+});
+
+function logoutUser() {
+    localStorage.removeItem('operator_id');
+    window.location.href = 'login.html';
 }
-updateClock();
-setInterval(updateClock, 1000);
+
+// Clock
+setInterval(() => {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}, 1000);
 
 // ============================================================
-// BOOKINGS DATA
+// DATA LOGIC
 // ============================================================
 let bookingsData = [];
 let selectedBookingData = null;
 
-// Load bookings from mock JSON (swap URL for real API later)
 async function loadBookings() {
     try {
-        // Mock data URL - replace with real API endpoint when ready
         const response = await fetch('mock_bookings.json');
         const data = await response.json();
-        bookingsData = data.bookings || [];
-        renderBookings();
-        updateStats();
-    } catch (err) {
-        console.error('Failed to load bookings:', err);
-        document.getElementById('arrivalsList').innerHTML = 
-            '<div style="text-align:center;padding:40px;color:var(--danger);">Failed to load bookings</div>';
-    }
-}
-
-// Group bookings by hour slot
-function groupByHour(bookings) {
-    const groups = {};
-    bookings.forEach(b => {
-        const hour = b.slot_start.slice(0, 2) + ':00';
-        if (!groups[hour]) {
-            groups[hour] = [];
+        
+        // Date Check (YYYY-MM-DD)
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        if (data.date !== todayStr) {
+            document.getElementById('arrivalsList').innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);"><h3>No Bookings for Today (${todayStr})</h3><p>File date: ${data.date}</p></div>`;
+            return;
         }
-        groups[hour].push(b);
+
+        bookingsData = data.bookings || [];
+        
+        // Initialize local 'actual' tracker
+        bookingsData.forEach(b => {
+            b.actual_pallets = 0; 
+        });
+
+        renderBookings();
+        await syncWithDatabase();
+        setupRealtime();
+
+    } catch (err) { console.error(err); }
+}
+
+async function syncWithDatabase() {
+    const todayStart = new Date().toISOString().split('T')[0] + 'T00:00:00';
+    
+    // Fetch POs, Status, and ACTUAL Pallet Counts from DB
+    const { data: arrivedVehicles, error } = await db
+        .from('vehicles')
+        .select('po_ref, status, pallet_count')
+        .gte('check_in_time', todayStart)
+        .not('po_ref', 'is', null);
+
+    if (error) return;
+
+    bookingsData.forEach(booking => {
+        const match = arrivedVehicles.find(v => v.po_ref === booking.ref);
+        if (match) {
+            booking.status = 'arrived';
+            if (match.status === 'released') booking.status = 'complete';
+            // Use DB pallet count, fallback to booking expectation if 0
+            booking.actual_pallets = match.pallet_count || booking.pallets; 
+        } else {
+            booking.status = 'booked';
+            booking.actual_pallets = 0;
+        }
     });
-    return groups;
+
+    renderBookings();
+    updateStats();
 }
 
-// Calculate next hour label (e.g. "08:00" -> "09:00")
-function nextHour(hourStr) {
-    const h = parseInt(hourStr.slice(0, 2), 10);
-    return String(h + 1).padStart(2, '0') + ':00';
-}
-
-// Get status class for booking
-function getStatusClass(booking) {
-    // For now all mock data is "booked" - in production check arrived time
-    if (booking.status === 'complete' || booking.status === 'arrived') return 'complete';
-    if (booking.status === 'arrived') return 'arrived';
-    if (booking.status === 'late') return 'late';
-    return 'booked';
-}
-
-// Check if slot is current hour
-function isCurrentHour(hourStr) {
-    const now = new Date();
-    const currentHour = String(now.getHours()).padStart(2, '0') + ':00';
-    return hourStr === currentHour;
-}
-
-// Render all bookings grouped by time slot
+// ============================================================
+// UI RENDERING
+// ============================================================
 function renderBookings() {
     const container = document.getElementById('arrivalsList');
-    
-    if (!bookingsData.length) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">No bookings for today</div>';
-        return;
-    }
+    if (!bookingsData.length) return;
 
-    const groups = groupByHour(bookingsData);
-    const sortedHours = Object.keys(groups).sort();
-    
+    // Group by hour
+    const groups = {};
+    bookingsData.forEach(b => {
+        const hour = b.slot_start.slice(0, 2) + ':00';
+        if (!groups[hour]) groups[hour] = [];
+        groups[hour].push(b);
+    });
+
     let html = '';
-    
-    sortedHours.forEach(hour => {
+    Object.keys(groups).sort().forEach(hour => {
         const bookings = groups[hour];
+        // Header sum uses EXPECTED pallets
         const totalPallets = bookings.reduce((sum, b) => sum + (b.pallets || 0), 0);
-        const isCurrent = isCurrentHour(hour);
+        const nowHour = String(new Date().getHours()).padStart(2,'0') + ':00';
         
         html += '<div class="time-slot">';
-        html += '<div class="slot-header' + (isCurrent ? ' now' : '') + '">';
-        html += '<span>' + hour + ' - ' + nextHour(hour) + (isCurrent ? ' (NOW)' : '') + '</span>';
-        html += '<span>' + bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '') + ' - ' + totalPallets + ' pallets</span>';
+        html += `<div class="slot-header${hour === nowHour ? ' now' : ''}">`;
+        html += `<span>${hour} - ${String(parseInt(hour)+1).padStart(2,'0')}:00${hour === nowHour ? ' (NOW)' : ''}</span>`;
+        html += `<span>${bookings.length} booking(s) - ${totalPallets} plts</span>`;
         html += '</div>';
         
         bookings.forEach(b => {
-            const statusClass = getStatusClass(b);
-            const orders = Array.isArray(b.orders) ? b.orders.join(' | ') : b.orders;
-            const ordersDisplay = b.pop_ref ? orders + ' - ' + b.pop_ref : orders;
+            let statusClass = 'booked';
+            if (b.status === 'arrived') statusClass = 'arrived';
+            if (b.status === 'complete') statusClass = 'complete';
             
-            html += '<div class="booking-card" onclick="selectBooking(this)"';
-            html += ' data-ref="' + b.ref + '"';
-            html += ' data-customer="' + (b.customer || '') + '"';
-            html += ' data-account="' + (b.account || '') + '"';
-            html += ' data-orders="' + orders + '"';
-            html += ' data-pallets="' + (b.pallets || 0) + '">';
+            const isArrived = b.status === 'arrived' || b.status === 'complete';
             
-            html += '<div class="booking-status ' + statusClass + '"></div>';
-            html += '<div class="booking-main">';
-            html += '<div class="booking-ref">#' + b.ref + ' <span>' + (b.customer || '') + '</span>';
-            if (b.contains_meds) {
-                html += ' <span class="badge badge-meds">MEDS</span>';
-            }
-            html += '</div>';
-            html += '<div class="booking-details">';
-            html += '<span>' + (b.account || '') + '</span>';
-            html += '<span>Slot: ' + b.slot_start + '-' + b.slot_end + '</span>';
-            html += '<span>Awaiting arrival</span>';
-            html += '</div>';
-            html += '<div class="booking-orders">' + ordersDisplay + '</div>';
-            html += '</div>';
-            html += '<div class="booking-meta">';
-            html += '<div class="booking-pallets">' + (b.pallets || 0) + ' <small>pallets</small></div>';
-            html += '</div>';
-            html += '</div>';
+            // Display Actual if arrived, Expected if pending
+            const displayPallets = isArrived ? b.actual_pallets : b.pallets;
+            const palletLabel = isArrived ? 'act' : 'exp';
+
+            html += `<div class="booking-card" ${!isArrived ? 'onclick="selectBooking(this)"' : 'style="opacity:0.7;cursor:default;"'} 
+                     data-ref="${b.ref}" data-customer="${b.customer}" data-account="${b.account}" 
+                     data-orders="${b.orders}" data-pallets="${b.pallets}" data-meds="${b.contains_meds}">`;
+            
+            html += `<div class="booking-status ${statusClass}"></div>`;
+            html += `<div class="booking-main">
+                        <div class="booking-ref">#${b.ref} <span>${b.customer}</span>
+                        ${b.contains_meds ? '<span class="badge badge-meds">MEDS</span>' : ''}
+                        ${isArrived ? '<span class="badge" style="background:var(--purple);color:white;">ARRIVED</span>' : ''}</div>
+                        <div class="booking-details"><span>${b.account}</span><span>Slot: ${b.slot_start}-${b.slot_end}</span></div>
+                        <div class="booking-orders">${Array.isArray(b.orders) ? b.orders.join(' | ') : b.orders}</div>
+                     </div>`;
+            html += `<div class="booking-meta">
+                        <div class="booking-pallets">${displayPallets} <small>${palletLabel}</small></div>
+                     </div>`;
+            html += `</div>`;
         });
-        
         html += '</div>';
     });
-    
     container.innerHTML = html;
 }
 
-// Update stats from data
 function updateStats() {
-    const total = bookingsData.length;
-    // For mock data, count by status (all currently "booked")
-    const arrived = bookingsData.filter(b => b.status === 'arrived' || b.status === 'complete').length;
-    const remaining = total - arrived;
-    const late = bookingsData.filter(b => b.status === 'late').length;
-    const pallets = bookingsData.reduce((sum, b) => sum + (b.pallets || 0), 0);
+    const totalCount = bookingsData.length;
+
+    // Arrived Count
+    const arrivedItems = bookingsData.filter(b => b.status === 'arrived' || b.status === 'complete');
+    const arrivedCount = arrivedItems.length;
     
-    document.getElementById('statExpected').textContent = total;
-    document.getElementById('statArrived').textContent = arrived;
-    document.getElementById('statRemaining').textContent = remaining;
-    document.getElementById('statLate').textContent = late;
-    document.getElementById('statPallets').textContent = pallets;
+    // Remaining Count
+    const remainingItems = bookingsData.filter(b => b.status !== 'arrived' && b.status !== 'complete');
+    const remainingCount = remainingItems.length;
+    
+    // Pallet Calc
+    const remainingPallets = remainingItems.reduce((sum, b) => sum + (b.pallets || 0), 0);
+
+    // Update DOM
+    document.getElementById('statExpected').textContent = totalCount;
+    document.getElementById('statArrived').textContent = arrivedCount;
+    document.getElementById('statRemaining').textContent = remainingCount;
+    document.getElementById('statPallets').textContent = remainingPallets;
+
+    // Update label to be clear
+    const palletLabel = document.querySelector('#statPallets').nextElementSibling;
+    if(palletLabel) palletLabel.textContent = "Remaining Pallets";
+
+    // Colors
+    document.getElementById('statRemaining').className = remainingCount > 0 ? 'stat-value' : 'stat-value success';
+    document.getElementById('statPallets').className = remainingPallets > 0 ? 'stat-value' : 'stat-value success';
 }
 
-// Load bookings on page load
-loadBookings();
-
-// Select booking from list
+// ============================================================
+// FORM HANDLING
+// ============================================================
 function selectBooking(card) {
-    const ref = card.dataset.ref;
-    const customer = card.dataset.customer;
-    const account = card.dataset.account;
-    const orders = card.dataset.orders;
-    const pallets = card.dataset.pallets;
-
-    if (!ref) {
-        alert('This booking has already been processed');
-        return;
-    }
-
-    // Store selected booking data
-    selectedBookingData = {
-        ref: ref,
-        customer: customer,
-        account: account,
-        orders: orders,
-        pallets: pallets
+    const data = {
+        ref: card.dataset.ref,
+        customer: card.dataset.customer,
+        account: card.dataset.account,
+        orders: card.dataset.orders,
+        pallets: parseInt(card.dataset.pallets) || 0,
+        meds: card.dataset.meds === 'true'
     };
+    
+    selectedBookingData = data;
 
-    document.getElementById('selectedRef').textContent = '#' + ref;
-    document.getElementById('selectedCustomer').textContent = customer;
-    document.getElementById('selectedAccount').textContent = account;
-    document.getElementById('selectedOrders').textContent = orders;
-    document.getElementById('selectedPallets').textContent = pallets;
-
+    // Visuals
+    document.getElementById('selectedRef').textContent = '#' + data.ref;
+    document.getElementById('selectedCustomer').textContent = data.customer;
+    document.getElementById('selectedAccount').textContent = data.account;
+    document.getElementById('selectedOrders').textContent = data.orders;
+    document.getElementById('selectedPallets').textContent = data.pallets;
     document.getElementById('selectedBooking').style.display = 'block';
     document.getElementById('searchResults').style.display = 'none';
     document.getElementById('searchInput').value = '';
 
-    // Focus registration input
+    // Inputs
+    document.getElementById('poInput').value = data.ref;
+    document.getElementById('haulierInput').value = data.customer;
+    
+    // Pre-fill actual pallets with expected pallets (User can edit)
+    if(document.getElementById('palletInput')) {
+        document.getElementById('palletInput').value = data.pallets;
+    }
+
+    let autoNotes = `Booking: #${data.ref}\nAccount: ${data.account}\nPallets: ${data.pallets}\nOrders: ${data.orders}`;
+    if (data.meds) autoNotes += "\n*** CONTAINS MEDS ***";
+    document.getElementById('notesInput').value = autoNotes;
+
     document.getElementById('regInput').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Search bookings
 function searchBookings(query) {
     const results = document.getElementById('searchResults');
-    
-    if (query.length < 2) {
-        results.style.display = 'none';
-        return;
-    }
-
+    if (query.length < 2) { results.style.display = 'none'; return; }
     query = query.toUpperCase();
-
-    // Search actual bookings data
-    const matches = bookingsData.filter(b => {
-        const ordersStr = Array.isArray(b.orders) ? b.orders.join(' ') : (b.orders || '');
-        return b.ref.toUpperCase().includes(query) || 
-               ordersStr.toUpperCase().includes(query) ||
-               (b.customer || '').toUpperCase().includes(query) ||
-               (b.account || '').toUpperCase().includes(query);
-    });
-
-    if (matches.length === 0) {
-        results.innerHTML = '<div class="search-result-item"><span style="color: var(--muted);">No matching bookings</span></div>';
+    const matches = bookingsData.filter(b => 
+        b.ref.includes(query) || (b.customer && b.customer.toUpperCase().includes(query))
+    );
+    if (!matches.length) {
+        results.innerHTML = '<div class="search-result-item">No matches</div>';
     } else {
-        results.innerHTML = matches.map(m => {
-            const orders = Array.isArray(m.orders) ? m.orders.join(' | ') : m.orders;
-            return '<div class="search-result-item" onclick="selectFromSearch(\'' + m.ref + '\', \'' + (m.customer || '') + '\', \'' + (m.account || '') + '\', \'' + orders + '\', ' + (m.pallets || 0) + ')">' +
-                '<div class="result-ref">#' + m.ref + '</div>' +
-                '<div class="result-detail">' + (m.customer || '') + ' - ' + orders + '</div>' +
-            '</div>';
-        }).join('');
+        results.innerHTML = matches.map(m => `
+            <div class="search-result-item" onclick="selectBooking({dataset:{ref:'${m.ref}',customer:'${m.customer}',account:'${m.account}',orders:'${m.orders}',pallets:'${m.pallets}',meds:'${m.contains_meds}'}})">
+                #${m.ref} - ${m.customer}
+            </div>`).join('');
     }
-
     results.style.display = 'block';
 }
 
-function selectFromSearch(ref, customer, account, orders, pallets) {
-    // Store selected booking data
-    selectedBookingData = {
-        ref: ref,
-        customer: customer,
-        account: account,
-        orders: orders,
-        pallets: pallets
-    };
+// ============================================================
+// CHECK-IN (DUPLICATE CHECK + DELAYED POPUP)
+// ============================================================
+async function checkInDriver() {
+    const btn = document.getElementById('submitBtn');
+    btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
 
-    document.getElementById('selectedRef').textContent = '#' + ref;
-    document.getElementById('selectedCustomer').textContent = customer;
-    document.getElementById('selectedAccount').textContent = account;
-    document.getElementById('selectedOrders').textContent = orders;
-    document.getElementById('selectedPallets').textContent = pallets;
+    try {
+        const reg = document.getElementById('regInput').value.trim().toUpperCase().replace(/\s+/g, '');
+        const haulier = document.getElementById('haulierInput').value.trim();
+        const po = document.getElementById('poInput').value.trim();
+        const mobileRaw = document.getElementById('mobileInput').value.trim();
+        const mobile = mobileRaw === '' ? null : mobileRaw;
+        const quoted = parseInt(document.getElementById('quotedInput').value, 10);
+        const notes = document.getElementById('notesInput').value.trim();
+        const isExport = document.getElementById('addExport').checked;
+        const actualPallets = parseInt(document.getElementById('palletInput').value) || 0;
 
-    document.getElementById('selectedBooking').style.display = 'block';
-    document.getElementById('searchResults').style.display = 'none';
-    document.getElementById('searchInput').value = '';
-    document.getElementById('regInput').focus();
+        if (!reg) { alert('Registration required'); throw new Error('Validation'); }
+
+        const opId = localStorage.getItem('operator_id');
+        const nowIso = new Date().toISOString();
+        const todayStart = nowIso.split('T')[0] + 'T00:00:00';
+        const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
+
+        // --- DUPLICATE CHECK ---
+        if (po) {
+            const { data: dups } = await db
+                .from('vehicles')
+                .select('registration')
+                .eq('po_ref', po)
+                .gte('check_in_time', todayStart);
+            
+            if (dups && dups.length > 0) {
+                alert(`⚠️ DUPLICATE WARNING ⚠️\n\nPO Reference '${po}' is already checked in.\nVehicle: ${dups[0].registration}\n\nCheck-in blocked.`);
+                throw new Error('Validation');
+            }
+        }
+
+        // --- INSERT ---
+        const { data, error } = await db.from('vehicles').insert({
+            registration: reg,
+            po_ref: po || null,
+            haulier: haulier || null,
+            mobile_number: mobile,
+            notes: notes || null,
+            quoted_minutes: quoted,
+            check_in_time: nowIso,
+            due_time: dueIso,
+            status: 'parked',
+            operator_id: opId,
+            classification: isExport ? 'export' : 'normal',
+            pallet_count: actualPallets
+        }).select();
+
+        if (error) throw error;
+        const uid = data[0].id;
+
+        await db.from('actions_log').insert({ vehicle_id: uid, action: 'check_in', timestamp: nowIso, operator_id: opId });
+
+        // --- OPEN WINDOWS WITH DELAY TO FIX POPUP BLOCKER ---
+        window.open(`qr-screen.html?uid=${uid}`, "_blank");
+        
+        if (mobile) {
+            // 500ms delay allows the browser to process the first popup before launching the second
+            setTimeout(() => {
+                window.open(`sms_simulator.html?type=check_in&phone=${encodeURIComponent(mobile)}&po=${encodeURIComponent(po || 'N/A')}&quoted=${quoted}`, "_blank", "width=400,height=700");
+            }, 500);
+        }
+
+        // --- UPDATE UI ---
+        if (po) {
+            const booking = bookingsData.find(b => b.ref === po);
+            if (booking) {
+                booking.status = 'arrived';
+                booking.actual_pallets = actualPallets;
+                renderBookings();
+                updateStats();
+            }
+        }
+
+        // --- RESET ---
+        document.getElementById('regInput').value = '';
+        document.getElementById('mobileInput').value = '';
+        document.getElementById('notesInput').value = '';
+        document.getElementById('palletInput').value = '';
+        document.getElementById('selectedBooking').style.display = 'none';
+
+    } catch (err) {
+        if (err.message !== 'Validation') alert(err.message);
+    } finally {
+        btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+    }
 }
 
-// Check in
-function checkInDriver() {
-    const reg = document.getElementById('regInput').value.trim();
-    const selectedRef = document.getElementById('selectedRef').textContent;
-
-    if (!reg) {
-        alert('Please enter registration');
-        return;
-    }
-
-    if (selectedRef === '#819810') {
-        alert('This is a mockup!\n\nIn the real system this would:\n\n1. Create vehicle in your queue\n2. Mark booking as "Arrived" in booking system\n3. Send SMS to driver\n4. Open QR code screen');
-    } else {
-        alert('Check-in complete for ' + reg);
-    }
-
-    // Reset form
-    document.getElementById('regInput').value = '';
-    document.getElementById('mobileInput').value = '';
-    document.getElementById('notesInput').value = '';
-    document.getElementById('selectedBooking').style.display = 'none';
+function setupRealtime() {
+    db.channel('arrivals').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vehicles' }, syncWithDatabase).subscribe();
 }
 </script>
-
 </body>
 </html>

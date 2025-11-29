@@ -449,8 +449,8 @@ with open(r'c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV
     print('Line 990:', repr(lines[989]))
 "
 OUT
-Line 953: '                    <div class="card-alert">â�\x8f° ${v.overdueMinutes} minutes overdue</div>\n'
-Line 990: '                    <div style="font-size: 14px; color: var(--warning);">â�\x8f±ï¸�\x8f ${timeUntilDue}</div>\n'
+Line 953: '                    <div class="card-alert">â \x8f° ${v.overdueMinutes} minutes overdue</div>\n'
+Line 990: '                    <div style="font-size: 14px; color: var(--warning);">â \x8f±ï¸ \x8f ${timeUntilDue}</div>\n'
 Now I can see the actual byte sequences. Let me fix them:
 Bash
 ⎿
@@ -462,8 +462,8 @@ with open(r'c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV
     content = f.read()
 
 # Replace the specific malformed characters
-content = content.replace('â�\x8f°', '&#128293;')  # Fire emoji
-content = content.replace('â�\x8f±ï¸�\x8f', '&#9888;')  # Warning sign
+content = content.replace('â \x8f°', '&#128293;')  # Fire emoji
+content = content.replace('â \x8f±ï¸ \x8f', '&#9888;')  # Warning sign
 
 # Write back
 with open(r'c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV\supervisor.html', 'w', encoding='utf-8') as f:
@@ -509,7 +509,7 @@ with open(r'c:\Users\Admin\OneDrive - DCS Group (UK) Ltd\Documents\Home\LRS2-DEV
 content = content_bytes.decode('utf-8', errors='replace')
 
 # Now replace all the replacement characters and malformed sequences with proper HTML entities
-# Replace any remaining �� sequences near 'overdueMinutes'
+# Replace any remaining    sequences near 'overdueMinutes'
 content = re.sub(r'[^\x00-\x7F]+\s+\$\{v\.overdueMinutes\}', '&#128293; \${v.overdueMinutes}', content)
 content = re.sub(r'[^\x00-\x7F]+\s+\$\{timeUntilDue\}', '&#9888; \${timeUntilDue}', content)
 
@@ -656,3 +656,31 @@ Fixed Characters:
 Line 1905 - Replaced malformed fire emoji with &#128293; (🔥)
 Line 1979 - Replaced malformed warning sign with &#9888; (⚠️)
 The Ctrl+K command palette should now work properly, and the display will show proper emoji icons instead of garbled characters. Refresh the page in your browser to see the changes!
+
+
+
+29/11/25
+
+1. Plain English Summary
+Today, we turned the Arrivals Board from a static "picture" into a working, interactive tool.
+Date Awareness: We taught the system to check the date on the schedule. If the schedule isn't for today, the system now tells you clearly instead of just showing a blank screen.
+Live Updates: Previously, clicking "Check In" didn't change the numbers at the top of the screen. Now, as soon as you check a driver in, the "Expected" count goes down and the "Arrived" count goes up instantly.
+Pallet Tracking: We solved the problem of tracking stock. Since a lorry might turn up with fewer (or more) pallets than expected, we added a box to the Check-In form. The operator can now confirm the actual number of pallets.
+Result: The dashboard now accurately calculates how much work is left (Remaining Pallets) versus how much work has already arrived, giving the warehouse a true picture of the day's progress.
+2. Tech Deep Dive
+We moved from a static frontend-only implementation to a Hybrid Data Model using Supabase and local JSON.
+Data Architecture:
+We maintained mock_bookings.json as the source of truth for Expected Work (Pre-bookings).
+We used Supabase vehicles table as the source of truth for Actual Arrivals.
+We implemented a syncWithDatabase() function that performs an in-memory join. It maps vehicles.po_ref (DB) to bookings.ref (JSON) to hydrate the application state.
+Schema Change:
+We executed an ALTER TABLE command on Supabase to add a pallet_count (integer) column. This allows persistence of the actual payload size, distinct from the booked payload size.
+Logic Implementation:
+Date Normalization: Used toLocaleDateString('en-CA') to enforce YYYY-MM-DD comparison between the client system time and the JSON file date.
+Dynamic DOM Injection: Instead of rewriting the HTML structure, we used JavaScript to dynamically inject the palletInput field into the existing form structure upon initialization.
+Stats Calculation:
+Total: Sum of all JSON pallets.
+Arrived: Sum of SQL pallet_count (where po_ref matches).
+Remaining: Sum of JSON pallets (where no matching SQL record exists).
+Reactivity:
+Implemented Supabase Realtime (db.channel(...).on('postgres_changes'...)). When a vehicle is inserted into the database, the client immediately re-runs the synchronization logic to update the UI without a page refresh.
