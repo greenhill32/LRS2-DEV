@@ -1,0 +1,365 @@
+<!-- chunk 1 start: head + styles + layout + version banner -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Search Vehicle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+    body {
+        background:#0d0d0d;
+        color:#e6e6e6;
+        font-family:Arial, sans-serif;
+        padding:30px;
+    }
+    h1 {
+        margin-top:0;
+        color:#1b8cff;
+    }
+
+    /* version badge */
+    #versionBanner {
+        margin:10px 0 20px;
+        padding:6px 10px;
+        background:#1b8cff;
+        color:white;
+        display:inline-block;
+        border-radius:6px;
+        font-size:14px;
+        font-weight:bold;
+    }
+
+    input {
+        width:100%;
+        padding:14px;
+        font-size:18px;
+        border-radius:8px;
+        border:1px solid #333;
+        background:#1a1a1a;
+        color:white;
+        margin-bottom:20px;
+    }
+
+    .resultItem {
+        padding:12px;
+        background:#1a1a1a;
+        border:1px solid #333;
+        border-radius:8px;
+        margin-top:10px;
+        cursor:pointer;
+    }
+    .resultItem:hover { background:#222; }
+
+    .modal {
+        background:#1c1c1c;
+        padding:25px;
+        border-radius:14px;
+        border:1px solid #333;
+        margin-top:25px;
+        width:340px;
+        margin-left:auto;
+        margin-right:auto;
+        font-size:16px;
+        line-height:1.5;
+    }
+
+    .closeBtn {
+        width:100%;
+        margin-top:18px;
+        padding:12px;
+        background:#444;
+        color:white;
+        border:none;
+        border-radius:8px;
+        cursor:pointer;
+        font-size:17px;
+    }
+    .closeBtn:hover { background:#555; }
+</style>
+</head>
+
+<body>
+
+<h1>Search</h1>
+
+<!-- visible version indicator (edit as needed) -->
+<div id="versionBanner"></div>
+
+<script>
+document.getElementById("versionBanner").innerText = "v1.0.2 — BUILD";
+</script>
+
+
+<input id="searchBox" placeholder="Enter registration…" onkeyup="runSearch()">
+
+<div id="list"></div>
+<div id="detail"></div>
+<!-- chunk 1 end -->
+
+
+<!-- chunk 2 start: Supabase init -->
+<script>
+const db = supabase.createClient(
+  "https://gtixdparpjdpyhhubsfz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+</script>
+<!-- chunk 2 end -->
+
+<!-- chunk 3 start: partial search -->
+<script>
+async function runSearch() {
+    const q = document.getElementById("searchBox").value.trim().toUpperCase();
+    const list = document.getElementById("list");
+    const detail = document.getElementById("detail");
+
+    detail.innerHTML = "";
+
+    // Require at least 2 characters
+    if (q.length < 2) {
+        list.innerHTML = "";
+        return;
+    }
+
+    /* --------------------------------------------
+       1) REGISTRATION SEARCH
+    -------------------------------------------- */
+    const { data: regMatches } = await db
+        .from("vehicles")
+        .select("id, registration, po_ref, status, check_in_time")
+        .ilike("registration", `%${q}%`)
+        .order("check_in_time", { ascending: false });
+
+    /* --------------------------------------------
+       2) PO SEARCH
+    -------------------------------------------- */
+    const { data: poMatches } = await db
+        .from("vehicles")
+        .select("id, registration, po_ref, status, check_in_time")
+        .ilike("po_ref", `%${q}%`)
+        .order("check_in_time", { ascending: false });
+
+    /* --------------------------------------------
+       3) MERGE + DEDUPE
+    -------------------------------------------- */
+    let combined = [...(regMatches || []), ...(poMatches || [])];
+
+    const seen = new Set();
+    combined = combined.filter(v => {
+        if (seen.has(v.id)) return false;
+        seen.add(v.id);
+        return true;
+    });
+
+    /* --------------------------------------------
+       4) NO RESULTS
+    -------------------------------------------- */
+    if (!combined.length) {
+        list.innerHTML = "<i>No matches</i>";
+        return;
+    }
+
+    /* --------------------------------------------
+       5) RENDER RESULTS
+    -------------------------------------------- */
+    let html = "";
+    combined.forEach(v => {
+        html += `
+            <div class="resultItem" onclick="openDetail('${v.id}')">
+                <strong>${v.registration}</strong> — ${v.status}<br>
+                PO: ${v.po_ref || "-"}
+            </div>
+        `;
+    });
+
+    list.innerHTML = html;
+}
+</script>
+<!-- chunk 3 end -->
+
+
+<!-- chunk 4 start: detail modal with operator lookup + colours -->
+<script>
+async function openDetail(id) {
+    document.getElementById("detail").innerHTML = "";
+
+    // 1. vehicle
+    const { data: v } = await db
+        .from("vehicles")
+        .select("*")
+        .eq("id", id)
+        .single();
+    if (!v) return;
+
+    // 2. logs
+    const { data: logs } = await db
+        .from("actions_log")
+        .select("action, timestamp, operator_id")
+        .eq("vehicle_id", id)
+        .order("timestamp", { ascending:true });
+
+    // 3. operator IDs
+    const opIds = [...new Set(logs.map(a => a.operator_id).filter(Boolean))];
+
+    // 4. fetch operator names
+    let opNames = {};
+    if (opIds.length > 0) {
+        const { data: ops } = await db
+            .from("operators")
+            .select("id, name")
+            .in("id", opIds);
+        ops?.forEach(o => opNames[o.id] = o.name);
+    }
+
+    // 5. identify operator names
+    let checkInOp = "unknown";
+    let notifiedOp = "unknown";
+    let releaseOp = "unknown";
+
+    logs.forEach(a => {
+        if (a.action === "check_in") {
+            checkInOp = opNames[a.operator_id] || "unknown";
+        }
+        if (a.action === "notified" || a.action === "notify") {
+            notifiedOp = opNames[a.operator_id] || "unknown";
+        }
+        if (a.action === "completed" || a.action === "release") {
+            releaseOp = opNames[a.operator_id] || "unknown";
+        }
+    });
+
+    // 6. calculate times
+    const checkIn = new Date(v.check_in_time);
+
+    let actualWait = v.release_time
+        ? Math.floor((new Date(v.release_time) - checkIn) / 60000)
+        : Math.floor((Date.now() - checkIn) / 60000);
+
+    const quoted = v.quoted_minutes || 0;
+    const result = actualWait - quoted;
+
+    let resultColour = "color:#ccc;";
+    if (result > 0) resultColour = "color:#ff4d4d;";
+    if (result < 0) resultColour = "color:#4dff88;";
+
+    // Calculate progress percentage and color for visual bar
+    const progressPct = quoted > 0 ? Math.min((actualWait / quoted) * 100, 100) : 100;
+    let progressColor = "#4dff88"; // green (on time)
+    let statusText = "On time";
+
+    if (actualWait >= quoted) {
+        progressColor = "#f59e0b"; // amber (at or over quoted time)
+        statusText = result === 0 ? "On time" : `${result}m over`;
+    }
+    if (result > 30) {
+        progressColor = "#ff4d4d"; // red (significantly overdue)
+        statusText = `${result}m overdue`;
+    }
+
+    // 7. build journey
+    const journey = [];
+
+    journey.push(
+        `${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+         — checked in by ${checkInOp}`
+    );
+
+    if (v.notify_time) {
+        journey.push(
+            `${new Date(v.notify_time).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+             — notified by ${notifiedOp}`
+        );
+    }
+
+    if (v.release_time) {
+        journey.push(
+            `${new Date(v.release_time).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+             — released by ${releaseOp}`
+        );
+    }
+
+    // 8. render modal
+    const html = `
+        <div class="modal">
+
+            <div style="font-size:24px;font-weight:bold;">
+                ${v.registration}
+            </div>
+
+            <div style="margin-top:12px;">
+                <strong>Status:</strong> ${v.status}<br>
+                <strong>Check-in:</strong> ${checkIn.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}<br>
+                <strong>Quoted:</strong> ${quoted} mins<br>
+                <strong>Actual wait:</strong> ${actualWait} mins<br>
+                <strong>Result:</strong> <span style="${resultColour}">${result >= 0 ? "+"+result : result} mins</span>
+            </div>
+
+            <div style="margin-top:20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+                    <span style="font-weight:600;">Time Progress</span>
+                    <span style="${resultColour}; font-weight:600;">${statusText}</span>
+                </div>
+                <div style="
+                    width:100%;
+                    height:20px;
+                    background:#2a2a2a;
+                    border-radius:10px;
+                    overflow:hidden;
+                    position:relative;
+                ">
+                    <div style="
+                        width:${progressPct}%;
+                        height:100%;
+                        background:${progressColor};
+                        border-radius:10px;
+                        transition: width 0.3s ease, background-color 0.3s ease;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:11px;
+                        font-weight:700;
+                        color:#000;
+                    ">${actualWait}m / ${quoted}m</div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:#999;">
+                    <span>0m</span>
+                    <span>${quoted}m (quoted)</span>
+                </div>
+            </div>
+
+            <div style="margin-top:20px;">
+                <strong style="font-size:18px;">Full Journey</strong><br><br>
+                ${journey.join("<br>")}
+            </div>
+
+            <div style="margin-top:20px;">
+                <strong>PO:</strong> ${v.po_ref || "-"}<br>
+                <strong>Mobile:</strong> ${v.mobile_number || "-"}<br>
+                <strong>Notes:</strong> ${v.notes || "-"}
+            </div>
+
+            <button class="closeBtn" onclick="closeDetail()">
+                Close
+            </button>
+        </div>
+    `;
+
+    document.getElementById("detail").innerHTML = html;
+}
+</script>
+<!-- chunk 4 end -->
+
+
+<!-- chunk 5 start: close modal + end -->
+<script>
+function closeDetail() {
+    document.getElementById("detail").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
+<!-- chunk 5 end -->

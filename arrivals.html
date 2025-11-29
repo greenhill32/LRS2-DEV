@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gatehouse - Expected Arrivals</title>
+<div id="versionBanner" style="
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    background: #8b5cf6; color: white; padding: 4px 12px;
+    border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
+">v3.5.0 - LAUNCHER MODE</div>
+
+<style>
+    :root {
+        --bg: #0e1420;
+        --card: #1f2937;
+        --accent: #0ea5e9; /* Blue - Booked */
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --success: #22c55e; /* Green - Released */
+        --warn: #fbbf24;
+        --danger: #ef4444;
+        --purple: #8b5cf6; /* Purple - In Queue */
+        --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+
+    /* HEADER LAYOUT */
+    header {
+        background: var(--card);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #1e293b;
+    }
+
+    .header-left {
+        flex: 1;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .header-clock {
+        flex: 1;
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        color: var(--text);
+    }
+
+    .header-right {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    /* Connection Status */
+    .connection-status {
+        width: 10px; height: 10px; background: var(--success);
+        border-radius: 50%; display: inline-block;
+    }
+    .connection-status.disconnected { background: var(--danger); animation: pulse 1s infinite; }
+
+    /* Avatar */
+    #avatarBtn {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: var(--bg); border: 1px solid #334155;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; color: var(--accent);
+        cursor: pointer; user-select: none;
+    }
+    #avatarMenu {
+        position: absolute; top: 48px; right: 0;
+        background: var(--card); border: 1px solid #334155;
+        border-radius: 6px; min-width: 150px;
+        padding: 4px 0; display: none; z-index: 10000;
+    }
+    #avatarMenu > div { padding: 8px 12px; cursor: pointer; font-size: 14px; color: var(--text); }
+    #avatarMenu > div:hover { background: var(--accent); color: #000; }
+
+    /* NAV */
+    .main-nav {
+        background: #1e3a5f; padding: 0;
+        display: flex; align-items: center; justify-content: center;
+        border-bottom: 1px solid var(--border);
+    }
+    .main-nav a {
+        color: var(--text); text-decoration: none;
+        padding: 14px 24px; font-size: 14px; font-weight: 600;
+        letter-spacing: 0.5px; transition: all 0.2s;
+    }
+    .main-nav a:hover { background: rgba(255,255,255,0.1); }
+    .main-nav a.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .nav-divider { color: #64748b; font-size: 18px; user-select: none; }
+
+    /* STATS BAR */
+    .stats-bar {
+        display: flex; gap: 16px; padding: 20px 24px;
+        background: var(--card); margin: 20px 24px;
+        border-radius: 12px; border: 1px solid var(--border);
+    }
+    .stat-item { flex: 1; text-align: center; padding: 12px; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-value { font-size: 36px; font-weight: 700; color: var(--accent); }
+    .stat-value.purple { color: var(--purple); }
+    .stat-value.success { color: var(--success); }
+    .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    /* LAYOUT - UPDATED for Task 1 */
+    .main-grid {
+        display: block; /* Removed Grid */
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px 24px;
+    }
+
+    /* ARRIVALS LIST */
+    .arrivals-panel {
+        background: var(--card); border-radius: 12px;
+        border: 1px solid var(--border); overflow: hidden;
+    }
+    .panel-header {
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-title { font-size: 18px; font-weight: 600; color: var(--accent); }
+    .arrivals-list { max-height: 600px; overflow-y: auto; }
+    
+    .time-slot { border-bottom: 1px solid var(--border); }
+    .time-slot:last-child { border-bottom: none; }
+    .slot-header {
+        padding: 10px 20px; background: rgba(255,255,255,0.02);
+        font-size: 13px; font-weight: 600; color: var(--muted);
+        display: flex; justify-content: space-between;
+    }
+    .slot-header.now { background: rgba(14, 165, 233, 0.1); color: var(--accent); }
+
+    /* BOOKING CARD */
+    .booking-card {
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 16px;
+        cursor: pointer; transition: all 0.2s; position: relative;
+    }
+    .booking-card:hover { background: rgba(255,255,255,0.03); }
+    .booking-card:last-child { border-bottom: none; }
+    
+    /* Status Bars */
+    .booking-status { width: 6px; height: 60px; border-radius: 4px; flex-shrink: 0; }
+    
+    /* Status Colors */
+    .status-booked { background: var(--accent); } /* Blue */
+    .status-waiting { background: var(--purple); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); } /* Purple */
+    .status-complete { background: var(--success); } /* Green */
+    .status-late { background: var(--danger); animation: pulse 1s infinite; }
+
+    .booking-main { flex: 1; }
+    
+    /* Ref & Registration Layout */
+    .booking-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .booking-ref { font-size: 18px; font-weight: 700; color: var(--text); }
+    .reg-badge { 
+        font-size: 14px; font-weight: 700; color: #fff; 
+        background: #334155; padding: 2px 8px; border-radius: 4px; 
+        letter-spacing: 0.5px; border: 1px solid #475569;
+    }
+
+    .booking-details { font-size: 13px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+    .booking-orders {
+        font-size: 12px; color: var(--text); margin-top: 6px;
+        font-family: monospace; background: rgba(0,0,0,0.2);
+        padding: 4px 8px; border-radius: 4px; display: inline-block;
+    }
+
+    .booking-meta { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .booking-pallets { font-size: 24px; font-weight: 700; color: var(--text); }
+    .booking-pallets small { font-size: 12px; font-weight: 400; color: var(--muted); }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .badge-meds { background: var(--danger); color: white; margin-left: 8px; }
+    
+    /* Status Badges */
+    .state-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+    .badge-queue { background: rgba(139, 92, 246, 0.2); color: var(--purple); border: 1px solid var(--purple); }
+    .badge-notified { background: var(--purple); color: white; }
+    .badge-released { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <span class="connection-status" id="connectionDot" title="Live Connection"></span>
+        <span style="margin-left: 10px;">Expected Arrivals</span>
+    </div>
+    <div class="header-clock" id="clock">--:--</div>
+    <div class="header-right">
+        <div id="avatarBtn">??</div>
+        <div id="avatarMenu">
+            <div id="menuName">Loading...</div>
+            <div onclick="logoutUser()">Logout</div>
+        </div>
+    </div>
+</header>
+
+<!-- NAV: ARRIVALS | QUEUE | SUPERVISOR -->
+<nav class="main-nav">
+    <a href="arrivals.html" class="active">ARRIVALS</a>
+    <span class="nav-divider">|</span>
+    <a href="index.html">QUEUE</a>
+    <span class="nav-divider">|</span>
+    <a href="supervisor.html">SUPERVISOR</a>
+</nav>
+
+<!-- STATS -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-value" id="statExpected">0</div>
+        <div class="stat-label">Expected</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value purple" id="statInQueue">0</div>
+        <div class="stat-label">In Queue</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value success" id="statComplete">0</div>
+        <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="statPallets">0</div>
+        <div class="stat-label">Remaining Pallets</div>
+    </div>
+</div>
+
+<div class="main-grid">
+    <!-- ARRIVALS LIST -->
+    <div class="arrivals-panel">
+        <div class="panel-header">
+            <div class="panel-title">Todays Schedule</div>
+            <div style="font-size:12px; color:var(--muted);">Select a booking to Check In</div>
+        </div>
+        <div class="arrivals-list" id="arrivalsList">
+            <div style="padding:40px; text-align:center; color:var(--muted);">Loading Schedule...</div>
+        </div>
+    </div>
+    <!-- CHECK-IN PANEL REMOVED -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db = supabase.createClient(
+    "https://gtixdparpjdpyhhubsfz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+
+// State
+let bookingsData = []; // From JSON
+let liveVehicles = []; // From Supabase
+let mergedData = [];   // Combined
+
+// 1. Initial Load
+async function init() {
+    updateClock(); setInterval(updateClock, 1000);
+    checkUser();
+    
+    await Promise.all([ loadBookingsJSON(), loadLiveVehicles() ]);
+    syncData();
+    setupRealtime();
+}
+
+// 2. Load Mock Bookings
+async function loadBookingsJSON() {
+    try {
+        const res = await fetch('mock_bookings.json');
+        if (!res.ok) throw new Error("JSON Fetch Failed");
+        const data = await res.json();
+        bookingsData = data.bookings || [];
+    } catch(e) { 
+        console.error("JSON Error, using fallback:", e); 
+        // Fallback data if JSON fails
+        bookingsData = [
+            { "ref": "819999", "time": "15:00", "pallets": 29, "customer": "Waitrose", "status": "booked" }
+        ];
+    }
+}
+
+// 3. Load Live Vehicles (Today)
+async function loadLiveVehicles() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await db.from('vehicles')
+        .select('po_ref, status, registration, pallet_count, check_in_time')
+        .gte('check_in_time', today);
+        
+    if (!error && data) {
+        liveVehicles = data;
+    }
+}
+
+// 4. Sync Logic
+function syncData() {
+    if (!bookingsData || bookingsData.length === 0) {
+        document.getElementById('arrivalsList').innerHTML = '<div style="padding:40px; text-align:center;">No Bookings Found</div>';
+        return;
+    }
+
+    mergedData = bookingsData.map(b => {
+        // Safe Copy
+        const item = { ...b, syncStatus: 'booked', syncBadge: '', liveReg: null, actualPallets: null };
+        
+        // Match logic
+        const match = liveVehicles.find(v => v.po_ref === b.ref);
+        
+        if (match) {
+            item.liveReg = match.registration;
+            item.actualPallets = match.pallet_count;
+            
+            if (match.status === 'parked') {
+                item.syncStatus = 'waiting';
+                item.syncBadge = `<span class="state-badge badge-queue">IN QUEUE</span>`;
+            } else if (match.status === 'notified') {
+                item.syncStatus = 'waiting';
+                item.syncBadge = `<span class="state-badge badge-notified">NOTIFIED</span>`;
+            } else if (match.status === 'released') {
+                item.syncStatus = 'complete';
+                item.syncBadge = `<span class="state-badge badge-released">RELEASED</span>`;
+            }
+        }
+        
+        return item;
+    });
+
+    renderBoard();
+    updateStats();
+}
+
+// 5. Render
+function renderBoard() {
+    const container = document.getElementById('arrivalsList');
+    container.innerHTML = '';
+
+    // Group by hour
+    const groups = {};
+    mergedData.forEach(item => {
+        // SAFETY CHECK: If time is missing, default to 00:00
+        const timeStr = item.time || "00:00";
+        const h = timeStr.slice(0,2) + ':00';
+        
+        if (!groups[h]) groups[h] = [];
+        groups[h].push(item);
+    });
+
+    // Sort hours
+    const sortedHours = Object.keys(groups).sort();
+
+    if (sortedHours.length === 0) {
+         container.innerHTML = '<div style="padding:40px; text-align:center;">No Scheduled Arrivals</div>';
+         return;
+    }
+
+    sortedHours.forEach(hour => {
+        const items = groups[hour];
+        const nowHour = String(new Date().getHours()).padStart(2,'0') + ':00';
+        const isNow = hour === nowHour;
+
+        let html = `<div class="time-slot">
+            <div class="slot-header ${isNow ? 'now' : ''}">
+                <span>${hour} - ${parseInt(hour)+1}:00 ${isNow ? '(NOW)' : ''}</span>
+                <span>${items.length} booking(s)</span>
+            </div>`;
+
+        items.forEach(b => {
+            const statusClass = `status-${b.syncStatus}`;
+            const displayPallets = b.actualPallets || b.pallets || 0;
+            const palletLabel = b.actualPallets ? '(Actual)' : '(Est)';
+
+            html += `
+            <div class="booking-card" onclick="selectForCheckin('${b.ref}')">
+                <div class="booking-status ${statusClass}"></div>
+                <div class="booking-main">
+                    <div class="booking-header">
+                        <span class="booking-ref">#${b.ref}</span>
+                        ${b.liveReg ? `<span class="reg-badge">${b.liveReg}</span>` : ''}
+                        ${b.syncBadge}
+                        ${b.contains_meds ? '<span class="badge badge-meds">MEDS</span>' : ''}
+                    </div>
+                    <div class="booking-details">
+                        <span>${b.customer || 'Unknown Customer'}</span>
+                        <span>${b.account || ''}</span>
+                    </div>
+                </div>
+                <div class="booking-meta">
+                    <div class="booking-pallets">${displayPallets}</div>
+                    <small>${palletLabel}</small>
+                </div>
+            </div>`;
+        });
+
+        html += `</div>`;
+        container.innerHTML += html;
+    });
+}
+
+function updateStats() {
+    const total = mergedData.length;
+    const inQueue = mergedData.filter(x => x.syncStatus === 'waiting').length;
+    const complete = mergedData.filter(x => x.syncStatus === 'complete').length;
+    
+    // UPDATED LINE: Filter out 'complete' items before summing
+    const pallets = mergedData
+        .filter(x => x.syncStatus !== 'complete') // This removes the completed ones
+        .reduce((sum, x) => sum + (x.actualPallets || x.pallets || 0), 0);
+
+    document.getElementById('statExpected').textContent = total;
+    document.getElementById('statInQueue').textContent = inQueue;
+    document.getElementById('statComplete').textContent = complete;
+    document.getElementById('statPallets').textContent = pallets;
+}
+
+// 6. Realtime
+function setupRealtime() {
+    const dot = document.getElementById('connectionDot');
+    db.channel('arrivals-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, 
+        async () => {
+            console.log("Change detected, refreshing arrivals...");
+            await loadLiveVehicles();
+            syncData();
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') dot.classList.remove('disconnected');
+            else dot.classList.add('disconnected');
+        });
+}
+
+// 7. Check-in Launcher (UPDATED)
+function selectForCheckin(ref) {
+    // Find the booking details in the existing data
+    const b = mergedData.find(x => x.ref === ref);
+    if (!b) return;
+
+    // Prepare the data to send to the queue page
+    const params = new URLSearchParams({
+        ref: b.ref,
+        customer: b.customer,
+        orders: Array.isArray(b.orders) ? b.orders.join(', ') : (b.orders || ''),
+        pallets: b.pallets || '',
+        meds: b.contains_meds || false
+    });
+
+    // Redirect to index.html with the data in the URL
+    window.location.href = `index.html?${params.toString()}`;
+}
+
+function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function checkUser() { if(!localStorage.getItem('operator_id')) window.location.href='login.html'; }
+function logoutUser() { localStorage.removeItem('operator_id'); window.location.href='login.html'; }
+
+// Run
+init();
+</script>
+</body>
+</html>

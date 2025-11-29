@@ -1,0 +1,160 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "📝 Log Claude Session (Quick)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "mkdir -p .claude-logs && echo '\n## '$(date '+%Y-%m-%d %H:%M')' - ${input:sessionDescription}' >> .claude-logs/$(basename \"$PWD\").md && echo '✅ Logged to .claude-logs/$(basename \"$PWD\").md'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "📋 Log Claude Session (Detailed)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "mkdir -p .claude-logs && { echo '\n## '$(date '+%Y-%m-%d %H:%M'); echo '**Description:** ${input:sessionDescription}'; echo '**Files Changed:** ${input:filesChanged}'; echo '**Status:** ${input:sessionStatus}'; echo '\n### Changes'; git diff HEAD 2>/dev/null || echo 'No git changes detected'; echo ''; } >> .claude-logs/$(basename \"$PWD\").md && echo '✅ Detailed log saved to .claude-logs/$(basename \"$PWD\").md'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "🔍 View Current Project Log",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "if [ -f .claude-logs/$(basename \"$PWD\").md ]; then cat .claude-logs/$(basename \"$PWD\").md; else echo '❌ No log file found for this project yet. Run a logging task first.'; fi"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "📊 View All Project Logs",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "if [ -d .claude-logs ]; then echo '=== Available Logs ===' && ls -lh .claude-logs/ && echo '' && echo '=== Recent Entries ===' && tail -n 20 .claude-logs/*.md 2>/dev/null || echo 'No logs yet'; else echo '❌ No .claude-logs directory found'; fi"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "🚀 Setup Auto-Logging (Git Hook)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "mkdir -p .git/hooks && cat > .git/hooks/post-commit << 'EOF'\n#!/bin/bash\nPROJECT=$(basename \"$PWD\")\nmkdir -p .claude-logs\necho \"$(date '+%Y-%m-%d %H:%M') - Commit: $(git log -1 --pretty=%B)\" >> .claude-logs/${PROJECT}.md\nEOF\nchmod +x .git/hooks/post-commit && echo '✅ Auto-logging enabled! Every git commit will now log to .claude-logs/'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "💾 Commit & Log Claude Changes",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "mkdir -p .claude-logs && git add -A && git commit -m '${input:commitMessage}' && echo '\n## '$(date '+%Y-%m-%d %H:%M')' - ${input:commitMessage}' >> .claude-logs/$(basename \"$PWD\").md && git diff HEAD~1 HEAD >> .claude-logs/$(basename \"$PWD\").md && echo '✅ Committed and logged!'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "🗑️ Clear Current Project Log",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "if [ -f .claude-logs/$(basename \"$PWD\").md ]; then rm .claude-logs/$(basename \"$PWD\").md && echo '✅ Log cleared for this project'; else echo '❌ No log file found'; fi"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "📤 Export Log Summary",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "if [ -f .claude-logs/$(basename \"$PWD\").md ]; then echo '=== Log Summary for '$(basename \"$PWD\")' ===' > claude-summary.txt && echo 'Generated: '$(date) >> claude-summary.txt && echo '' >> claude-summary.txt && tail -n 50 .claude-logs/$(basename \"$PWD\").md >> claude-summary.txt && echo '✅ Summary exported to claude-summary.txt'; else echo '❌ No log file found'; fi"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sessionDescription",
+      "type": "promptString",
+      "description": "What did Claude do this session?",
+      "default": "Made changes"
+    },
+    {
+      "id": "filesChanged",
+      "type": "promptString",
+      "description": "Which files were changed? (optional)",
+      "default": "Multiple files"
+    },
+    {
+      "id": "sessionStatus",
+      "type": "pickString",
+      "description": "Session status:",
+      "options": [
+        "✅ Complete",
+        "🚧 In Progress",
+        "⚠️ Needs Review",
+        "❌ Rolled Back"
+      ],
+      "default": "✅ Complete"
+    },
+    {
+      "id": "commitMessage",
+      "type": "promptString",
+      "description": "Git commit message:",
+      "default": "Claude: updated files"
+    }
+  ]
+}
