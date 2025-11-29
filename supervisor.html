@@ -1,1222 +1,582 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <title>Supervisor Intervention Dashboard</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
-
 <style>
-
     :root {
-
         --bg: #0a0e14;
-
         --card: #151a23;
-
         --text: #e6e8eb;
-
         --muted: #6b7280;
-
         --accent: #3b82f6;
-
         --border: #1f2937;
 
-
-
         --critical: #ef4444;
-
         --warning: #f59e0b;
-
         --ok: #10b981;
-
         --export: #8b5cf6;
-
     }
-
-
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-
-
     body {
-
         background: var(--bg);
-
         color: var(--text);
-
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
         line-height: 1.5;
-
     }
 
-
-
-    /* HEADER */
-
+    /* HEADER LAYOUT - MATCHING INDEX EXACTLY */
     .header {
-
         background: var(--card);
-
         padding: 16px 24px;
-
         border-bottom: 2px solid var(--border);
-
         display: flex;
-
-        justify-content: space-between;
-
         align-items: center;
-
+        /* Removed justify-content: space-between to allow flex-1 centering */
     }
 
-    .header h1 {
-
+    /* Three-column layout for perfect centering */
+    .header-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
         font-size: 20px;
-
         font-weight: 600;
-
         color: var(--text);
-
+    }
+    
+    .header-clock {
+        flex: 1;
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        color: var(--text);
     }
 
     .header-right {
-
+        flex: 1;
         display: flex;
-
-        gap: 16px;
-
+        justify-content: flex-end;
         align-items: center;
-
+        gap: 16px;
+        position: relative;
         font-size: 14px;
-
         color: var(--muted);
-
     }
 
     .status-dot {
-
         width: 8px;
-
         height: 8px;
-
         border-radius: 50%;
-
         background: var(--ok);
-
         animation: pulse 2s infinite;
-
     }
-
     @keyframes pulse {
-
         0%, 100% { opacity: 1; }
-
         50% { opacity: 0.5; }
-
     }
 
+    /* AVATAR + MENU */
+    #avatarBtn {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; color: var(--accent);
+        cursor: pointer; user-select: none;
+    }
+    #avatarMenu {
+        position: absolute; top: 48px; right: 0;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 6px; min-width: 150px;
+        padding: 4px 0; display: none; z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    #avatarMenu > div {
+        padding: 8px 12px; cursor: pointer; font-size: 14px; color: var(--text);
+    }
+    #avatarMenu > div:hover { background: var(--accent); color: #fff; }
 
 
     /* MAIN LAYOUT */
-
     .container {
-
         max-width: 1600px;
-
         margin: 0 auto;
-
         padding: 24px;
-
     }
-
-
 
     /* ZONE */
-
     .zone {
-
         background: var(--card);
-
         border-radius: 12px;
-
         padding: 20px;
-
         margin-bottom: 24px;
-
         border: 2px solid var(--border);
-
     }
-
     .zone-critical {
-
         border-color: var(--critical);
-
         background: linear-gradient(135deg, rgba(239,68,68,0.05), transparent);
-
     }
-
     .zone-warning {
-
         border-color: var(--warning);
-
         background: linear-gradient(135deg, rgba(245,158,11,0.05), transparent);
-
     }
-
-
 
     .zone-header {
-
         display: flex;
-
         justify-content: space-between;
-
         align-items: center;
-
         margin-bottom: 16px;
-
         padding-bottom: 12px;
-
         border-bottom: 1px solid var(--border);
-
     }
-
     .zone-title {
-
         font-size: 18px;
-
         font-weight: 600;
-
         display: flex;
-
         align-items: center;
-
         gap: 10px;
-
     }
-
     .badge-critical {
-
         background: var(--critical);
-
         color: white;
-
         padding: 4px 12px;
-
         border-radius: 12px;
-
         font-size: 14px;
-
         font-weight: 600;
-
     }
-
     .badge-warning {
-
         background: var(--warning);
-
         color: #000;
-
         padding: 4px 12px;
-
         border-radius: 12px;
-
         font-size: 14px;
-
         font-weight: 600;
-
     }
-
-
 
     /* INTERVENTION CARDS */
-
     .intervention-card {
-
         background: rgba(255,255,255,0.02);
-
         border: 1px solid var(--border);
-
         border-radius: 8px;
-
         padding: 16px;
-
         margin-bottom: 12px;
-
         display: flex;
-
         justify-content: space-between;
-
         align-items: center;
-
         transition: all 0.2s;
-
     }
-
     .intervention-card:hover {
-
         background: rgba(255,255,255,0.05);
-
         transform: translateY(-2px);
-
     }
-
-
 
     .card-left {
-
         flex: 1;
-
     }
-
     .card-reg {
-
         font-size: 20px;
-
         font-weight: 700;
-
         margin-bottom: 4px;
-
     }
-
     .card-meta {
-
         font-size: 13px;
-
         color: var(--muted);
-
         display: flex;
-
         gap: 16px;
-
         margin-top: 8px;
-
     }
-
     .card-alert {
-
         font-size: 14px;
-
         color: var(--critical);
-
         font-weight: 500;
-
         margin-top: 6px;
-
     }
-
-
 
     .card-right {
-
         display: flex;
-
         gap: 8px;
-
     }
-
     .btn {
-
         padding: 8px 16px;
-
         border-radius: 6px;
-
         border: none;
-
         font-size: 14px;
-
         font-weight: 600;
-
         cursor: pointer;
-
         transition: all 0.2s;
-
     }
-
     .btn-view {
-
         background: var(--accent);
-
         color: white;
-
     }
-
     .btn-view:hover {
-
         background: #2563eb;
-
     }
-
-
 
     /* EXPORT BADGE */
-
     .export-badge {
-
         display: inline-block;
-
         background: var(--export);
-
         color: white;
-
         padding: 2px 8px;
-
         border-radius: 4px;
-
         font-size: 11px;
-
         font-weight: 700;
-
         margin-left: 8px;
-
     }
-
-
 
     /* STATS GRID */
-
     .stats-grid {
-
         display: grid;
-
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-
         gap: 16px;
-
         margin-bottom: 24px;
-
     }
-
     .stat-card {
-
         background: var(--card);
-
         border: 1px solid var(--border);
-
         border-radius: 8px;
-
         padding: 16px;
-
         text-align: center;
-
     }
-
     .stat-value {
-
         font-size: 32px;
-
         font-weight: 700;
-
         color: var(--accent);
-
         margin-bottom: 4px;
-
     }
-
     .stat-label {
-
         font-size: 13px;
-
         color: var(--muted);
-
         text-transform: uppercase;
-
         letter-spacing: 0.5px;
-
     }
-
-
 
     /* EMPTY STATE */
-
     .empty-state {
-
         text-align: center;
-
         padding: 40px;
-
         color: var(--muted);
-
     }
-
     .empty-state-icon {
-
         font-size: 48px;
-
         margin-bottom: 12px;
-
         opacity: 0.5;
-
     }
-
-
 
     /* MODAL OVERLAY */
-
     #modalOverlay {
-
         position: fixed;
-
         top: 0;
-
         left: 0;
-
         right: 0;
-
         bottom: 0;
-
         background: rgba(0,0,0,0.75);
-
         display: none;
-
         align-items: center;
-
         justify-content: center;
-
         z-index: 10000;
-
         backdrop-filter: blur(4px);
-
     }
-
     #modalOverlay.active {
-
         display: flex;
-
     }
-
-
 
     #caseModal {
-
         background: var(--card);
-
         border: 2px solid var(--border);
-
         border-radius: 12px;
-
         width: 90%;
-
         max-width: 700px;
-
         max-height: 85vh;
-
         overflow-y: auto;
-
         box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-
     }
-
-
 
     .modal-header {
-
         padding: 20px 24px;
-
         border-bottom: 1px solid var(--border);
-
         display: flex;
-
         justify-content: space-between;
-
         align-items: center;
-
         position: sticky;
-
         top: 0;
-
         background: var(--card);
-
         z-index: 10;
-
     }
-
     .modal-title {
-
         font-size: 22px;
-
         font-weight: 700;
-
     }
-
     .modal-close {
-
         background: transparent;
-
         border: none;
-
         font-size: 28px;
-
         color: var(--muted);
-
         cursor: pointer;
-
         padding: 0;
-
         width: 32px;
-
         height: 32px;
-
         display: flex;
-
         align-items: center;
-
         justify-content: center;
-
     }
-
     .modal-close:hover {
-
         color: var(--text);
-
     }
-
-
 
     .modal-body {
-
         padding: 24px;
-
     }
-
-
 
     .modal-section {
-
         margin-bottom: 28px;
-
     }
-
     .modal-section-title {
-
         font-size: 16px;
-
         font-weight: 600;
-
         color: var(--accent);
-
         margin-bottom: 12px;
-
         text-transform: uppercase;
-
         letter-spacing: 0.5px;
-
     }
-
-
 
     .info-grid {
-
         display: grid;
-
         grid-template-columns: 140px 1fr;
-
         gap: 12px;
-
         font-size: 14px;
-
     }
-
     .info-label {
-
         color: var(--muted);
-
         font-weight: 500;
-
     }
-
     .info-value {
-
         color: var(--text);
-
     }
-
-
 
     .timeline-item {
-
         display: flex;
-
         gap: 12px;
-
         margin-bottom: 16px;
-
         padding-left: 20px;
-
         border-left: 2px solid var(--border);
-
         padding-bottom: 12px;
-
     }
-
     .timeline-item:last-child {
-
         border-left-color: transparent;
-
     }
-
     .timeline-time {
-
         font-size: 13px;
-
         color: var(--muted);
-
         min-width: 60px;
-
     }
-
     .timeline-event {
-
         font-size: 14px;
-
         color: var(--text);
-
     }
-
-
 
     .supervisor-actions {
-
         display: grid;
-
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-
         gap: 12px;
-
     }
-
     .action-btn {
-
         padding: 12px 16px;
-
         border-radius: 8px;
-
         border: 1px solid var(--border);
-
         background: rgba(255,255,255,0.05);
-
         color: var(--text);
-
         font-size: 14px;
-
         font-weight: 600;
-
         cursor: pointer;
-
         transition: all 0.2s;
-
         display: flex;
-
         align-items: center;
-
         justify-content: center;
-
         gap: 8px;
-
     }
-
     .action-btn:hover {
-
         background: rgba(255,255,255,0.1);
-
         transform: translateY(-2px);
-
     }
-
     .action-btn-primary {
-
         background: var(--accent);
-
         border-color: var(--accent);
-
         color: white;
-
     }
-
     .action-btn-primary:hover {
-
         background: #2563eb;
-
     }
-
-
 
     .note-input {
-
         width: 100%;
-
         padding: 12px;
-
         border: 1px solid var(--border);
-
         border-radius: 8px;
-
         background: rgba(255,255,255,0.05);
-
         color: var(--text);
-
         font-size: 14px;
-
         font-family: inherit;
-
         resize: vertical;
-
         min-height: 80px;
-
         margin-top: 8px;
-
     }
-
     .note-input:focus {
-
         outline: none;
-
         border-color: var(--accent);
-
     }
-
-
 
     .status-badge {
-
         display: inline-block;
-
         padding: 4px 12px;
-
         border-radius: 12px;
-
         font-size: 12px;
-
         font-weight: 600;
-
     }
-
     .status-parked { background: #fbbf24; color: #000; }
-
     .status-notified { background: #3b82f6; color: white; }
-
     .status-released { background: #10b981; color: white; }
 
-
-
     /* ============================================================
-
        COMMAND PALETTE (Ctrl+K) - Inline Integration
-
        ============================================================ */
-
     #cmdOverlay {
-
         position: fixed;
-
         top: 0;
-
         left: 0;
-
         right: 0;
-
         bottom: 0;
-
         background: rgba(0, 0, 0, 0.85);
-
         backdrop-filter: blur(4px);
-
         display: none;
-
         align-items: flex-start;
-
         justify-content: center;
-
         padding-top: 100px;
-
-        z-index: 20000; /* Higher than existing modal (10000) */
-
+        z-index: 20000;
         animation: cmdFadeIn 0.15s ease;
-
     }
-
-    #cmdOverlay.active {
-
-        display: flex;
-
-    }
-
-    @keyframes cmdFadeIn {
-
-        from { opacity: 0; }
-
-        to { opacity: 1; }
-
-    }
+    #cmdOverlay.active { display: flex; }
+    @keyframes cmdFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     #cmdPalette {
-
         width: 600px;
-
         max-width: 90vw;
-
         background: var(--card);
-
         border: 1px solid var(--border);
-
         border-radius: 12px;
-
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-
         overflow: hidden;
-
         animation: cmdSlideDown 0.2s ease;
-
     }
-
-    @keyframes cmdSlideDown {
-
-        from {
-
-            opacity: 0;
-
-            transform: translateY(-20px);
-
-        }
-
-        to {
-
-            opacity: 1;
-
-            transform: translateY(0);
-
-        }
-
-    }
+    @keyframes cmdSlideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
     #cmdInput {
-
-        width: 100%;
-
-        padding: 20px;
-
-        font-size: 18px;
-
-        background: transparent;
-
-        border: none;
-
-        color: var(--text);
-
-        outline: none;
-
+        width: 100%; padding: 20px; font-size: 18px;
+        background: transparent; border: none;
+        color: var(--text); outline: none;
         border-bottom: 1px solid var(--border);
-
     }
+    #cmdInput::placeholder { color: var(--muted); }
 
-    #cmdInput::placeholder {
-
-        color: var(--muted);
-
-    }
-
-    #cmdResults {
-
-        max-height: 400px;
-
-        overflow-y: auto;
-
-        padding: 12px;
-
-    }
+    #cmdResults { max-height: 400px; overflow-y: auto; padding: 12px; }
 
     .cmd-result-item {
-
-        padding: 14px 16px;
-
-        margin-bottom: 8px;
-
+        padding: 14px 16px; margin-bottom: 8px;
         background: rgba(255, 255, 255, 0.03);
-
-        border-radius: 8px;
-
-        border-left: 3px solid var(--accent);
-
-        cursor: pointer;
-
-        transition: all 0.2s;
-
+        border-radius: 8px; border-left: 3px solid var(--accent);
+        cursor: pointer; transition: all 0.2s;
     }
-
-    .cmd-result-item:hover {
-
-        background: rgba(255, 255, 255, 0.08);
-
-        transform: translateX(2px);
-
-    }
-
-    .cmd-hint {
-
-        padding: 20px;
-
-        text-align: center;
-
-        color: var(--muted);
-
-        font-size: 14px;
-
-    }
-
-    .cmd-suggestions {
-
-        padding: 16px;
-
-        border-top: 1px solid var(--border);
-
-    }
-
-    .cmd-suggestions-title {
-
-        font-size: 12px;
-
-        color: var(--muted);
-
-        text-transform: uppercase;
-
-        margin-bottom: 8px;
-
-        font-weight: 600;
-
-    }
-
+    .cmd-result-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(2px); }
+    .cmd-hint { padding: 20px; text-align: center; color: var(--muted); font-size: 14px; }
+    .cmd-suggestions { padding: 16px; border-top: 1px solid var(--border); }
+    .cmd-suggestions-title { font-size: 12px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
     .cmd-tag {
-
-        display: inline-block;
-
-        padding: 6px 12px;
-
-        margin: 4px;
-
+        display: inline-block; padding: 6px 12px; margin: 4px;
         background: rgba(255, 255, 255, 0.05);
-
-        border: 1px solid var(--border);
-
-        border-radius: 6px;
-
-        font-size: 13px;
-
-        cursor: pointer;
-
-        transition: all 0.2s;
-
+        border: 1px solid var(--border); border-radius: 6px;
+        font-size: 13px; cursor: pointer; transition: all 0.2s;
     }
+    .cmd-tag:hover { background: rgba(59, 130, 246, 0.2); border-color: var(--accent); }
 
-    .cmd-tag:hover {
-
-        background: rgba(59, 130, 246, 0.2);
-
-        border-color: var(--accent);
-
-    }
-
-    .cmd-metrics-grid {
-
-        display: grid;
-
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-
-        gap: 12px;
-
-        padding: 16px;
-
-    }
-
-    .cmd-metric-card {
-
-        background: rgba(255, 255, 255, 0.03);
-
-        padding: 16px;
-
-        border-radius: 8px;
-
-        text-align: center;
-
-        border: 1px solid var(--border);
-
-    }
-
-    .cmd-metric-value {
-
-        font-size: 32px;
-
-        font-weight: 700;
-
-        margin-bottom: 4px;
-
-    }
-
+    .cmd-metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 16px; }
+    .cmd-metric-card { background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
+    .cmd-metric-value { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
     .cmd-metric-value.cmd-danger { color: var(--critical); }
-
     .cmd-metric-value.cmd-warning { color: var(--warning); }
-
     .cmd-metric-value.cmd-success { color: var(--ok); }
+    .cmd-metric-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
 
-    .cmd-metric-label {
-
-        font-size: 12px;
-
-        color: var(--muted);
-
-        text-transform: uppercase;
-
-    }
-
-    .cmd-detail-list {
-
-        padding: 16px;
-
-    }
-
+    .cmd-detail-list { padding: 16px; }
     .cmd-detail-item {
-
-        padding: 12px;
-
-        margin-bottom: 8px;
-
+        padding: 12px; margin-bottom: 8px;
         background: rgba(255, 255, 255, 0.03);
-
-        border-radius: 6px;
-
-        font-size: 14px;
-
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: center;
-
+        border-radius: 6px; font-size: 14px;
+        display: flex; justify-content: space-between; align-items: center;
     }
-
-    .cmd-detail-item strong {
-
-        font-weight: 600;
-
-    }
-
-    .cmd-badge {
-
-        padding: 4px 10px;
-
-        border-radius: 4px;
-
-        font-size: 11px;
-
-        font-weight: 600;
-
-        text-transform: uppercase;
-
-    }
-
+    .cmd-detail-item strong { font-weight: 600; }
+    .cmd-badge { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
     .cmd-badge-critical { background: var(--critical); color: white; }
-
     .cmd-badge-warning { background: var(--warning); color: black; }
-
     .cmd-badge-normal { background: var(--ok); color: white; }
 
     /* Navigation bar */
     .main-nav {
-        background: #1e3a5f;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        background: #1e3a5f; padding: 0;
+        display: flex; align-items: center; justify-content: center;
         border-bottom: 1px solid #1f2937;
     }
     .main-nav a {
-        color: #e6e8eb;
-        text-decoration: none;
-        padding: 14px 24px;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.2s;
+        color: #e6e8eb; text-decoration: none;
+        padding: 14px 24px; font-size: 14px; font-weight: 600;
+        letter-spacing: 0.5px; transition: all 0.2s;
     }
-    .main-nav a:hover {
-        background: rgba(255,255,255,0.1);
-    }
-    .main-nav a.active {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-    }
-    .nav-divider {
-        color: #64748b;
-        font-size: 18px;
-        user-select: none;
-    }
+    .main-nav a:hover { background: rgba(255,255,255,0.1); }
+    .main-nav a.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .nav-divider { color: #64748b; font-size: 18px; user-select: none; }
 
 </style>
-
 </head>
-
-
 
 <body>
 
-
-
 <div id="versionBanner" style="
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: white; padding: 4px 12px;
+    border-radius: 4px; font-size: 12px; font-weight: 600; z-index: 9999;
+">v3.1.5 - DEV BUILD</div>
 
-    position: fixed;
-
-    top: 10px;
-
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    background: var(--accent);
-
-    color: white;
-
-    padding: 4px 12px;
-
-    border-radius: 4px;
-
-    font-size: 12px;
-
-    font-weight: 600;
-
-    z-index: 9999;
-
-">v3.1.3 - DEV BUILD</div>
-
-
-
+<!-- HEADER (Now matching Index exactly) -->
 <div class="header">
-
-    <h1>&#9889; Supervisor Intervention Dashboard</h1>
-
-    <div class="header-right">
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-
-            <div class="status-dot"></div>
-
-            <span>Live</span>
-
-        </div>
-
-        <span id="clockTime">--:--</span>
-
-        <span id="supervisorName">Loading...</span>
-
+    <div class="header-left">
+        <h1>&#9889; Supervisor Intervention Dashboard</h1>
     </div>
-
+    
+    <!-- Centered Clock -->
+    <div id="clockTime" class="header-clock">--:--</div>
+    
+    <div class="header-right">
+        <!-- Live Status -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="status-dot"></div>
+            <span>Live</span>
+        </div>
+        
+        <!-- Avatar + dropdown -->
+        <div style="position: relative;">
+            <div id="avatarBtn">??</div>
+            <div id="avatarMenu">
+                <div id="menuName">Loading...</div>
+                <div onclick="logoutUser()">Logout</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Navigation -->
@@ -1228,353 +588,149 @@
     <a href="supervisor.html" class="active">SUPERVISOR</a>
 </nav>
 
-
-
 <div class="container">
 
-
-
     <!-- SEARCH BAR -->
-
     <div style="margin-bottom: 24px;">
-
         <input
-
             id="superSearch"
-
             type="text"
-
             placeholder="Search by registration or PO..."
-
             style="
-
-                width:100%;
-
-                padding:14px;
-
-                font-size:16px;
-
-                border-radius:8px;
-
-                border:1px solid var(--border);
-
-                background:var(--card);
-
-                color:var(--text);
-
+                width:100%; padding:14px; font-size:16px;
+                border-radius:8px; border:1px solid var(--border);
+                background:var(--card); color:var(--text);
             ">
-
     </div>
-
-
 
     <div id="superSearchResults" style="margin-bottom:24px;"></div>
 
-
-
     <!-- QUICK STATS -->
-
     <div class="stats-grid">
-
         <div class="stat-card">
-
             <div class="stat-value" id="statInYard">0</div>
-
             <div class="stat-label">In Yard</div>
-
         </div>
-
         <div class="stat-card">
-
             <div class="stat-value" id="statNeedsAction">0</div>
-
             <div class="stat-label">Needs Action</div>
-
         </div>
-
         <div class="stat-card">
-
             <div class="stat-value" id="statAvgWait">0m</div>
-
             <div class="stat-label">Avg Wait</div>
-
         </div>
-
         <div class="stat-card">
-
             <div class="stat-value" id="statReleasedToday">0</div>
-
             <div class="stat-label">Released Today</div>
-
         </div>
-
     </div>
-
-
 
     <!-- CRITICAL ZONE -->
-
     <div class="zone zone-critical" id="criticalZone">
-
         <div class="zone-header">
-
             <div class="zone-title">
-
                 &#128680; URGENT
-
                 <span class="badge-critical" id="criticalCount">0 vehicles</span>
-
             </div>
-
             <span style="font-size: 13px; color: var(--muted);">Overdue >90 mins or critical issues</span>
-
         </div>
-
         <div id="criticalList"></div>
-
     </div>
-
-
 
     <!-- WATCH LIST -->
-
     <div class="zone zone-warning" id="watchZone">
-
         <div class="zone-header">
-
             <div class="zone-title">
-
                 &#9888; WATCH LIST
-
                 <span class="badge-warning" id="watchCount">0 vehicles</span>
-
             </div>
-
             <span style="font-size: 13px; color: var(--muted);">Approaching quoted time</span>
-
         </div>
-
         <div id="watchList"></div>
-
     </div>
-
-
 
 </div>
 
-
-
 <!-- MODAL -->
-
 <div id="modalOverlay">
-
     <div id="caseModal">
-
         <div class="modal-header">
-
             <div class="modal-title" id="modalTitle">Vehicle Details</div>
-
             <button class="modal-close" onclick="closeModal()">&times;</button>
-
         </div>
-
         <div class="modal-body">
-
             
-
             <!-- SUMMARY BAR - Quick glance status -->
-
             <div id="modalSummaryBar" style="
-
-                display: flex;
-
-                gap: 12px;
-
-                margin-bottom: 24px;
-
-                padding: 16px;
-
-                background: rgba(255,255,255,0.03);
-
-                border-radius: 8px;
-
+                display: flex; gap: 12px; margin-bottom: 24px; padding: 16px;
+                background: rgba(255,255,255,0.03); border-radius: 8px;
                 border: 1px solid var(--border);
-
             ">
-
                 <div style="flex: 1; text-align: center; border-right: 1px solid var(--border);">
-
                     <div style="font-size: 28px; font-weight: 700;" id="modalTotalWait">-</div>
-
                     <div style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Total Wait</div>
-
                 </div>
-
                 <div style="flex: 1; text-align: center; border-right: 1px solid var(--border);">
-
                     <div style="font-size: 28px; font-weight: 700;" id="modalQuoted">-</div>
-
                     <div style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Quoted</div>
-
                 </div>
-
                 <div style="flex: 1; text-align: center;">
-
                     <div style="font-size: 28px; font-weight: 700;" id="modalVariance">-</div>
-
                     <div style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Variance</div>
-
                 </div>
-
             </div>
-
-
 
             <!-- VEHICLE IDENTITY -->
-
             <div class="modal-section">
-
                 <div class="modal-section-title">Vehicle Identity</div>
-
                 <div class="info-grid">
-
                     <div class="info-label">Registration</div>
-
                     <div class="info-value" id="modalReg">-</div>
-
                     
-
                     <div class="info-label">Status</div>
-
                     <div class="info-value" id="modalStatus">-</div>
-
                     
-
                     <div class="info-label">PO / Reference</div>
-
                     <div class="info-value" id="modalPO">-</div>
-
                     
-
                     <div class="info-label">Mobile Number</div>
-
                     <div class="info-value" id="modalMobile">-</div>
-
                     
-
                     <div class="info-label">Classification</div>
-
                     <div class="info-value" id="modalClassification">-</div>
-
                 </div>
-
             </div>
 
-
-
-            <!-- TIME ANALYSIS - The key upgrade -->
-
+            <!-- TIME ANALYSIS -->
             <div class="modal-section">
-
                 <div class="modal-section-title">Time Analysis</div>
-
-                
-
-                <!-- Visual timeline bar -->
-
-                <div id="modalTimelineBar" style="
-
-                    display: flex;
-
-                    align-items: center;
-
-                    margin-bottom: 20px;
-
-                    padding: 12px 0;
-
-                "></div>
-
-
-
-                <!-- Detailed stage breakdown table -->
-
-                <div id="modalStageTable" style="
-
-                    background: rgba(0,0,0,0.2);
-
-                    border-radius: 8px;
-
-                    overflow: hidden;
-
-                "></div>
-
+                <div id="modalTimelineBar" style="display: flex; align-items: center; margin-bottom: 20px; padding: 12px 0;"></div>
+                <div id="modalStageTable" style="background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;"></div>
             </div>
-
-
 
             <!-- ACTIVITY LOG -->
-
             <div class="modal-section">
-
                 <div class="modal-section-title">Activity Log</div>
-
                 <div id="modalActivityLog" style="
-
-                    max-height: 200px;
-
-                    overflow-y: auto;
-
-                    background: rgba(0,0,0,0.2);
-
-                    border-radius: 8px;
-
-                    padding: 12px;
-
+                    max-height: 200px; overflow-y: auto;
+                    background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px;
                 "></div>
-
             </div>
-
-
 
             <!-- NOTES -->
-
             <div class="modal-section">
-
                 <div class="modal-section-title">Notes</div>
-
                 <div id="modalNotes" style="
-
-                    padding: 12px; 
-
-                    background: rgba(255,255,255,0.03); 
-
-                    border-radius: 6px; 
-
-                    font-size: 14px; 
-
-                    color: var(--text);
-
-                    white-space: pre-wrap;
-
-                    max-height: 150px;
-
-                    overflow-y: auto;
-
+                    padding: 12px; background: rgba(255,255,255,0.03); 
+                    border-radius: 6px; font-size: 14px; color: var(--text);
+                    white-space: pre-wrap; max-height: 150px; overflow-y: auto;
                 ">-</div>
-
             </div>
 
-
-
             <!-- SUPERVISOR ACTIONS -->
-
             <div class="modal-section">
-
                 <div class="modal-section-title">Supervisor Actions</div>
-
                 
-                
-                <!-- Quick change of vehicle status within the case modal -->
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted);">Change Status</label>
                     <select id="changeStatusSelect" style="
@@ -1589,2817 +745,671 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-
                     <label style="display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted);">Add Supervisor Note</label>
-
                     <textarea id="supervisorNote" class="note-input" placeholder="Enter note about this case..."></textarea>
-
                     <button class="action-btn action-btn-primary" style="margin-top: 8px; width: auto;" onclick="addSupervisorNote()">
-
                         &#128190; Save Note
-
                     </button>
-
                 </div>
-
-
 
                 <div class="supervisor-actions">
-
-                    <button class="action-btn" onclick="markUnderReview()">
-
-                        &#128269;Mark Under Review
-
-                    </button>
-
-                    <button class="action-btn" onclick="markSupervisorAware()">
-
-                        &#10003; Mark Supervisor Aware
-
-                    </button>
-
-                    <button class="action-btn" onclick="sendDriverSMS()" title="Feature coming soon">
-
-                        &#128241; SMS Driver
-
-                    </button>
-
+                    <button class="action-btn" onclick="markUnderReview()">&#128269;Mark Under Review</button>
+                    <button class="action-btn" onclick="markSupervisorAware()">&#10003; Mark Supervisor Aware</button>
+                    <button class="action-btn" onclick="sendDriverSMS()" title="Feature coming soon">&#128241; SMS Driver</button>
                 </div>
-
             </div>
 
-
-
         </div>
-
     </div>
-
 </div>
-
-
 
 <!-- EDIT MODAL -->
-
 <div id="superEditOverlay" style="
-
     position:fixed; top:0; left:0; right:0; bottom:0;
-
-    background:rgba(0,0,0,0.75);
-
-    display:none;
-
-    align-items: center;
-
-    justify-content: center;
-
-    z-index:10001;
-
-    backdrop-filter: blur(4px);">
-
-
-
+    background:rgba(0,0,0,0.75); display:none;
+    align-items: center; justify-content: center;
+    z-index:10001; backdrop-filter: blur(4px);">
     <div id="superEditModal" style="
-
-        background:var(--card);
-
-        color:var(--text);
-
-        width:90%;
-
-        max-width:500px;
-
-        padding:28px;
-
-        border-radius:12px;
-
-        border:2px solid var(--border);
-
+        background:var(--card); color:var(--text);
+        width:90%; max-width:500px; padding:28px;
+        border-radius:12px; border:2px solid var(--border);
         box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-
     </div>
-
 </div>
 
-
-
 <!-- SUPABASE -->
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
-
 <script>
-
 // ==================== SUPABASE SETUP ====================
-
 const db = supabase.createClient(
-
     "https://gtixdparpjdpyhhubsfz.supabase.co",
-
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
-
 );
 
-
-
 let currentVehicle = null;
-
 let operators = [];
 
-
-
-// ==================== AUTH CHECK ====================
-
+// ==================== AUTH CHECK & AVATAR POPULATION ====================
 (async () => {
-
     const opId = localStorage.getItem("operator_id");
-
     if (!opId) {
-
         window.location.href = "login.html";
-
         return;
-
     }
-
-
 
     const { data: op } = await db
-
         .from("operators")
-
         .select("name, role")
-
         .eq("id", opId)
-
         .single();
 
-
-
     if (!op) {
-
         window.location.href = "login.html";
-
         return;
-
     }
 
-
-
-    // Optional: uncomment to restrict to supervisors only
-
-    // if (op.role !== "supervisor") {
-
-    //     window.location.href = "index.html";
-
-    //     return;
-
-    // }
-
-
-
-    document.getElementById("supervisorName").textContent = op.name;
+    // Populate Avatar functionality
+    const menuName = document.getElementById('menuName');
+    const avatarBtn = document.getElementById('avatarBtn');
+    
+    if (menuName) menuName.textContent = op.name;
+    if (avatarBtn) {
+        const initials = op.name.split(' ').map(x => (x[0] || '').toUpperCase()).join('').slice(0, 2);
+        avatarBtn.textContent = initials || '??';
+    }
 
 })();
 
-
-
-// ==================== LOAD OPERATORS ====================
-
-async function loadOperators() {
-
-    const { data } = await db
-
-        .from("operators")
-
-        .select("id, name");
-
-    operators = data || [];
-
+// ==================== AVATAR MENU LOGIC ====================
+function logoutUser() {
+    localStorage.removeItem('operator_id');
+    window.location.href = 'login.html';
 }
 
+document.addEventListener('click', (e) => {
+    const btn = document.getElementById('avatarBtn');
+    const menu = document.getElementById('avatarMenu');
+    if (!btn || !menu) return;
+    if (btn.contains(e.target)) {
+        menu.style.display = (menu.style.display === 'block' ? 'none' : 'block');
+    } else if (!menu.contains(e.target)) {
+        menu.style.display = 'none';
+    }
+});
 
+// ==================== LOAD OPERATORS ====================
+async function loadOperators() {
+    const { data } = await db
+        .from("operators")
+        .select("id, name");
+    operators = data || [];
+}
 
 // ==================== LOAD DASHBOARD ====================
-
 async function loadDashboard() {
-
     try {
-
-        // Get all active vehicles (parked or notified)
-
         const { data: vehicles } = await db
-
             .from("vehicles")
-
             .select("*")
-
             .in("status", ["parked", "notified"])
-
             .order("check_in_time", { ascending: true });
-
-
 
         if (!vehicles) return;
 
-
-
         const now = Date.now();
-
-
 
         // Calculate stats
-
         const inYard = vehicles.length;
-
         const releasedTodayQuery = await db
-
             .from("vehicles")
-
             .select("id")
-
             .eq("status", "released")
-
             .gte("release_time", new Date().toISOString().slice(0, 10));
-
         const releasedToday = releasedTodayQuery.data?.length || 0;
 
-
-
-        // Calculate average wait
-
         let totalWait = 0;
-
         vehicles.forEach(v => {
-
             const checkIn = new Date(v.check_in_time).getTime();
-
             totalWait += (now - checkIn);
-
         });
-
         const avgWait = vehicles.length > 0 ? Math.floor(totalWait / vehicles.length / 60000) : 0;
 
-
-
-        // Categorize vehicles
-
         const critical = [];
-
         const watchList = [];
 
-
-
         vehicles.forEach(v => {
-
             const dueTime = new Date(v.due_time).getTime();
-
             const overdueMinutes = Math.floor((now - dueTime) / 60000);
 
-
-
             if (overdueMinutes >= 90) {
-
                 critical.push({ ...v, overdueMinutes });
-
             } else if (overdueMinutes >= 0 || overdueMinutes >= -30) {
-
                 watchList.push({ ...v, overdueMinutes });
-
             }
-
         });
 
-
-
-        // Update stats
-
         document.getElementById("statInYard").textContent = inYard;
-
         document.getElementById("statNeedsAction").textContent = critical.length;
-
         document.getElementById("statAvgWait").textContent = avgWait + "m";
-
         document.getElementById("statReleasedToday").textContent = releasedToday;
 
-
-
-        // Update counts
-
         document.getElementById("criticalCount").textContent = critical.length + " vehicle" + (critical.length !== 1 ? "s" : "");
-
         document.getElementById("watchCount").textContent = watchList.length + " vehicle" + (watchList.length !== 1 ? "s" : "");
 
-
-
-        // Render lists
-
         renderCriticalList(critical);
-
         renderWatchList(watchList);
 
-
-
     } catch (error) {
-
         console.error("Error loading dashboard:", error);
-
     }
-
 }
 
-
-
-// ==================== RENDER CRITICAL LIST ====================
-
+// ==================== RENDER LISTS ====================
 function renderCriticalList(vehicles) {
-
     const container = document.getElementById("criticalList");
-
-    
-
     if (vehicles.length === 0) {
-
-        container.innerHTML = `
-
-            <div class="empty-state">
-
-                <div class="empty-state-icon">&#9989;</div>
-
-                <div style="font-size: 16px; font-weight: 600;">All Clear</div>
-
-                <div style="font-size: 14px;">No critical interventions needed</div>
-
-            </div>
-
-        `;
-
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#9989;</div><div style="font-size: 16px; font-weight: 600;">All Clear</div><div style="font-size: 14px;">No critical interventions needed</div></div>`;
         return;
-
     }
-
-
-
     container.innerHTML = vehicles.map(v => {
-
         const exportBadge = v.classification === "export" ? '<span class="export-badge">EXPORT</span>' : '';
-
         const mobile = v.mobile_number || v.pager_number || "No mobile";
-
-        
-
         return `
-
             <div class="intervention-card">
-
                 <div class="card-left">
-
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
-
                     <div class="card-alert">&#128293; ${v.overdueMinutes} minutes overdue</div>
-
                     <div class="card-meta">
-
                         <span>&#128203; PO: ${v.po_ref || "-"}</span>
-
                         <span>&#128241; ${mobile}</span>
-
                         <span>&#10003; ${v.status === "parked" ? "Parked" : "Notified"}</span>
-
                     </div>
-
                 </div>
-
                 <div class="card-right">
-
                     <button class="btn btn-view" onclick="openCaseModal('${v.id}')">View Case</button>
-
                 </div>
-
-            </div>
-
-        `;
-
+            </div>`;
     }).join("");
-
 }
-
-
-
-// ==================== RENDER WATCH LIST ====================
 
 function renderWatchList(vehicles) {
-
     const container = document.getElementById("watchList");
-
-    
-
     if (vehicles.length === 0) {
-
-        container.innerHTML = `
-
-            <div style="text-align: center; padding: 20px; color: var(--muted);">
-
-                No vehicles approaching quoted time
-
-            </div>
-
-        `;
-
+        container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--muted);">No vehicles approaching quoted time</div>`;
         return;
-
     }
-
-
-
     container.innerHTML = vehicles.map(v => {
-
         const exportBadge = v.classification === "export" ? '<span class="export-badge">EXPORT</span>' : '';
-
         const mobile = v.mobile_number || v.pager_number || "No mobile";
-
         const timeUntilDue = v.overdueMinutes < 0 ? Math.abs(v.overdueMinutes) + " mins until overdue" : v.overdueMinutes + " mins overdue";
-
-        
-
         return `
-
             <div class="intervention-card">
-
                 <div class="card-left">
-
                     <div class="card-reg">${v.registration} ${exportBadge}</div>
-
                     <div style="font-size: 14px; color: var(--warning);">&#9888; ${timeUntilDue}</div>
-
                     <div class="card-meta">
-
                         <span>&#128203; PO: ${v.po_ref || "-"}</span>
-
                         <span>&#128241; ${mobile}</span>
-
                         <span>&#10003; ${v.status === "parked" ? "Parked" : "Notified"}</span>
-
                     </div>
-
                 </div>
-
                 <div class="card-right">
-
                     <button class="btn btn-view" onclick="openCaseModal('${v.id}')">View Case</button>
-
                 </div>
-
-            </div>
-
-        `;
-
+            </div>`;
     }).join("");
-
 }
 
-
-
 // ==================== OPEN CASE MODAL ====================
-
 async function openCaseModal(vehicleId) {
-
     try {
-
-        // Fetch vehicle details
-
-        const { data: vehicle } = await db
-
-            .from("vehicles")
-
-            .select("*")
-
-            .eq("id", vehicleId)
-
-            .single();
-
-
-
+        const { data: vehicle } = await db.from("vehicles").select("*").eq("id", vehicleId).single();
         if (!vehicle) return;
-
-
-
         currentVehicle = vehicle;
 
-
-
-        // Fetch timeline (actions_log)
-
-        const { data: logs } = await db
-
-            .from("actions_log")
-
-            .select("*")
-
-            .eq("vehicle_id", vehicleId)
-
-            .order("timestamp", { ascending: true });
-
-
-
-        // ==================== TIME CALCULATIONS ====================
+        const { data: logs } = await db.from("actions_log").select("*").eq("vehicle_id", vehicleId).order("timestamp", { ascending: true });
 
         const now = Date.now();
-
         const checkInTime = new Date(vehicle.check_in_time);
-
-        const dueTime = new Date(vehicle.due_time);
-
         const notifyTime = vehicle.notify_time ? new Date(vehicle.notify_time) : null;
-
         const releaseTime = vehicle.release_time ? new Date(vehicle.release_time) : null;
-
         const quoted = vehicle.quoted_minutes || 0;
 
-
-
-        // Calculate total wait (either to release or to now)
-
         const endTime = releaseTime || now;
-
         const totalWaitMins = Math.floor((endTime - checkInTime.getTime()) / 60000);
 
-
-
-        // Calculate stage durations
-
         let checkInToNotify = null;
-
         let notifyToRelease = null;
-
         let notifyToNow = null;
 
-
-
         if (notifyTime) {
-
             checkInToNotify = Math.floor((notifyTime.getTime() - checkInTime.getTime()) / 60000);
-
             if (releaseTime) {
-
                 notifyToRelease = Math.floor((releaseTime.getTime() - notifyTime.getTime()) / 60000);
-
             } else {
-
                 notifyToNow = Math.floor((now - notifyTime.getTime()) / 60000);
-
             }
-
         }
-
-
-
-        // Calculate variance
 
         const variance = totalWaitMins - quoted;
 
-
-
-        // ==================== SUMMARY BAR ====================
-
         document.getElementById("modalTotalWait").textContent = totalWaitMins + "m";
-
         document.getElementById("modalTotalWait").style.color = variance > 0 ? "var(--critical)" : "var(--ok)";
-
-        
-
         document.getElementById("modalQuoted").textContent = quoted + "m";
-
-        
-
         const varianceEl = document.getElementById("modalVariance");
-
         if (variance > 0) {
-
             varianceEl.textContent = "+" + variance + "m";
-
             varianceEl.style.color = "var(--critical)";
-
         } else if (variance < 0) {
-
             varianceEl.textContent = variance + "m";
-
             varianceEl.style.color = "var(--ok)";
-
         } else {
-
             varianceEl.textContent = "0m";
-
             varianceEl.style.color = "var(--text)";
-
         }
 
-
-
-        // ==================== VEHICLE IDENTITY ====================
-
         document.getElementById("modalTitle").textContent = vehicle.registration;
-
         document.getElementById("modalReg").textContent = vehicle.registration;
-
-        
-
         const statusClass = `status-${vehicle.status}`;
-
         document.getElementById("modalStatus").innerHTML = `<span class="status-badge ${statusClass}">${vehicle.status}</span>`;
-
-        
-
         document.getElementById("modalPO").textContent = vehicle.po_ref || "-";
-
         document.getElementById("modalMobile").textContent = vehicle.mobile_number || vehicle.pager_number || "-";
-
-        // Set classification text. Use a simple emoji for export to avoid encoding issues
         document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? " EXPORT" : "Normal";
 
-        // If a change status dropdown exists, set its value to the current status
         const statusSelect = document.getElementById("changeStatusSelect");
         if (statusSelect) statusSelect.value = vehicle.status;
 
-
-
-        // ==================== VISUAL TIMELINE BAR ====================
-
         const timelineBarEl = document.getElementById("modalTimelineBar");
-
-        
-
-        // Calculate proportions for the visual bar
-
         let segments = [];
-
         if (vehicle.status === "released" && notifyTime && releaseTime) {
-
-            // Completed journey
-
             const total = totalWaitMins || 1;
-
             const seg1Pct = Math.round((checkInToNotify / total) * 100);
-
             const seg2Pct = 100 - seg1Pct;
-
             segments = [
-                // Use a plain arrow to avoid mangled characters
                 { label: "Check-in  Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
                 { label: "Notify  Release", mins: notifyToRelease, pct: seg2Pct, color: "var(--ok)" }
             ];
-
         } else if (notifyTime) {
-
-            // Notified but not released
-
             const total = totalWaitMins || 1;
-
             const seg1Pct = Math.round((checkInToNotify / total) * 100);
-
             const seg2Pct = 100 - seg1Pct;
-
             segments = [
                 { label: "Check-in  Notify", mins: checkInToNotify, pct: seg1Pct, color: "var(--warning)" },
                 { label: "Notify  Now", mins: notifyToNow, pct: seg2Pct, color: "var(--accent)", active: true }
             ];
-
         } else {
-
-            // Still parked
-
             segments = [
                 { label: "Check-in  Now", mins: totalWaitMins, pct: 100, color: "var(--warning)", active: true }
             ];
-
         }
-
-
 
         timelineBarEl.innerHTML = `
-
             <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-
                 <div style="display: flex; height: 24px; border-radius: 4px; overflow: hidden;">
-
                     ${segments.map(s => `
-
-                        <div style="
-
-                            width: ${s.pct}%;
-
-                            background: ${s.color};
-
-                            display: flex;
-
-                            align-items: center;
-
-                            justify-content: center;
-
-                            font-size: 11px;
-
-                            font-weight: 600;
-
-                            color: #000;
-
-                            ${s.active ? 'animation: pulse 2s infinite;' : ''}
-
-                        ">${s.mins}m</div>
-
+                        <div style="width: ${s.pct}%; background: ${s.color}; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #000; ${s.active ? 'animation: pulse 2s infinite;' : ''}">${s.mins}m</div>
                     `).join('')}
-
                 </div>
-
                 <div style="display: flex; font-size: 11px; color: var(--muted);">
-
-                    ${segments.map(s => `
-
-                        <div style="width: ${s.pct}%; text-align: center;">${s.label}</div>
-
-                    `).join('')}
-
+                    ${segments.map(s => `<div style="width: ${s.pct}%; text-align: center;">${s.label}</div>`).join('')}
                 </div>
-
-            </div>
-
-        `;
-
-
-
-        // ==================== STAGE TABLE ====================
+            </div>`;
 
         const stageTableEl = document.getElementById("modalStageTable");
-
-        
-
-        // Find operators for each stage from logs
-
-        let checkInOp = "Unknown";
-
-        let notifyOp = "Unknown";
-
-        let releaseOp = "Unknown";
-
-
-
+        let checkInOp = "Unknown", notifyOp = "Unknown", releaseOp = "Unknown";
         logs?.forEach(log => {
-
             const op = operators.find(o => o.id === log.operator_id);
-
             const opName = op?.name || "Unknown";
-
             if (log.action === "check_in") checkInOp = opName;
-
             if (log.action === "notified" || log.action === "notify") notifyOp = opName;
-
             if (log.action === "released" || log.action === "completed") releaseOp = opName;
-
         });
-
-
 
         const formatTime = (d) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-
         const formatDate = (d) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" });
 
-
-
         let stageRows = [];
-
-
-
-        // Check-in row
-
-        stageRows.push({
-
-            stage: "Check-in",
-
-            time: formatTime(checkInTime),
-
-            date: formatDate(checkInTime),
-
-            duration: "-",
-
-            operator: checkInOp,
-
-            highlight: false
-
-        });
-
-
-
-        // Notify row (if exists)
-
+        stageRows.push({ stage: "Check-in", time: formatTime(checkInTime), date: formatDate(checkInTime), duration: "-", operator: checkInOp, highlight: false });
         if (notifyTime) {
-
-            // Show a simple warning triangle when the notify delay exceeds the quoted time
             const delayFlag = checkInToNotify > quoted ? ' ' : '';
-
-            stageRows.push({
-
-                stage: "Notified",
-
-                time: formatTime(notifyTime),
-
-                date: formatDate(notifyTime),
-
-                duration: `+${checkInToNotify}m${delayFlag}`,
-
-                operator: notifyOp,
-
-                highlight: checkInToNotify > quoted
-
-            });
-
+            stageRows.push({ stage: "Notified", time: formatTime(notifyTime), date: formatDate(notifyTime), duration: `+${checkInToNotify}m${delayFlag}`, operator: notifyOp, highlight: checkInToNotify > quoted });
         }
-
-
-
-        // Release row (if exists)
-
         if (releaseTime) {
-
-            stageRows.push({
-
-                stage: "Released",
-
-                time: formatTime(releaseTime),
-
-                date: formatDate(releaseTime),
-
-                duration: notifyTime ? `+${notifyToRelease}m` : `+${totalWaitMins}m`,
-
-                operator: releaseOp,
-
-                highlight: false
-
-            });
-
+            stageRows.push({ stage: "Released", time: formatTime(releaseTime), date: formatDate(releaseTime), duration: notifyTime ? `+${notifyToRelease}m` : `+${totalWaitMins}m`, operator: releaseOp, highlight: false });
         }
-
-
-
-        // Current state row (if not released)
-
         if (!releaseTime) {
-
             const currentDuration = notifyTime ? notifyToNow : totalWaitMins;
-
-            // Use a red circle to indicate overdue when the variance is positive
             const overdueFlag = variance > 0 ? ' ' : '';
-
-            stageRows.push({
-
-                stage: vehicle.status === "notified" ? "Waiting (notified)" : "Waiting (parked)",
-
-                time: "NOW",
-
-                date: "-",
-
-                duration: `+${currentDuration}m${overdueFlag}`,
-
-                operator: "-",
-
-                highlight: variance > 0,
-
-                active: true
-
-            });
-
+            stageRows.push({ stage: vehicle.status === "notified" ? "Waiting (notified)" : "Waiting (parked)", time: "NOW", date: "-", duration: `+${currentDuration}m${overdueFlag}`, operator: "-", highlight: variance > 0, active: true });
         }
-
-
-
-        // Total row
 
         const totalColor = variance > 0 ? "var(--critical)" : (variance < 0 ? "var(--ok)" : "var(--text)");
-
         const varianceText = variance > 0 ? `+${variance}m over` : (variance < 0 ? `${Math.abs(variance)}m under` : "on time");
 
-
-
         stageTableEl.innerHTML = `
-
             <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-
                 <thead>
-
                     <tr style="background: rgba(255,255,255,0.05);">
-
                         <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Stage</th>
-
                         <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Time</th>
-
                         <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Duration</th>
-
                         <th style="padding: 10px 12px; text-align: left; color: var(--muted); font-weight: 500;">Operator</th>
-
                     </tr>
-
                 </thead>
-
                 <tbody>
-
                     ${stageRows.map(row => `
-
                         <tr style="${row.highlight ? 'background: rgba(239,68,68,0.1);' : ''} ${row.active ? 'background: rgba(59,130,246,0.1);' : ''}">
-
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">
-
-                                ${row.stage}
-
-                            </td>
-
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">
-
-                                ${row.time}
-
-                                <span style="font-size: 11px; color: var(--muted); margin-left: 4px;">${row.date !== '-' ? row.date : ''}</span>
-
-                            </td>
-
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border); ${row.highlight ? 'color: var(--critical); font-weight: 600;' : ''}">
-
-                                ${row.duration}
-
-                            </td>
-
-                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">
-
-                                ${row.operator}
-
-                            </td>
-
+                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">${row.stage}</td>
+                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">${row.time} <span style="font-size: 11px; color: var(--muted); margin-left: 4px;">${row.date !== '-' ? row.date : ''}</span></td>
+                            <td style="padding: 10px 12px; border-top: 1px solid var(--border); ${row.highlight ? 'color: var(--critical); font-weight: 600;' : ''}">${row.duration}</td>
+                            <td style="padding: 10px 12px; border-top: 1px solid var(--border);">${row.operator}</td>
                         </tr>
-
                     `).join('')}
-
                     <tr style="background: rgba(255,255,255,0.03); font-weight: 600;">
-
                         <td style="padding: 12px; border-top: 2px solid var(--border);">TOTAL</td>
-
-                        <td style="padding: 12px; border-top: 2px solid var(--border);">
-
-                            ${formatTime(checkInTime)}  ${releaseTime ? formatTime(releaseTime) : 'NOW'}
-
-                        </td>
-
-                        <td style="padding: 12px; border-top: 2px solid var(--border); color: ${totalColor};">
-
-                            ${totalWaitMins}m <span style="font-size: 12px; opacity: 0.8;">(${varianceText})</span>
-
-                        </td>
-
+                        <td style="padding: 12px; border-top: 2px solid var(--border);">${formatTime(checkInTime)}  ${releaseTime ? formatTime(releaseTime) : 'NOW'}</td>
+                        <td style="padding: 12px; border-top: 2px solid var(--border); color: ${totalColor};">${totalWaitMins}m <span style="font-size: 12px; opacity: 0.8;">(${varianceText})</span></td>
                         <td style="padding: 12px; border-top: 2px solid var(--border);">-</td>
-
                     </tr>
-
                 </tbody>
-
-            </table>
-
-        `;
-
-
-
-        // ==================== ACTIVITY LOG ====================
+            </table>`;
 
         const activityLogEl = document.getElementById("modalActivityLog");
-
-        
-
         if (!logs || logs.length === 0) {
-
             activityLogEl.innerHTML = `<div style="color: var(--muted); font-size: 14px;">No activity logged</div>`;
-
         } else {
-
             activityLogEl.innerHTML = logs.map(log => {
-
                 const logTime = new Date(log.timestamp);
-
                 const logOp = operators.find(o => o.id === log.operator_id);
-
-                
-
-                // Humanize action names
-
                 let actionLabel = log.action;
-
                 switch(log.action) {
-
                     case 'check_in': actionLabel = 'Checked in'; break;
-
                     case 'notified': actionLabel = 'Notified driver'; break;
-
                     case 'notify': actionLabel = 'Notified driver'; break;
-
                     case 'released': actionLabel = 'Released'; break;
-
                     case 'completed': actionLabel = 'Completed'; break;
-
                     case 'undo': actionLabel = 'Status reverted'; break;
-
                     case 'edit': actionLabel = 'Record edited'; break;
-
                     case 'modal_edit': actionLabel = 'Record edited'; break;
-
                     case 'supervisor_edit': actionLabel = 'Supervisor edit'; break;
-
                     case 'supervisor_note': actionLabel = 'Supervisor note added'; break;
-
                     case 'under_review': actionLabel = 'Marked under review'; break;
-
                     case 'supervisor_aware': actionLabel = 'Supervisor aware'; break;
-
                     case 'notes_edit': actionLabel = 'Notes updated'; break;
-
                 }
-
-
-
                 return `
-
-                    <div style="
-
-                        display: flex;
-
-                        justify-content: space-between;
-
-                        align-items: center;
-
-                        padding: 8px 0;
-
-                        border-bottom: 1px solid var(--border);
-
-                    ">
-
-                        <div>
-
-                            <span style="font-weight: 500;">${actionLabel}</span>
-
-                            <span style="color: var(--muted); margin-left: 8px;">by ${logOp?.name || "Unknown"}</span>
-
-                        </div>
-
-                        <div style="font-size: 12px; color: var(--muted);">
-
-                            ${logTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-
-                            <span style="margin-left: 4px;">${logTime.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" })}</span>
-
-                        </div>
-
-                    </div>
-
-                `;
-
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <div><span style="font-weight: 500;">${actionLabel}</span><span style="color: var(--muted); margin-left: 8px;">by ${logOp?.name || "Unknown"}</span></div>
+                        <div style="font-size: 12px; color: var(--muted);">${logTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} <span style="margin-left: 4px;">${logTime.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" })}</span></div>
+                    </div>`;
             }).join('');
-
         }
 
-
-
-        // ==================== NOTES ====================
-
         document.getElementById("modalNotes").textContent = vehicle.notes || "No notes";
-
-
-
-        // Clear supervisor note input
-
         document.getElementById("supervisorNote").value = "";
-
-
-
-        // Show modal
-
         document.getElementById("modalOverlay").classList.add("active");
 
-
-
     } catch (error) {
-
         console.error("Error opening case modal:", error);
-
         alert("Error loading vehicle details");
-
     }
-
 }
-
-
-
-// ==================== CLOSE MODAL ====================
 
 function closeModal() {
-
     document.getElementById("modalOverlay").classList.remove("active");
-
     currentVehicle = null;
-
 }
-
-
-
-// Close modal when clicking outside
-
 document.getElementById("modalOverlay").addEventListener("click", (e) => {
-
-    if (e.target.id === "modalOverlay") {
-
-        closeModal();
-
-    }
-
+    if (e.target.id === "modalOverlay") closeModal();
 });
 
-
-
 // ==================== SUPERVISOR ACTIONS ====================
-
-
-
 async function addSupervisorNote() {
-
     if (!currentVehicle) return;
-
-    
-
     const note = document.getElementById("supervisorNote").value.trim();
-
-    if (!note) {
-
-        alert("Please enter a note");
-
-        return;
-
-    }
-
-
-
+    if (!note) { alert("Please enter a note"); return; }
     const opId = localStorage.getItem("operator_id");
-
     const now = new Date().toISOString();
-
-
-
     try {
-
-        // Append to existing notes
-
         const existingNotes = currentVehicle.notes || "";
-
         const newNotes = existingNotes + "\n\n[SUPERVISOR " + now.slice(0, 16) + "]\n" + note;
-
-
-
-        await db.from("vehicles").update({
-
-            notes: newNotes
-
-        }).eq("id", currentVehicle.id);
-
-
-
-        // Log action
-
-        await db.from("actions_log").insert({
-
-            vehicle_id: currentVehicle.id,
-
-            operator_id: opId,
-
-            action: "supervisor_note",
-
-            timestamp: now
-
-        });
-
-
-
+        await db.from("vehicles").update({ notes: newNotes }).eq("id", currentVehicle.id);
+        await db.from("actions_log").insert({ vehicle_id: currentVehicle.id, operator_id: opId, action: "supervisor_note", timestamp: now });
         alert("&#10003; Note added successfully");
-
         document.getElementById("supervisorNote").value = "";
-
-        
-
-        // Reload modal
-
         openCaseModal(currentVehicle.id);
-
-
-
-    } catch (error) {
-
-        console.error("Error adding note:", error);
-
-        alert("Error adding note");
-
-    }
-
+    } catch (error) { console.error("Error adding note:", error); alert("Error adding note"); }
 }
-
-
 
 async function markUnderReview() {
-
     if (!currentVehicle) return;
-
-    
-
     const opId = localStorage.getItem("operator_id");
-
     const now = new Date().toISOString();
-
-
-
     try {
-
         const existingNotes = currentVehicle.notes || "";
-
         const newNotes = existingNotes + "\n\n[SUPERVISOR] Marked UNDER REVIEW at " + now.slice(0, 16);
-
-
-
-        await db.from("vehicles").update({
-
-            notes: newNotes
-
-        }).eq("id", currentVehicle.id);
-
-
-
-        await db.from("actions_log").insert({
-
-            vehicle_id: currentVehicle.id,
-
-            operator_id: opId,
-
-            action: "under_review",
-
-            timestamp: now
-
-        });
-
-
-
+        await db.from("vehicles").update({ notes: newNotes }).eq("id", currentVehicle.id);
+        await db.from("actions_log").insert({ vehicle_id: currentVehicle.id, operator_id: opId, action: "under_review", timestamp: now });
         alert("&#10003; Marked as Under Review");
-
         openCaseModal(currentVehicle.id);
-
-
-
-    } catch (error) {
-
-        console.error("Error:", error);
-
-        alert("Error updating status");
-
-    }
-
+    } catch (error) { console.error("Error:", error); alert("Error updating status"); }
 }
-
-
 
 async function markSupervisorAware() {
-
     if (!currentVehicle) return;
-
-    
-
     const opId = localStorage.getItem("operator_id");
-
     const now = new Date().toISOString();
-
-
-
     try {
-
         const existingNotes = currentVehicle.notes || "";
-
         const newNotes = existingNotes + "\n\n[SUPERVISOR] Supervisor aware of this case at " + now.slice(0, 16);
-
-
-
-        await db.from("vehicles").update({
-
-            notes: newNotes
-
-        }).eq("id", currentVehicle.id);
-
-
-
-        await db.from("actions_log").insert({
-
-            vehicle_id: currentVehicle.id,
-
-            operator_id: opId,
-
-            action: "supervisor_aware",
-
-            timestamp: now
-
-        });
-
-
-
+        await db.from("vehicles").update({ notes: newNotes }).eq("id", currentVehicle.id);
+        await db.from("actions_log").insert({ vehicle_id: currentVehicle.id, operator_id: opId, action: "supervisor_aware", timestamp: now });
         alert("&#10003; Marked as Supervisor Aware");
-
         openCaseModal(currentVehicle.id);
-
-
-
-    } catch (error) {
-
-        console.error("Error:", error);
-
-        alert("Error updating status");
-
-    }
-
+    } catch (error) { console.error("Error:", error); alert("Error updating status"); }
 }
-
-
 
 function sendDriverSMS() {
-
     if (!currentVehicle) return;
-
     alert("&#128241; SMS Feature\n\nThis feature is coming soon.\n\nWill send SMS to: " + (currentVehicle.mobile_number || currentVehicle.pager_number || "No mobile"));
-
 }
 
-// ==================== CHANGE STATUS ====================
-// Allows supervisors to quickly change the status of a vehicle directly from the case modal.
 async function changeStatus(newStatus) {
     if (!currentVehicle) return;
     const opId = localStorage.getItem("operator_id");
     const now = new Date().toISOString();
-    // Build update fields based on new status. Reset times when reverting to parked.
     const updateFields = { status: newStatus, operator_id: opId };
-    if (newStatus === "notified") {
-        updateFields.notify_time = now;
-        updateFields.release_time = null;
-    } else if (newStatus === "released") {
-        updateFields.release_time = now;
-    } else {
-        // When moving back to parked, clear notify and release times
-        updateFields.notify_time = null;
-        updateFields.release_time = null;
-    }
+    if (newStatus === "notified") { updateFields.notify_time = now; updateFields.release_time = null; }
+    else if (newStatus === "released") { updateFields.release_time = now; }
+    else { updateFields.notify_time = null; updateFields.release_time = null; }
     try {
         await db.from("vehicles").update(updateFields).eq("id", currentVehicle.id);
-        // Log the status change
-        await db.from("actions_log").insert({
-            vehicle_id: currentVehicle.id,
-            operator_id: opId,
-            action: newStatus,
-            timestamp: now
-        });
-        // Refresh modal to reflect the new status
+        await db.from("actions_log").insert({ vehicle_id: currentVehicle.id, operator_id: opId, action: newStatus, timestamp: now });
         openCaseModal(currentVehicle.id);
-    } catch (error) {
-        console.error("Error updating status:", error);
-        alert("Error updating status");
-    }
+    } catch (error) { console.error("Error updating status:", error); alert("Error updating status"); }
 }
-
-
 
 // ==================== CLOCK ====================
-
 function updateClock() {
-
     const now = new Date();
-
     const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
     document.getElementById("clockTime").textContent = timeStr;
-
 }
-
-
 
 // ==================== SEARCH FUNCTIONALITY ====================
-
-
-
-// LIVE SEARCH
-
 document.getElementById("superSearch").addEventListener("input", async (e) => {
-
     const q = e.target.value.trim().toUpperCase();
-
     const box = document.getElementById("superSearchResults");
-
-
-
-    if (q.length < 2) {
-
-        box.innerHTML = "";
-
-        return;
-
-    }
-
-
-
-    let { data: results } = await db
-
-        .from("vehicles")
-
-        .select("*")
-
-        .ilike("registration", `%${q}%`);
-
-
-
-    if (!results.length) {
-
-        const { data: byPO } = await db
-
-            .from("vehicles")
-
-            .select("*")
-
-            .ilike("po_ref", `%${q}%`);
-
-        results = byPO;
-
-    }
-
-
-
-    if (!results.length) {
-
-        box.innerHTML = `<div style="color:var(--muted); padding:12px;">No matches</div>`;
-
-        return;
-
-    }
-
-
-
+    if (q.length < 2) { box.innerHTML = ""; return; }
+    let { data: results } = await db.from("vehicles").select("*").ilike("registration", `%${q}%`);
+    if (!results.length) { const { data: byPO } = await db.from("vehicles").select("*").ilike("po_ref", `%${q}%`); results = byPO; }
+    if (!results.length) { box.innerHTML = `<div style="color:var(--muted); padding:12px;">No matches</div>`; return; }
     box.innerHTML = results.map(v => `
-
-        <div onclick="openCaseModal('${v.id}')"
-
-            style="
-
-                padding:14px;
-
-                margin-bottom:10px;
-
-                background:var(--card);
-
-                border:1px solid var(--border);
-
-                border-radius:8px;
-
-                cursor:pointer;
-
-                transition: all 0.2s;">
-
-            <strong style="font-size:16px;">${v.registration}</strong>
-
-            <span class="status-badge status-${v.status}" style="margin-left:8px;">${v.status}</span><br>
-
-            <span style="font-size:13px; color:var(--muted);">
-
-                PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || v.pager_number || "-"}
-
-            </span>
-
-        </div>
-
-    `).join("");
-
+        <div onclick="openCaseModal('${v.id}')" style="padding:14px; margin-bottom:10px; background:var(--card); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition: all 0.2s;">
+            <strong style="font-size:16px;">${v.registration}</strong> <span class="status-badge status-${v.status}" style="margin-left:8px;">${v.status}</span><br>
+            <span style="font-size:13px; color:var(--muted);">PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || v.pager_number || "-"}</span>
+        </div>`).join("");
 });
-
-
-
-// OPEN MODAL EDITOR
-
-async function superEditVehicle(id) {
-
-    const { data: v } = await db
-
-        .from("vehicles")
-
-        .select("*")
-
-        .eq("id", id)
-
-        .single();
-
-
-
-    if (!v) return;
-
-
-
-    const modal = document.getElementById("superEditModal");
-
-    const overlay = document.getElementById("superEditOverlay");
-
-
-
-    modal.innerHTML = `
-
-        <h2 style="margin-bottom:20px; font-size:22px; font-weight:700;">${v.registration}</h2>
-
-
-
-        <label style="display:block; margin-bottom:6px; font-size:14px; color:var(--muted);">Status</label>
-
-        <select id="sv-status" style="
-
-            width:100%; padding:12px; margin-bottom:16px;
-
-            background:#0a0e14; border:1px solid var(--border);
-
-            border-radius:6px; color:var(--text); font-size:14px;">
-
-            <option value="parked" ${v.status === "parked" ? "selected" : ""}>parked</option>
-
-            <option value="notified" ${v.status === "notified" ? "selected" : ""}>notified</option>
-
-            <option value="released" ${v.status === "released" ? "selected" : ""}>released</option>
-
-        </select>
-
-
-
-        <label style="display:block; margin-bottom:6px; font-size:14px; color:var(--muted);">PO / Reference</label>
-
-        <input id="sv-po" value="${v.po_ref || ""}" style="
-
-            width:100%; padding:12px; margin-bottom:16px;
-
-            background:#0a0e14; border:1px solid var(--border);
-
-            border-radius:6px; color:var(--text); font-size:14px;">
-
-
-
-        <label style="display:block; margin-bottom:6px; font-size:14px; color:var(--muted);">Mobile Number</label>
-
-        <input id="sv-mobile" value="${v.mobile_number || ""}" style="
-
-            width:100%; padding:12px; margin-bottom:16px;
-
-            background:#0a0e14; border:1px solid var(--border);
-
-            border-radius:6px; color:var(--text); font-size:14px;">
-
-
-
-        <label style="display:block; margin-bottom:6px; font-size:14px; color:var(--muted);">Pager Number</label>
-
-        <input id="sv-pager" type="number" value="${v.pager_number || ""}" style="
-
-            width:100%; padding:12px; margin-bottom:16px;
-
-            background:#0a0e14; border:1px solid var(--border);
-
-            border-radius:6px; color:var(--text); font-size:14px;">
-
-
-
-        <label style="display:block; margin-bottom:6px; font-size:14px; color:var(--muted);">Notes</label>
-
-        <textarea id="sv-notes" style="
-
-            width:100%; height:100px; padding:12px; margin-bottom:20px;
-
-            background:#0a0e14; border:1px solid var(--border);
-
-            border-radius:6px; color:var(--text); font-size:14px; resize:vertical;
-
-        ">${v.notes || ""}</textarea>
-
-
-
-        <div style="display:flex; gap:12px; justify-content:flex-end;">
-
-            <button onclick="svClose()" style="
-
-                padding:12px 20px; background:var(--border); color:var(--text);
-
-                border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
-
-                Cancel
-
-            </button>
-
-
-
-            <button onclick="svSave('${id}')" style="
-
-                padding:12px 20px; background:var(--accent); color:white;
-
-                border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
-
-                Save Changes
-
-            </button>
-
-        </div>
-
-    `;
-
-
-
-    overlay.style.display = "flex";
-
-}
-
-
-
-function svClose() {
-
-    document.getElementById("superEditOverlay").style.display = "none";
-
-}
-
-
-
-// Close modal when clicking outside
-
-document.getElementById("superEditOverlay").addEventListener("click", (e) => {
-
-    if (e.target.id === "superEditOverlay") {
-
-        svClose();
-
-    }
-
-});
-
-
-
-// SAVE EDITS
-
-async function svSave(id) {
-
-    const status = document.getElementById("sv-status").value;
-
-    const po = document.getElementById("sv-po").value.trim();
-
-    const mobile = document.getElementById("sv-mobile").value.trim();
-
-    const pager = parseInt(document.getElementById("sv-pager").value) || null;
-
-    const notes = document.getElementById("sv-notes").value.trim();
-
-    const opId = localStorage.getItem("operator_id");
-
-    const now = new Date().toISOString();
-
-
-
-    try {
-
-        await db.from("vehicles").update({
-
-            status,
-
-            po_ref: po,
-
-            mobile_number: mobile,
-
-            pager_number: pager,
-
-            notes,
-
-            notify_time: (status === "notified" ? now : null),
-
-            release_time: (status === "released" ? now : null),
-
-            operator_id: opId
-
-        }).eq("id", id);
-
-
-
-        await db.from("actions_log").insert({
-
-            vehicle_id: id,
-
-            operator_id: opId,
-
-            action: "supervisor_edit",
-
-            details: { status, po, mobile, pager, notes },
-
-            timestamp: now
-
-        });
-
-
-
-        alert("&#10003; Vehicle updated successfully");
-
-        svClose();
-
-
-
-        // Clear search and refresh dashboard
-
-        document.getElementById("superSearch").value = "";
-
-        document.getElementById("superSearchResults").innerHTML = "";
-
-        await loadDashboard();
-
-
-
-    } catch (error) {
-
-        console.error("Error saving vehicle:", error);
-
-        alert("Error saving changes. Please try again.");
-
-    }
-
-}
-
-
 
 // ==================== INIT ====================
-
 (async () => {
-
     await loadOperators();
-
     await loadDashboard();
-
     updateClock();
-
-
-
-    // Initialize command palette after DOM is ready
-
     initCommandPalette();
-
-
-
-    // Auto-refresh every 30 seconds
-
     setInterval(loadDashboard, 30000);
-
     setInterval(updateClock, 1000);
-
 })();
 
-
-
 // ==================== COMMAND PALETTE (Ctrl+K) ====================
-
 let cmdOverlay, cmdInput, cmdResults;
-
-
-
-// Initialize after DOM is loaded
-
 function initCommandPalette() {
-
     cmdOverlay = document.getElementById('cmdOverlay');
-
     cmdInput = document.getElementById('cmdInput');
-
     cmdResults = document.getElementById('cmdResults');
-
-
-
-    // Open palette with Cmd/Ctrl + K
-
     document.addEventListener('keydown', (e) => {
-
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-
-            e.preventDefault();
-
-            toggleCmdPalette();
-
-        }
-
-
-
-        // Close with Escape
-
-        if (e.key === 'Escape' && cmdOverlay && cmdOverlay.classList.contains('active')) {
-
-            closeCmdPalette();
-
-        }
-
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleCmdPalette(); }
+        if (e.key === 'Escape' && cmdOverlay && cmdOverlay.classList.contains('active')) closeCmdPalette();
     });
-
-
-
-    // Close when clicking outside
-
-    cmdOverlay.addEventListener('click', (e) => {
-
-        if (e.target === cmdOverlay) {
-
-            closeCmdPalette();
-
-        }
-
-    });
-
-
-
-    // Command input handler
-
+    cmdOverlay.addEventListener('click', (e) => { if (e.target === cmdOverlay) closeCmdPalette(); });
     cmdInput.addEventListener('input', async (e) => {
-
         const query = e.target.value.trim().toLowerCase();
-
-
-
-        if (!query) {
-
-            showCmdSuggestions();
-
-            return;
-
-        }
-
-
-
-        // Execute command if it starts with /
-
-        if (query.startsWith('/')) {
-
-            await executeCmdCommand(query);
-
-        } else {
-
-            // Search mode - find vehicles
-
-            await cmdSearchVehicles(query);
-
-        }
-
+        if (!query) { showCmdSuggestions(); return; }
+        if (query.startsWith('/')) { await executeCmdCommand(query); } else { await cmdSearchVehicles(query); }
     });
-
-
-
-    // Execute on Enter
-
     cmdInput.addEventListener('keydown', (e) => {
-
-        if (e.key === 'Enter') {
-
-            const query = cmdInput.value.trim().toLowerCase();
-
-            if (query.startsWith('/')) {
-
-                executeCmdCommand(query);
-
-            }
-
-        }
-
+        if (e.key === 'Enter') { const query = cmdInput.value.trim().toLowerCase(); if (query.startsWith('/')) executeCmdCommand(query); }
     });
-
 }
-
-
 
 function toggleCmdPalette() {
-
     cmdOverlay.classList.toggle('active');
-
-    if (cmdOverlay.classList.contains('active')) {
-
-        cmdInput.value = '';
-
-        cmdInput.focus();
-
-        showCmdSuggestions();
-
-    }
-
+    if (cmdOverlay.classList.contains('active')) { cmdInput.value = ''; cmdInput.focus(); showCmdSuggestions(); }
 }
-
-
-
-function closeCmdPalette() {
-
-    cmdOverlay.classList.remove('active');
-
-}
-
-
-
-// ==================== COMMAND IMPLEMENTATIONS ====================
-
-
+function closeCmdPalette() { cmdOverlay.classList.remove('active'); }
 
 async function executeCmdCommand(cmd) {
-
     cmd = cmd.toLowerCase();
-
-
-
     switch(cmd) {
-
-        case '/status':
-
-            await cmdShowStatus();
-
-            break;
-
-        case '/overdue':
-
-            await cmdShowOverdue();
-
-            break;
-
-        case '/critical':
-
-            await cmdShowCritical();
-
-            break;
-
-        case '/longest':
-
-            await cmdShowLongest();
-
-            break;
-
-        case '/waiting':
-
-            await cmdShowWaiting();
-
-            break;
-
-        case '/export':
-
-            await cmdShowExports();
-
-            break;
-
-        case '/notified':
-
-            await cmdShowNotified();
-
-            break;
-
-        case '/today':
-
-            await cmdShowToday();
-
-            break;
-
-        default:
-
-            cmdResults.innerHTML = `
-
-                <div class="cmd-hint">
-
-                    Unknown command: <code>${cmd}</code><br>
-
-                    Try /status, /overdue, /critical, /longest, /waiting, /export, /notified, or /today
-
-                </div>
-
-            `;
-
+        case '/status': await cmdShowStatus(); break;
+        case '/overdue': await cmdShowOverdue(); break;
+        case '/critical': await cmdShowCritical(); break;
+        case '/longest': await cmdShowLongest(); break;
+        case '/waiting': await cmdShowWaiting(); break;
+        case '/export': await cmdShowExports(); break;
+        case '/notified': await cmdShowNotified(); break;
+        case '/today': await cmdShowToday(); break;
+        default: cmdResults.innerHTML = `<div class="cmd-hint">Unknown command: <code>${cmd}</code><br>Try /status, /overdue, /critical, /longest, /waiting, /export, /notified, or /today</div>`;
     }
-
 }
-
-
 
 async function cmdShowStatus() {
-
     const now = Date.now();
-
-
-
-    const { data: vehicles } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .in('status', ['parked', 'notified']);
-
-
-
-    const todayStart = new Date();
-
-    todayStart.setHours(0, 0, 0, 0);
-
-    
-
-    const { count: releasedCount } = await db
-
-        .from('vehicles')
-
-        .select('*', { count: 'exact', head: true })
-
-        .eq('status', 'released')
-
-        .gte('release_time', todayStart.toISOString());
-
-
-
+    const { data: vehicles } = await db.from('vehicles').select('*').in('status', ['parked', 'notified']);
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const { count: releasedCount } = await db.from('vehicles').select('*', { count: 'exact', head: true }).eq('status', 'released').gte('release_time', todayStart.toISOString());
     const inYard = vehicles?.length || 0;
-
-    const overdue = vehicles?.filter(v => {
-
-        const due = new Date(v.due_time).getTime();
-
-        return now > due + (30 * 60000);
-
-    }).length || 0;
-
-
-
-    const critical = vehicles?.filter(v => {
-
-        const due = new Date(v.due_time).getTime();
-
-        return now > due + (90 * 60000);
-
-    }).length || 0;
-
-
-
-    const avgWait = vehicles?.length > 0 
-
-        ? Math.round(vehicles.reduce((sum, v) => {
-
-            return sum + (now - new Date(v.check_in_time).getTime());
-
-        }, 0) / vehicles.length / 60000)
-
-        : 0;
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-metrics-grid">
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value">${inYard}</div>
-
-                <div class="cmd-metric-label">In Yard</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value ${critical > 0 ? 'cmd-danger' : ''}">${critical}</div>
-
-                <div class="cmd-metric-label">Critical</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value ${overdue > 0 ? 'cmd-warning' : ''}">${overdue}</div>
-
-                <div class="cmd-metric-label">Overdue</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value cmd-success">${releasedCount}</div>
-
-                <div class="cmd-metric-label">Released Today</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value">${avgWait}m</div>
-
-                <div class="cmd-metric-label">Avg Wait</div>
-
-            </div>
-
-        </div>
-
-    `;
-
+    const overdue = vehicles?.filter(v => { const due = new Date(v.due_time).getTime(); return now > due + (30 * 60000); }).length || 0;
+    const critical = vehicles?.filter(v => { const due = new Date(v.due_time).getTime(); return now > due + (90 * 60000); }).length || 0;
+    const avgWait = vehicles?.length > 0 ? Math.round(vehicles.reduce((sum, v) => sum + (now - new Date(v.check_in_time).getTime()), 0) / vehicles.length / 60000) : 0;
+    cmdResults.innerHTML = `<div class="cmd-metrics-grid"><div class="cmd-metric-card"><div class="cmd-metric-value">${inYard}</div><div class="cmd-metric-label">In Yard</div></div><div class="cmd-metric-card"><div class="cmd-metric-value ${critical > 0 ? 'cmd-danger' : ''}">${critical}</div><div class="cmd-metric-label">Critical</div></div><div class="cmd-metric-card"><div class="cmd-metric-value ${overdue > 0 ? 'cmd-warning' : ''}">${overdue}</div><div class="cmd-metric-label">Overdue</div></div><div class="cmd-metric-card"><div class="cmd-metric-value cmd-success">${releasedCount}</div><div class="cmd-metric-label">Released Today</div></div><div class="cmd-metric-card"><div class="cmd-metric-value">${avgWait}m</div><div class="cmd-metric-label">Avg Wait</div></div></div>`;
 }
-
-
 
 async function cmdShowOverdue() {
-
     const now = Date.now();
-
-
-
-    const { data: vehicles } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .in('status', ['parked', 'notified']);
-
-
-
-    const overdue = vehicles?.filter(v => {
-
-        const due = new Date(v.due_time).getTime();
-
-        return now > due + (30 * 60000);
-
-    }).map(v => {
-
-        const due = new Date(v.due_time).getTime();
-
-        const minsOverdue = Math.floor((now - due) / 60000);
-
-        return { ...v, minsOverdue };
-
-    }).sort((a, b) => b.minsOverdue - a.minsOverdue) || [];
-
-
-
-    if (overdue.length === 0) {
-
-        cmdResults.innerHTML = `
-
-            <div class="cmd-hint">
-
-                 No overdue vehicles
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-detail-list">
-
-            ${overdue.map(v => `
-
-                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
-
-                    <div>
-
-                        <strong>${v.registration}</strong>
-
-                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-
-                            PO: ${v.po_ref || '-'} | ${v.status}
-
-                        </div>
-
-                    </div>
-
-                    <span class="cmd-badge ${v.minsOverdue > 90 ? 'cmd-badge-critical' : 'cmd-badge-warning'}">
-
-                        +${v.minsOverdue}m
-
-                    </span>
-
-                </div>
-
-            `).join('')}
-
-        </div>
-
-    `;
-
+    const { data: vehicles } = await db.from('vehicles').select('*').in('status', ['parked', 'notified']);
+    const overdue = vehicles?.filter(v => { const due = new Date(v.due_time).getTime(); return now > due + (30 * 60000); }).map(v => { const due = new Date(v.due_time).getTime(); const minsOverdue = Math.floor((now - due) / 60000); return { ...v, minsOverdue }; }).sort((a, b) => b.minsOverdue - a.minsOverdue) || [];
+    if (overdue.length === 0) { cmdResults.innerHTML = `<div class="cmd-hint">No overdue vehicles</div>`; return; }
+    cmdResults.innerHTML = `<div class="cmd-detail-list">${overdue.map(v => `<div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;"><div><strong>${v.registration}</strong><div style="font-size: 12px; color: var(--muted); margin-top: 4px;">PO: ${v.po_ref || '-'} | ${v.status}</div></div><span class="cmd-badge ${v.minsOverdue > 90 ? 'cmd-badge-critical' : 'cmd-badge-warning'}">+${v.minsOverdue}m</span></div>`).join('')}</div>`;
 }
-
-
 
 async function cmdShowCritical() {
-
     const now = Date.now();
-
-
-
-    const { data: vehicles } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .in('status', ['parked', 'notified']);
-
-
-
-    const critical = vehicles?.filter(v => {
-
-        const due = new Date(v.due_time).getTime();
-
-        return now > due + (90 * 60000);
-
-    }).map(v => {
-
-        const due = new Date(v.due_time).getTime();
-
-        const minsOverdue = Math.floor((now - due) / 60000);
-
-        return { ...v, minsOverdue };
-
-    }).sort((a, b) => b.minsOverdue - a.minsOverdue) || [];
-
-
-
-    if (critical.length === 0) {
-
-        cmdResults.innerHTML = `
-
-            <div class="cmd-hint">
-
-                 No critical alerts
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-detail-list">
-
-            ${critical.map(v => `
-
-                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
-
-                    <div>
-
-                        <strong>${v.registration}</strong>
-
-                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-
-                            PO: ${v.po_ref || '-'} | ${v.status}
-
-                        </div>
-
-                    </div>
-
-                    <span class="cmd-badge cmd-badge-critical">
-
-                        +${v.minsOverdue}m
-
-                    </span>
-
-                </div>
-
-            `).join('')}
-
-        </div>
-
-    `;
-
+    const { data: vehicles } = await db.from('vehicles').select('*').in('status', ['parked', 'notified']);
+    const critical = vehicles?.filter(v => { const due = new Date(v.due_time).getTime(); return now > due + (90 * 60000); }).map(v => { const due = new Date(v.due_time).getTime(); const minsOverdue = Math.floor((now - due) / 60000); return { ...v, minsOverdue }; }).sort((a, b) => b.minsOverdue - a.minsOverdue) || [];
+    if (critical.length === 0) { cmdResults.innerHTML = `<div class="cmd-hint">No critical alerts</div>`; return; }
+    cmdResults.innerHTML = `<div class="cmd-detail-list">${critical.map(v => `<div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;"><div><strong>${v.registration}</strong><div style="font-size: 12px; color: var(--muted); margin-top: 4px;">PO: ${v.po_ref || '-'} | ${v.status}</div></div><span class="cmd-badge cmd-badge-critical">+${v.minsOverdue}m</span></div>`).join('')}</div>`;
 }
-
-
 
 async function cmdShowLongest() {
-
     const now = Date.now();
-
-
-
-    const { data: vehicles } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .in('status', ['parked', 'notified'])
-
-        .order('check_in_time', { ascending: true })
-
-        .limit(10);
-
-
-
-    if (!vehicles || vehicles.length === 0) {
-
-        cmdResults.innerHTML = `<div class="cmd-hint">No vehicles in yard</div>`;
-
-        return;
-
-    }
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-detail-list">
-
-            ${vehicles.map(v => {
-
-                const checkIn = new Date(v.check_in_time).getTime();
-
-                const waitMins = Math.floor((now - checkIn) / 60000);
-
-                const due = new Date(v.due_time).getTime();
-
-                const overdue = now > due;
-
-
-
-                return `
-
-                    <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
-
-                        <div>
-
-                            <strong>${v.registration}</strong>
-
-                            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-
-                                PO: ${v.po_ref || '-'} | ${v.status}
-
-                            </div>
-
-                        </div>
-
-                        <span class="cmd-badge ${overdue ? 'cmd-badge-critical' : 'cmd-badge-normal'}">
-
-                            ${waitMins}m
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            }).join('')}
-
-        </div>
-
-    `;
-
+    const { data: vehicles } = await db.from('vehicles').select('*').in('status', ['parked', 'notified']).order('check_in_time', { ascending: true }).limit(10);
+    if (!vehicles || vehicles.length === 0) { cmdResults.innerHTML = `<div class="cmd-hint">No vehicles in yard</div>`; return; }
+    cmdResults.innerHTML = `<div class="cmd-detail-list">${vehicles.map(v => { const checkIn = new Date(v.check_in_time).getTime(); const waitMins = Math.floor((now - checkIn) / 60000); const due = new Date(v.due_time).getTime(); const overdue = now > due; return `<div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;"><div><strong>${v.registration}</strong><div style="font-size: 12px; color: var(--muted); margin-top: 4px;">PO: ${v.po_ref || '-'} | ${v.status}</div></div><span class="cmd-badge ${overdue ? 'cmd-badge-critical' : 'cmd-badge-normal'}">${waitMins}m</span></div>`; }).join('')}</div>`;
 }
-
-
 
 async function cmdShowWaiting() {
-
-    const { count } = await db
-
-        .from('vehicles')
-
-        .select('*', { count: 'exact', head: true })
-
-        .in('status', ['parked', 'notified']);
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-metrics-grid">
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value">${count || 0}</div>
-
-                <div class="cmd-metric-label">Waiting Vehicles</div>
-
-            </div>
-
-        </div>
-
-    `;
-
+    const { count } = await db.from('vehicles').select('*', { count: 'exact', head: true }).in('status', ['parked', 'notified']);
+    cmdResults.innerHTML = `<div class="cmd-metrics-grid"><div class="cmd-metric-card"><div class="cmd-metric-value">${count || 0}</div><div class="cmd-metric-label">Waiting Vehicles</div></div></div>`;
 }
-
-
 
 async function cmdShowExports() {
-
-    const { data: exports } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .eq('classification', 'export')
-
-        .in('status', ['parked', 'notified']);
-
-
-
-    if (!exports || exports.length === 0) {
-
-        cmdResults.innerHTML = `<div class="cmd-hint">No export loads in yard</div>`;
-
-        return;
-
-    }
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-detail-list">
-
-            ${exports.map(v => `
-
-                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
-
-                    <div>
-
-                        <strong>${v.registration}</strong> 
-
-                        <span style="color: var(--export); font-size: 11px; margin-left: 8px;">EXPORT</span>
-
-                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-
-                            PO: ${v.po_ref || '-'} | ${v.status}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            `).join('')}
-
-        </div>
-
-    `;
-
+    const { data: exports } = await db.from('vehicles').select('*').eq('classification', 'export').in('status', ['parked', 'notified']);
+    if (!exports || exports.length === 0) { cmdResults.innerHTML = `<div class="cmd-hint">No export loads in yard</div>`; return; }
+    cmdResults.innerHTML = `<div class="cmd-detail-list">${exports.map(v => `<div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;"><div><strong>${v.registration}</strong> <span style="color: var(--export); font-size: 11px; margin-left: 8px;">EXPORT</span><div style="font-size: 12px; color: var(--muted); margin-top: 4px;">PO: ${v.po_ref || '-'} | ${v.status}</div></div></div>`).join('')}</div>`;
 }
-
-
 
 async function cmdShowNotified() {
-
-    const { data: notified } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .eq('status', 'notified')
-
-        .order('notify_time', { ascending: true });
-
-
-
-    if (!notified || notified.length === 0) {
-
-        cmdResults.innerHTML = `<div class="cmd-hint">No notified vehicles</div>`;
-
-        return;
-
-    }
-
-
-
+    const { data: notified } = await db.from('vehicles').select('*').eq('status', 'notified').order('notify_time', { ascending: true });
+    if (!notified || notified.length === 0) { cmdResults.innerHTML = `<div class="cmd-hint">No notified vehicles</div>`; return; }
     const now = Date.now();
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-detail-list">
-
-            ${notified.map(v => {
-
-                const notifyTime = new Date(v.notify_time).getTime();
-
-                const minsSinceNotify = Math.floor((now - notifyTime) / 60000);
-
-
-
-                return `
-
-                    <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
-
-                        <div>
-
-                            <strong>${v.registration}</strong>
-
-                            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-
-                                PO: ${v.po_ref || '-'} | Notified ${minsSinceNotify}m ago
-
-                            </div>
-
-                        </div>
-
-                        <span class="cmd-badge ${minsSinceNotify > 30 ? 'cmd-badge-warning' : 'cmd-badge-normal'}">
-
-                            ${minsSinceNotify}m
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            }).join('')}
-
-        </div>
-
-    `;
-
+    cmdResults.innerHTML = `<div class="cmd-detail-list">${notified.map(v => { const notifyTime = new Date(v.notify_time).getTime(); const minsSinceNotify = Math.floor((now - notifyTime) / 60000); return `<div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;"><div><strong>${v.registration}</strong><div style="font-size: 12px; color: var(--muted); margin-top: 4px;">PO: ${v.po_ref || '-'} | Notified ${minsSinceNotify}m ago</div></div><span class="cmd-badge ${minsSinceNotify > 30 ? 'cmd-badge-warning' : 'cmd-badge-normal'}">${minsSinceNotify}m</span></div>`; }).join('')}</div>`;
 }
-
-
 
 async function cmdShowToday() {
-
-    const todayStart = new Date();
-
-    todayStart.setHours(0, 0, 0, 0);
-
-
-
-    // Get all checked in today
-
-    const { count: checkedInCount } = await db
-
-        .from('vehicles')
-
-        .select('*', { count: 'exact', head: true })
-
-        .gte('check_in_time', todayStart.toISOString());
-
-
-
-    // Get released today
-
-    const { data: released } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .eq('status', 'released')
-
-        .gte('release_time', todayStart.toISOString());
-
-
-
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const { count: checkedInCount } = await db.from('vehicles').select('*', { count: 'exact', head: true }).gte('check_in_time', todayStart.toISOString());
+    const { data: released } = await db.from('vehicles').select('*').eq('status', 'released').gte('release_time', todayStart.toISOString());
     const releasedCount = released?.length || 0;
-
-
-
-    // Calculate average turnaround
-
     let avgTurnaround = 0;
-
     if (released && released.length > 0) {
-
-        const totalMins = released.reduce((sum, v) => {
-
-            const checkIn = new Date(v.check_in_time).getTime();
-
-            const releaseTime = new Date(v.release_time).getTime();
-
-            return sum + (releaseTime - checkIn) / 60000;
-
-        }, 0);
-
+        const totalMins = released.reduce((sum, v) => sum + (new Date(v.release_time).getTime() - new Date(v.check_in_time).getTime()) / 60000, 0);
         avgTurnaround = Math.round(totalMins / released.length);
-
     }
-
-
-
-    // Current in yard
-
-    const { count: inYard } = await db
-
-        .from('vehicles')
-
-        .select('*', { count: 'exact', head: true })
-
-        .in('status', ['parked', 'notified']);
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-metrics-grid">
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value">${checkedInCount || 0}</div>
-
-                <div class="cmd-metric-label">Checked In Today</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value cmd-success">${releasedCount}</div>
-
-                <div class="cmd-metric-label">Released Today</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value">${inYard || 0}</div>
-
-                <div class="cmd-metric-label">Currently In Yard</div>
-
-            </div>
-
-            <div class="cmd-metric-card">
-
-                <div class="cmd-metric-value">${avgTurnaround}m</div>
-
-                <div class="cmd-metric-label">Avg Turnaround</div>
-
-            </div>
-
-        </div>
-
-    `;
-
+    const { count: inYard } = await db.from('vehicles').select('*', { count: 'exact', head: true }).in('status', ['parked', 'notified']);
+    cmdResults.innerHTML = `<div class="cmd-metrics-grid"><div class="cmd-metric-card"><div class="cmd-metric-value">${checkedInCount || 0}</div><div class="cmd-metric-label">Checked In Today</div></div><div class="cmd-metric-card"><div class="cmd-metric-value cmd-success">${releasedCount}</div><div class="cmd-metric-label">Released Today</div></div><div class="cmd-metric-card"><div class="cmd-metric-value">${inYard || 0}</div><div class="cmd-metric-label">Currently In Yard</div></div><div class="cmd-metric-card"><div class="cmd-metric-value">${avgTurnaround}m</div><div class="cmd-metric-label">Avg Turnaround</div></div></div>`;
 }
-
-
 
 async function cmdSearchVehicles(query) {
-
     query = query.toUpperCase();
-
-
-
-    const { data: vehicles } = await db
-
-        .from('vehicles')
-
-        .select('*')
-
-        .ilike('registration', `%${query}%`)
-
-        .limit(10);
-
-
-
-    if (!vehicles || vehicles.length === 0) {
-
-        cmdResults.innerHTML = `
-
-            <div class="cmd-hint">
-
-                No vehicles found matching "${query}"
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-detail-list">
-
-            ${vehicles.map(v => `
-
-                <div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;">
-
-                    <div>
-
-                        <strong>${v.registration}</strong>
-
-                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-
-                            PO: ${v.po_ref || '-'} | Status: ${v.status}
-
-                        </div>
-
-                    </div>
-
-                    <span class="cmd-badge ${
-
-                        v.status === 'released' ? 'cmd-badge-normal' : 
-
-                        v.status === 'notified' ? 'cmd-badge-warning' : 
-
-                        'cmd-badge-critical'
-
-                    }">
-
-                        ${v.status}
-
-                    </span>
-
-                </div>
-
-            `).join('')}
-
-        </div>
-
-    `;
-
+    const { data: vehicles } = await db.from('vehicles').select('*').ilike('registration', `%${query}%`).limit(10);
+    if (!vehicles || vehicles.length === 0) { cmdResults.innerHTML = `<div class="cmd-hint">No vehicles found matching "${query}"</div>`; return; }
+    cmdResults.innerHTML = `<div class="cmd-detail-list">${vehicles.map(v => `<div class="cmd-detail-item" onclick="openCaseModal('${v.id}'); closeCmdPalette();" style="cursor:pointer;"><div><strong>${v.registration}</strong><div style="font-size: 12px; color: var(--muted); margin-top: 4px;">PO: ${v.po_ref || '-'} | Status: ${v.status}</div></div><span class="cmd-badge ${v.status === 'released' ? 'cmd-badge-normal' : v.status === 'notified' ? 'cmd-badge-warning' : 'cmd-badge-critical'}">${v.status}</span></div>`).join('')}</div>`;
 }
-
-
 
 function showCmdSuggestions() {
-
-    cmdResults.innerHTML = `
-
-        <div class="cmd-suggestions">
-
-            <div class="cmd-suggestions-title">Quick Commands</div>
-
-            <div>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/status'; executeCmdCommand('/status');">/status</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/overdue'; executeCmdCommand('/overdue');">/overdue</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/critical'; executeCmdCommand('/critical');">/critical</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/longest'; executeCmdCommand('/longest');">/longest</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/waiting'; executeCmdCommand('/waiting');">/waiting</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/export'; executeCmdCommand('/export');">/export</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/notified'; executeCmdCommand('/notified');">/notified</span>
-
-                <span class="cmd-tag" onclick="cmdInput.value='/today'; executeCmdCommand('/today');">/today</span>
-
-            </div>
-
-        </div>
-
-        <div class="cmd-hint">
-
-            Type <code>/</code> to see commands or start typing to search vehicles
-
-        </div>
-
-    `;
-
+    cmdResults.innerHTML = `<div class="cmd-suggestions"><div class="cmd-suggestions-title">Quick Commands</div><div><span class="cmd-tag" onclick="cmdInput.value='/status'; executeCmdCommand('/status');">/status</span><span class="cmd-tag" onclick="cmdInput.value='/overdue'; executeCmdCommand('/overdue');">/overdue</span><span class="cmd-tag" onclick="cmdInput.value='/critical'; executeCmdCommand('/critical');">/critical</span><span class="cmd-tag" onclick="cmdInput.value='/longest'; executeCmdCommand('/longest');">/longest</span><span class="cmd-tag" onclick="cmdInput.value='/waiting'; executeCmdCommand('/waiting');">/waiting</span><span class="cmd-tag" onclick="cmdInput.value='/export'; executeCmdCommand('/export');">/export</span><span class="cmd-tag" onclick="cmdInput.value='/notified'; executeCmdCommand('/notified');">/notified</span><span class="cmd-tag" onclick="cmdInput.value='/today'; executeCmdCommand('/today');">/today</span></div></div><div class="cmd-hint">Type <code>/</code> to see commands or start typing to search vehicles</div>`;
 }
-
 </script>
 
-
-
-<!-- ============================================================
-
-     COMMAND PALETTE (Ctrl+K) - Invisible Until Triggered
-
-     ============================================================ -->
-
 <div id="cmdOverlay">
-
     <div id="cmdPalette">
-
-        <input 
-
-            type="text" 
-
-            id="cmdInput" 
-
-            placeholder="Type a command... (e.g. /status, /overdue)" 
-
-            autocomplete="off"
-
-            spellcheck="false"
-
-        >
-
+        <input type="text" id="cmdInput" placeholder="Type a command... (e.g. /status, /overdue)" autocomplete="off" spellcheck="false">
         <div id="cmdResults"></div>
-
     </div>
-
 </div>
+<!-- START: PRELOADER OPTIMIZATION -->
+<script>
+(function() {
+    const appPages = ['index.html', 'arrivals.html', 'supervisor.html'];
+    const currentPath = window.location.pathname;
+    const currentPage = currentPath.substring(currentPath.lastIndexOf('/') + 1) || 'index.html';
+    const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 1000));
 
-
-
+    idleCallback(() => {
+        appPages.forEach(page => {
+            if (page === currentPage) return;
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = page;
+            link.as = 'document';
+            document.head.appendChild(link);
+            console.log(`[System] Prefetching ${page}`);
+        });
+    });
+})();
+</script>
+<!-- END: PRELOADER OPTIMIZATION -->
 </body>
-
 </html>
-
