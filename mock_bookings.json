@@ -1,1 +1,83 @@
-{ "date": "2025-11-29", "bookings": [ { "ref": "819999", "account": "WAI099", "customer": "Waitrose", "orders": ["1000079100"], "pop_ref": "POPS0000132100", "slot_start": "15:00", "slot_end": "15:30", "pallets": 29, "contains_meds": true, "status": "booked", "created_by": "Sync" }, { "ref": "820000", "account": "TES101", "customer": "Tesco", "orders": ["1000079101", "1000079102"], "pop_ref": "POPS0000132101", "slot_start": "16:00", "slot_end": "16:30", "pallets": 18, "contains_meds": false, "status": "booked", "created_by": "Manual" }, { "ref": "820001", "account": "MOR202", "customer": "Morrisons", "orders": ["1000079103"], "pop_ref": "POPS0000132102", "slot_start": "17:00", "slot_end": "17:30", "pallets": 22, "contains_meds": false, "status": "checked_in", "created_by": "Sync" }, { "ref": "820002", "account": "ASD303", "customer": "Asda", "orders": ["1000079104", "1000079105"], "pop_ref": "POPS0000132103", "slot_start": "18:00", "slot_end": "18:30", "pallets": 30, "contains_meds": true, "status": "released", "created_by": "Manual" }, { "ref": "820003", "account": "ALD404", "customer": "Aldi", "orders": ["1000079106"], "pop_ref": "POPS0000132104", "slot_start": "19:00", "slot_end": "19:30", "pallets": 15, "contains_meds": false, "status": "booked", "created_by": "Sync" }, { "ref": "820004", "account": "LID505", "customer": "Lidl", "orders": ["1000079107", "1000079108"], "pop_ref": "POPS0000132105", "slot_start": "20:00", "slot_end": "20:30", "pallets": 99, "contains_meds": false, "status": "booked", "created_by": "Manual" } ] }
+{
+  "date": "2025-11-29",
+  "bookings": [
+    {
+      "ref": "819999",
+      "account": "WAI099",
+      "customer": "Waitrose",
+      "orders": ["1000079100"],
+      "pop_ref": "POPS0000132100",
+      "slot_start": "15:00",
+      "slot_end": "15:30",
+      "pallets": 29,
+      "contains_meds": true,
+      "status": "booked",
+      "created_by": "Sync"
+    },
+    {
+      "ref": "820000",
+      "account": "TES101",
+      "customer": "Tesco",
+      "orders": ["1000079101", "1000079102"],
+      "pop_ref": "POPS0000132101",
+      "slot_start": "16:00",
+      "slot_end": "16:30",
+      "pallets": 18,
+      "contains_meds": false,
+      "status": "booked",
+      "created_by": "Manual"
+    },
+    {
+      "ref": "820001",
+      "account": "MOR202",
+      "customer": "Morrisons",
+      "orders": ["1000079103"],
+      "pop_ref": "POPS0000132102",
+      "slot_start": "17:00",
+      "slot_end": "17:30",
+      "pallets": 22,
+      "contains_meds": false,
+      "status": "checked_in",
+      "created_by": "Sync"
+    },
+    {
+      "ref": "820002",
+      "account": "ASD303",
+      "customer": "Asda",
+      "orders": ["1000079104", "1000079105"],
+      "pop_ref": "POPS0000132103",
+      "slot_start": "18:00",
+      "slot_end": "18:30",
+      "pallets": 30,
+      "contains_meds": true,
+      "status": "released",
+      "created_by": "Manual"
+    },
+    {
+      "ref": "820003",
+      "account": "ALD404",
+      "customer": "Aldi",
+      "orders": ["1000079106"],
+      "pop_ref": "POPS0000132104",
+      "slot_start": "19:00",
+      "slot_end": "19:30",
+      "pallets": 15,
+      "contains_meds": false,
+      "status": "booked",
+      "created_by": "Sync"
+    },
+    {
+      "ref": "820004",
+      "account": "LID505",
+      "customer": "Lidl",
+      "orders": ["1000079107", "1000079108"],
+      "pop_ref": "POPS0000132105",
+      "slot_start": "20:00",
+      "slot_end": "20:30",
+      "pallets": 99,
+      "contains_meds": false,
+      "status": "booked",
+      "created_by": "Manual"
+    }
+  ]
+}
