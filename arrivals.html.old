@@ -719,7 +719,7 @@ async function checkInDriver() {
                 .gte('check_in_time', todayStart);
             
             if (dups && dups.length > 0) {
-                alert(`âš ï¸ DUPLICATE WARNING âš ï¸\n\nPO Reference '${po}' is already checked in.\nVehicle: ${dups[0].registration}\n\nCheck-in blocked.`);
+                alert(`⚠️ DUPLICATE WARNING ⚠️\n\nPO Reference '${po}' is already checked in.\nVehicle: ${dups[0].registration}\n\nCheck-in blocked.`);
                 throw new Error('Validation');
             }
         }
@@ -781,10 +781,35 @@ async function checkInDriver() {
 }
 
 function setupRealtime() {
-    db.channel('arrivals').on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, syncWithDatabase).subscribe();
+    db.channel('arrivals')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vehicles' }, syncWithDatabase)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'vehicles' }, syncWithDatabase)
+        .subscribe();
 }
 </script>
 
+<!-- START: PRELOADER OPTIMIZATION -->
+<script>
+(function() {
+    const appPages = ['index.html', 'arrivals.html', 'supervisor.html'];
+    const currentPath = window.location.pathname;
+    const currentPage = currentPath.substring(currentPath.lastIndexOf('/') + 1) || 'index.html';
+    const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 1000));
+
+    idleCallback(() => {
+        appPages.forEach(page => {
+            if (page === currentPage) return;
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = page;
+            link.as = 'document';
+            document.head.appendChild(link);
+            console.log(`[System] Prefetching ${page}`);
+        });
+    });
+})();
+</script>
+<!-- END: PRELOADER OPTIMIZATION -->
 
 </body>
 </html>

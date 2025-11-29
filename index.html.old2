@@ -8,7 +8,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.5.1 - lazy";
+document.getElementById("versionBanner").innerText = "v3.5.6 - pre";
 </script>
 
 <!--
@@ -594,11 +594,10 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - lazy";
             .filter(id => id && !vehicles.find(v => v.id === id) && !vehicleCache[id]);
         
         if (missingIds.length > 0) {
-            const uniqueIds = [...new Set(missingIds)];
             const { data: missingVehicles } = await db
                 .from('vehicles')
                 .select('id, registration, po_ref')
-                .in('id', uniqueIds);
+                .in('id', [new Set(missingIds)]);
             
             if (missingVehicles) {
                 missingVehicles.forEach(v => {
