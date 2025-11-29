@@ -8,17 +8,9 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v3.5.1 - colour";
+document.getElementById("versionBanner").innerText = "v3.5.1 - LAUNCHER MODE";
 </script>
 
-<!--
-  Warehouse gatehouse dashboard - OPTIMIZED VERSION
-  Changes from v3.1.2:
-    - Filtered queries - only fetch active vehicles, not entire history
-    - Supabase Realtime - instant updates, no polling
-    - Cached operators - load once, not every 15 seconds
-    - Debounced refreshes - prevent hammering DB on rapid changes
--->
 <style>
     :root {
         --bg: #0e1420;
@@ -432,14 +424,14 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - colour";
             </div>
         </div>
     </header>
-<!-- Navigation -->
-<nav class="main-nav">
-    <a href="arrivals.html" class="active">ARRIVALS</a>
-    <span class="nav-divider">|</span>
-    <a href="index.html">QUEUE</a>
-    <span class="nav-divider">|</span>
-    <a href="supervisor.html">SUPERVISOR</a>
-</nav>
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <a href="arrivals.html">ARRIVALS</a>
+        <span class="nav-divider">|</span>
+        <a href="index.html" class="active">QUEUE</a>
+        <span class="nav-divider">|</span>
+        <a href="supervisor.html">SUPERVISOR</a>
+    </nav>
     <!-- END A2 -->
     
     <!-- KPI Tiles -->
@@ -594,11 +586,10 @@ document.getElementById("versionBanner").innerText = "v3.5.1 - colour";
             .filter(id => id && !vehicles.find(v => v.id === id) && !vehicleCache[id]);
         
         if (missingIds.length > 0) {
-            const uniqueIds = [...new Set(missingIds)];
             const { data: missingVehicles } = await db
                 .from('vehicles')
                 .select('id, registration, po_ref')
-                .in('id', uniqueIds);
+                .in('id', [new Set(missingIds)]);
             
             if (missingVehicles) {
                 missingVehicles.forEach(v => {
@@ -1213,6 +1204,44 @@ function togglePanel() {
             alert('Failed to save changes');
         }
     }
+    
+    // ============================================================
+    // CHECK INCOMING BOOKING (URL PARAMS)
+    // ============================================================
+    function checkIncomingBooking() {
+        // Read the URL
+        const params = new URLSearchParams(window.location.search);
+        
+        // If there is a reference number in the URL, run this logic
+        if (params.has('ref')) {
+            // 1. Force the Add Panel to open
+            const panel = document.getElementById('addPanel');
+            panel.classList.add('panel-visible');
+            
+            // 2. Fill in the boxes
+            document.getElementById('poInput').value = params.get('ref');
+            
+            // Handle the Haulier/Customer field
+            const haulierBox = document.getElementById('haulierInput');
+            if (haulierBox) haulierBox.value = params.get('customer') || '';
+            
+            // Create the notes
+            let notes = `Booking: #${params.get('ref')}`;
+            if (params.get('orders')) notes += `\nOrders: ${params.get('orders')}`;
+            if (params.get('pallets')) notes += `\nExpected Pallets: ${params.get('pallets')}`;
+            if (params.get('meds') === 'true') notes += `\n*** CONTAINS MEDS ***`;
+            
+            document.getElementById('notesInput').value = notes;
+            
+            // 3. Put the cursor in the Registration box so I can type immediately
+            setTimeout(() => {
+                document.getElementById('regInput').focus();
+            }, 500);
+            
+            // 4. Clean the URL so if I refresh, it doesn't do it again
+            window.history.replaceState({}, document.title, "index.html");
+        }
+    }
 
     // ============================================================
     // INITIALIZATION
@@ -1225,6 +1254,9 @@ function togglePanel() {
         await fetchOperators();
         await fetchVehicles();
         await fetchLogs();
+        
+        // Check for incoming bookings from arrivals.html
+        checkIncomingBooking();
         
         // Setup realtime (replaces setInterval polling)
         setupRealtime();
@@ -1255,28 +1287,5 @@ function togglePanel() {
             </div>
         </div>
     </div>
-<!-- START: PRELOADER OPTIMIZATION -->
-<script>
-(function() {
-    const appPages = ['index.html', 'arrivals.html', 'supervisor.html'];
-    const currentPath = window.location.pathname;
-    const currentPage = currentPath.substring(currentPath.lastIndexOf('/') + 1) || 'index.html';
-    const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 1000));
-
-    idleCallback(() => {
-        appPages.forEach(page => {
-            if (page === currentPage) return;
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
-            link.href = page;
-            link.as = 'document';
-            document.head.appendChild(link);
-            console.log(`[System] Prefetching ${page}`);
-        });
-    });
-})();
-</script>
-<!-- END: PRELOADER OPTIMIZATION -->
-
 </body>
 </html>
