@@ -781,7 +781,10 @@ async function checkInDriver() {
 }
 
 function setupRealtime() {
-    db.channel('arrivals').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vehicles' }, syncWithDatabase).subscribe();
+    db.channel('arrivals')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vehicles' }, syncWithDatabase)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'vehicles' }, syncWithDatabase)
+        .subscribe();
 }
 </script>
 

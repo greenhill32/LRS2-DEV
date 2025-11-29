@@ -1,3 +1,5 @@
 supervisor modal actions require sql entries? under review,supervisor aware?
 
 arrivals.html how to check it has been delivered? not local storage as other users wont see it
+is there  a bd entry?
+are the html aware?
