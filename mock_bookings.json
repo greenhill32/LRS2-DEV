@@ -1,5 +1,5 @@
 {
-  "date": "2025-11-30",
+  "date": "2025-11-29",
   "bookings": [
     {
       "ref": "819901",
@@ -9,7 +9,7 @@
       "pop_ref": "POPS0000132001",
       "slot_start": "07:00",
       "slot_end": "07:30",
-      "pallets": 26,
+      "pallets": 60,
       "contains_meds": false,
       "status": "booked",
       "created_by": "Sync"
