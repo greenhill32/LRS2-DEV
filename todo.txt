@@ -11,4 +11,6 @@ they get notified to move to loading area (notifed status)
 when complete they get markerd complete.
 
 the lorry should show in the arrivals page all day (cleansed before the following day)
-lorry should disappear from index (queue) once complete
+lorry should disappear from index (queue) once complete.
+
+in arrivals there is no login/out feature.someone must be logged in for audit who added lorry?
