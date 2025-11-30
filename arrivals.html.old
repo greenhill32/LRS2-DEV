@@ -270,7 +270,7 @@
     </div>
     <div class="header-clock" id="clock">--:--</div>
     <div class="header-right">
-        <!-- Avatar + dropdown -->
+        /* Avatar + dropdown -->
         <div style="position: relative;">
             <div id="avatarBtn">??</div>
             <div id="avatarMenu">
@@ -281,7 +281,7 @@
     </div>
 </header>
 
-<!-- Navigation -->
+/* Navigation -->
 <nav class="main-nav">
     <a href="index.html">QUEUE</a>
     <span class="nav-divider">|</span>
@@ -290,7 +290,7 @@
     <a href="supervisor.html">SUPERVISOR</a>
 </nav>
 
-<!-- Stats bar -->
+/* Stats bar -->
 <div class="stats-bar">
     <div class="stat-item">
         <div class="stat-value" id="statExpected">0</div>
@@ -314,10 +314,10 @@
     </div>
 </div>
 
-<!-- Main grid -->
+/* Main grid -->
 <div class="main-grid">
 
-    <!-- Arrivals timeline -->
+    /* Arrivals timeline -->
     <div class="arrivals-panel">
         <div class="panel-header">
             <div class="panel-title">Expected Arrivals</div>
@@ -335,18 +335,18 @@
         </div>
     </div>
 
-    <!-- Check-in panel -->
+    /* Check-in panel -->
     <div class="checkin-panel">
         <h2>Booking Check-In</h2>
 
-        <!-- Search / Booking Selection -->
+        /* Search / Booking Selection -->
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Search booking ref or order number..." oninput="searchBookings(this.value)">
         </div>
 
         <div class="search-results" id="searchResults" style="display: none;"></div>
 
-        <!-- Selected Booking Summary -->
+        /* Selected Booking Summary -->
         <div class="selected-booking" id="selectedBooking" style="display: none;">
             <h3 id="selectedRef">#------</h3>
             <div class="selected-info">
@@ -357,7 +357,7 @@
             </div>
         </div>
 
-        <!-- Entry Form (Matching Index + Pre-population) -->
+        /* Entry Form (Matching Index + Pre-population) -->
         <div class="checkin-form">
             <div class="form-row">
                 <label>Registration *</label>
@@ -409,7 +409,7 @@
     </div>
 
 </div>
-<!-- Supabase -->
+/* Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -788,7 +788,7 @@ function setupRealtime() {
 }
 </script>
 
-<!-- START: PRELOADER OPTIMIZATION -->
+/* START: PRELOADER OPTIMIZATION -->
 <script>
 (function() {
     const appPages = ['index.html', 'arrivals.html', 'supervisor.html'];
@@ -809,7 +809,7 @@ function setupRealtime() {
     });
 })();
 </script>
-<!-- END: PRELOADER OPTIMIZATION -->
+/* END: PRELOADER OPTIMIZATION -->
 
 </body>
 </html>

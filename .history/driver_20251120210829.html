@@ -5,7 +5,7 @@
 <title>Vehicle Status</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- START E1 — CSS -->
+/* START E1 — CSS -->
 <style>
     :root {
         --bg: #0d0d0d;
@@ -111,17 +111,17 @@
         color: var(--text);
     }
 </style>
-<!-- END E1 -->
+/* END E1 -->
 </head>
 
 <body>
 
-<!-- START E2 — HEADER -->
+/* START E2 — HEADER -->
 <div id="title" class="title">Vehicle Status</div>
 <div id="subtitle" class="sub">Updates refresh every few seconds</div>
-<!-- END E2 -->
+/* END E2 -->
 
-<!-- START E3 — LANGUAGE BUTTONS -->
+/* START E3 — LANGUAGE BUTTONS -->
 <div class="lang-row" id="langRow">
     <div class="tile active" data-lang="en">🇬🇧 English</div>
     <div class="tile" data-lang="pl">🇵🇱 Polski</div>
@@ -129,9 +129,9 @@
     <div class="tile" data-lang="uk">🇺🇦 Українська</div>
     <div class="tile" data-lang="cs">🇨🇿 Čeština</div>
 </div>
-<!-- END E3 -->
+/* END E3 -->
 
-<!-- START E4 — MAIN CARD -->
+/* START E4 — MAIN CARD -->
 <div class="card">
     <div id="reg" class="reg"></div>
 
@@ -146,9 +146,9 @@
 
     <div id="noteText" class="note"></div>
 </div>
-<!-- END E4 -->
+/* END E4 -->
 
-<!-- START E5 — SUPABASE / LOGIC -->
+/* START E5 — SUPABASE / LOGIC -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const db = supabase.createClient(
@@ -225,7 +225,7 @@ loadVehicle();
 setInterval(loadVehicle, 8000);
 setLang("en");
 </script>
-<!-- END E5 -->
+/* END E5 -->
 
 </body>
 </html>

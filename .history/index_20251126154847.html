@@ -1,4 +1,4 @@
-<!-- START A1 -->
+/* START A1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +11,7 @@
 document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FIX";
 </script>
 
-<!--
+/*
   Warehouse gatehouse dashboard - OPTIMIZED VERSION
   Changes from v3.1.2:
     â€¢ Filtered queries - only fetch active vehicles, not entire history
@@ -340,19 +340,19 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
         50% { opacity: 0.5; }
     }
 </style>
-<!-- END A1 -->
+/* END A1 -->
  
 </head>
 <body>
-    <!-- START A2 -->
-    <!-- Hidden Add Lorry Panel -->
+    /* START A2 -->
+    /* Hidden Add Lorry Panel -->
     <div id="addPanel" class="slide-panel">
         <div class="panel-title">Add New Lorry</div>
-        <!-- Haulier/Lorry field -->
+        /* Haulier/Lorry field -->
         <div class="form-row">
             <input type="text" id="haulierInput" placeholder="Haulier / Lorry Company" style="width:100%;">
         </div>
-        <!-- Expected Loads Dropdown -->
+        /* Expected Loads Dropdown -->
         <div class="form-row">
             <select id="prebookSelect" onchange="applyPrebook()" style="width:100%;">
                 <option value="">-- Select Expected Load --</option>
@@ -401,10 +401,10 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             </div>
         </div>
     </header>
-    <!-- END A2 -->
+    /* END A2 -->
     
-    <!-- KPI Tiles -->
-    <!-- START A3 -->
+    /* KPI Tiles -->
+    /* START A3 -->
     <div class="stats">
         <div class="tile">
             <div class="value" id="kpiTotalIn">0</div>
@@ -423,9 +423,9 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             Overdue >30m
         </div>
     </div>
-    <!-- END A3 -->
+    /* END A3 -->
     
-    <!-- START A4 -->
+    /* START A4 -->
     <div class="grid">
         <div class="queue">
             <h2>Active Queue</h2>
@@ -436,13 +436,13 @@ document.getElementById("versionBanner").innerText = "v3.2.2 - RELEASED TODAY FI
             <div id="activityList">Loadingâ€¦</div>
         </div>
     </div>
-    <!-- END A4 -->
+    /* END A4 -->
     
-    <!-- START A5 -->
+    /* START A5 -->
     <canvas id="chartTrend" style="max-width:600px;height:240px;max-height:240px;margin:0 auto 24px;display:block;"></canvas>
-    <!-- END A5 -->
+    /* END A5 -->
 
-    <!-- Supabase & Chart.js -->
+    /* Supabase & Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -1197,7 +1197,7 @@ function togglePanel() {
     })();
     </script>
 
-    <!-- Modal overlay for editing vehicles -->
+    /* Modal overlay for editing vehicles -->
     <div id="editModalOverlay">
         <div id="editModal">
             <h3 style="margin-top:0; margin-bottom:8px; font-size:20px; color: var(--accent);">Edit Vehicle</h3>

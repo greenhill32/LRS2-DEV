@@ -1,4 +1,4 @@
-<!-- START CHUNK S1 — Header + Styles -->
+/* START CHUNK S1 — Header + Styles -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,9 +112,9 @@
     Supervisor Dashboard
     <span id="superName" style="font-size:16px;color:#fff;"></span>
 </div>
-<!-- END CHUNK S1 — Header + Styles -->
+/* END CHUNK S1 — Header + Styles -->
 
-<!-- START CHUNK S6 — Supervisor Search + Dynamic Status Editor -->
+/* START CHUNK S6 — Supervisor Search + Dynamic Status Editor -->
 <div style="padding:20px 30px;">
     <input 
         id="superSearch"
@@ -133,7 +133,7 @@
 
 <div id="superSearchResults" style="padding:0 30px; margin-bottom:20px;"></div>
 
-<!-- Modal -->
+/* Modal -->
 <div id="superEditOverlay" style="
     position:fixed; top:0; left:0; right:0; bottom:0;
     background:rgba(0,0,0,0.6);
@@ -303,12 +303,12 @@ async function svSave(id) {
     svClose();
 }
 </script>
-<!-- END CHUNK S6 — Supervisor Search + Dynamic Status Editor -->
+/* END CHUNK S6 — Supervisor Search + Dynamic Status Editor -->
 
 
-<!-- START CHUNK S2 — KPI + Charts + Tables -->
+/* START CHUNK S2 — KPI + Charts + Tables -->
 
-<!-- KPI ROW -->
+/* KPI ROW -->
 <div class="grid-kpi">
     <div class="kpi"><div class="value" id="kpiLorriesToday">0</div>Lorries Today</div>
     <div class="kpi"><div class="value" id="kpiReleased">0</div>Completed Today</div>
@@ -316,7 +316,7 @@ async function svSave(id) {
     <div class="kpi"><div class="value" id="kpiOverdue">0</div>Overdue > 1hr</div>
 </div>
 
-<!-- CHARTS -->
+/* CHARTS -->
 <div class="charts">
     <div class="chart-card">
         <h3>Check-ins Per Hour</h3>
@@ -329,7 +329,7 @@ async function svSave(id) {
     </div>
 </div>
 
-<!-- TABLES -->
+/* TABLES -->
 <div class="tables">
     <div>
         <h3 style="margin-left:5px;">Top 10 Longest Waits</h3>
@@ -346,9 +346,9 @@ async function svSave(id) {
     </div>
 </div>
 
-<!-- END CHUNK S2 — KPI + Charts + Tables -->
+/* END CHUNK S2 — KPI + Charts + Tables -->
 
-<!-- START CHUNK S3 — Supabase + Access Check -->
+/* START CHUNK S3 — Supabase + Access Check -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -382,9 +382,9 @@ const db = supabase.createClient(
 })();
 </script>
 
-<!-- END CHUNK S3 — Supabase + Access Check -->
+/* END CHUNK S3 — Supabase + Access Check -->
 
-<!-- START CHUNK S4 — KPI + Tables + Charts Logic -->
+/* START CHUNK S4 — KPI + Tables + Charts Logic -->
 
 <script>
 async function loadKPIs() {
@@ -558,10 +558,10 @@ runAll();
 setInterval(runAll, 30000);
 </script>
 
-<!-- END CHUNK S4 — KPI + Tables + Charts Logic --><!-- START CHUNK S5 — Closing HTML -->
+/* END CHUNK S4 — KPI + Tables + Charts Logic -->/* START CHUNK S5 — Closing HTML -->
 </body>
 </html>
-<!-- END CHUNK S5 — Closing HTML -->
+/* END CHUNK S5 — Closing HTML -->
 
 
 

@@ -1,4 +1,4 @@
-<!-- chunk 1 start: head + styles + layout + version banner -->
+/* chunk 1 start: head + styles + layout + version banner -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,7 +85,7 @@
 
 <h1>Search</h1>
 
-<!-- visible version indicator (edit as needed) -->
+/* visible version indicator (edit as needed) -->
 <div id="versionBanner"></div>
 
 <script>
@@ -97,19 +97,19 @@ document.getElementById("versionBanner").innerText = "v1.0.2 — BUILD";
 
 <div id="list"></div>
 <div id="detail"></div>
-<!-- chunk 1 end -->
+/* chunk 1 end -->
 
 
-<!-- chunk 2 start: Supabase init -->
+/* chunk 2 start: Supabase init -->
 <script>
 const db = supabase.createClient(
   "https://gtixdparpjdpyhhubsfz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
 );
 </script>
-<!-- chunk 2 end -->
+/* chunk 2 end -->
 
-<!-- chunk 3 start: partial search -->
+/* chunk 3 start: partial search -->
 <script>
 async function runSearch() {
     const q = document.getElementById("searchBox").value.trim().toUpperCase();
@@ -178,10 +178,10 @@ async function runSearch() {
     list.innerHTML = html;
 }
 </script>
-<!-- chunk 3 end -->
+/* chunk 3 end -->
 
 
-<!-- chunk 4 start: detail modal with operator lookup + colours -->
+/* chunk 4 start: detail modal with operator lookup + colours -->
 <script>
 async function openDetail(id) {
     document.getElementById("detail").innerHTML = "";
@@ -350,10 +350,10 @@ async function openDetail(id) {
     document.getElementById("detail").innerHTML = html;
 }
 </script>
-<!-- chunk 4 end -->
+/* chunk 4 end -->
 
 
-<!-- chunk 5 start: close modal + end -->
+/* chunk 5 start: close modal + end -->
 <script>
 function closeDetail() {
     document.getElementById("detail").innerHTML = "";
@@ -362,4 +362,4 @@ function closeDetail() {
 
 </body>
 </html>
-<!-- chunk 5 end -->
+/* chunk 5 end -->

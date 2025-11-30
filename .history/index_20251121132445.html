@@ -1,14 +1,14 @@
-<!-- START SECTION A -->
+/* START SECTION A -->
 
-<!-- START A1 -->
+/* START A1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Warehouse Pager Dashboard</title>
-<!-- END A1 -->
+/* END A1 -->
 
-<!-- START A2 -->
+/* START A2 -->
 <style>
     body {
         margin: 0;
@@ -20,9 +20,9 @@
         box-sizing: border-box;
     }
 </style>
-<!-- END A2 -->
+/* END A2 -->
 
-<!-- START A3 -->
+/* START A3 -->
 <style>
     .add-btn {
         background:#1b4cd4;
@@ -93,9 +93,9 @@
         font-weight: bold;
     }
 </style>
-<!-- END A3 -->
+/* END A3 -->
 
-<!-- START A4 -->
+/* START A4 -->
 <style>
     /* HEADER */
     .header {
@@ -191,8 +191,8 @@
         color: #ffffff;
     }
 </style>
-<!-- END A4 -->
-<!-- START A5 -->
+/* END A4 -->
+/* START A5 -->
 <style>
 
     /* BASE ENTRY CARD */
@@ -244,22 +244,22 @@
     }
 
 </style>
-<!-- END A5 -->
+/* END A5 -->
 
-<!-- START A6 -->
+/* START A6 -->
 </head>
 <body>
-<!-- END A6 -->
+/* END A6 -->
 
-<!-- END SECTION A -->
+/* END SECTION A -->
 
-<!-- START SECTION B -->
-<!-- START B1 -->
+/* START SECTION B -->
+/* START B1 -->
 <div id="panel" class="slide-panel">
 
     <div class="panel-title">Add New Lorry</div>
 
-    <!-- NEW: Expected Loads Dropdown -->
+    /* NEW: Expected Loads Dropdown -->
     <label style="color:#ccc; margin-top:10px;">Expected Loads</label>
     <select id="prebookSelect"
         onchange="applyPrebook()"
@@ -299,10 +299,10 @@
 
     <div id="submitBtn" class="submit-btn" onclick="submitVehicle()">Submit</div>
 </div>
-<!-- END B1 -->
+/* END B1 -->
 
 
-<!-- START B2 -->
+/* START B2 -->
 <div id="header" class="header">
 
     <div class="header-left">Warehouse Pager</div>
@@ -312,7 +312,7 @@
     <div class="header-right">
         <button class="add-btn" onclick="togglePanel()">Add Vehicle</button>
 
-        <!-- AVATAR + DROPDOWN -->
+        /* AVATAR + DROPDOWN -->
         <div style="position:relative;">
             <div id="avatarBtn"
                 style="
@@ -411,10 +411,10 @@ document.addEventListener("click", e => {
     document.getElementById("avatarBtn").textContent = initials;
 })();
 </script>
-<!-- END B2 -->
+/* END B2 -->
 
 
-<!-- START B3 -->
+/* START B3 -->
 <div class="grid">
 
     <div class="stat">
@@ -442,10 +442,10 @@ document.addEventListener("click", e => {
     </div>
 
 </div>
-<!-- END B3 -->
+/* END B3 -->
 
 
-<!-- START B4 -->
+/* START B4 -->
 <div class="main-split">
 
     <div class="left-side">
@@ -455,7 +455,7 @@ document.addEventListener("click", e => {
                 <span class="queue-count" style="color:#bbb;">Loading...</span>
             </div>
 
-            <!-- Queue items inserted by renderQueue() -->
+            /* Queue items inserted by renderQueue() -->
         </div>
     </div>
 
@@ -466,10 +466,10 @@ document.addEventListener("click", e => {
     </div>
 
 </div>
-<!-- END B4 -->
+/* END B4 -->
 
 
-<!-- START B5 -->
+/* START B5 -->
 <div id="searchPanel" style="color:white; display:none;">
     <h3>Search Vehicle</h3>
 
@@ -490,10 +490,10 @@ document.addEventListener("click", e => {
 
     <div id="searchResults" style="margin-top:15px; font-size:16px; color:#ddd;"></div>
 </div>
-<!-- END B5 -->
+/* END B5 -->
 
 
-<!-- START B6 -->
+/* START B6 -->
 <div id="editModalOverlay" style="
     position:fixed;
     top:0; left:0; right:0; bottom:0;
@@ -510,22 +510,22 @@ document.addEventListener("click", e => {
         border-radius:12px;
         border:1px solid #333;
     ">
-        <!-- Modal content injected in D4 -->
+        /* Modal content injected in D4 -->
     </div>
 </div>
-<!-- END B6 -->
+/* END B6 -->
 
-<!-- END SECTION B -->
-<!-- START SECTION C -->
+/* END SECTION B -->
+/* START SECTION C -->
 
-<!-- START C1 -->
+/* START C1 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseUrl = "https://gtixdparpjdpyhhubsfz.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0";
 const db = supabase.createClient(supabaseUrl, supabaseKey);
 </script>
-<!-- END C1 -->
+/* END C1 -->
 
 // START C2 — Operator Loader (fixed avatar)
 <script>
@@ -563,7 +563,7 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 </script>
 // END C2 — Operator Loader (fixed avatar)
 
-<!-- START C3 — submitVehicle (HTML-safe, QR auto-launch) -->
+/* START C3 — submitVehicle (HTML-safe, QR auto-launch) -->
 <script>
 let submitting = false;
 let prebookCache = [];
@@ -702,10 +702,10 @@ async function submitVehicle() {
     togglePanel();
 }
 </script>
-<!-- END C3 — submitVehicle (HTML-safe, QR auto-launch) -->
+/* END C3 — submitVehicle (HTML-safe, QR auto-launch) -->
 
 
-<!-- START C4 -->
+/* START C4 -->
 <script>
 async function loadQueue() {
     const { data } = await db
@@ -729,8 +729,8 @@ async function loadQueue() {
     renderQueue(data || []);
 }
 </script>
-<!-- END C4 -->
-<!-- START C5 -->
+/* END C4 -->
+/* START C5 -->
 <script>
 function renderQueue(list) {
     const container = document.querySelector(".queue-container");
@@ -817,9 +817,9 @@ function renderQueue(list) {
     });
 }
 </script>
-<!-- END C5 -->
+/* END C5 -->
 
-<!-- START C6 -->
+/* START C6 -->
 <script>
 function enableNotesEdit(vehicleId, oldNotes) {
     const notesEl = document.getElementById("notes-" + vehicleId);
@@ -857,10 +857,10 @@ async function saveNotes(vehicleId) {
     loadActivity();
 }
 </script>
-<!-- END C6 -->
+/* END C6 -->
 
 
-<!-- START C7 — Complete/Notify/Undo -->
+/* START C7 — Complete/Notify/Undo -->
 <script>
 async function notifyVehicle(id) {
     const opId = localStorage.getItem("operator_id");
@@ -933,12 +933,12 @@ async function undoVehicle(id) {
     loadActivity();
 }
 </script>
-<!-- END C7 — Complete/Notify/Undo -->
+/* END C7 — Complete/Notify/Undo -->
 
 
 
-<!-- END SECTION C -->
-<!-- START D1 — Load Activity (400-safe version) -->
+/* END SECTION C -->
+/* START D1 — Load Activity (400-safe version) -->
 <script>
 async function loadActivity() {
     const panel = document.querySelector(".activity-panel");
@@ -1012,9 +1012,9 @@ async function loadActivity() {
     }
 }
 </script>
-<!-- END D1 — Load Activity (400-safe version) -->
+/* END D1 — Load Activity (400-safe version) -->
 
-<!-- START D2 -->
+/* START D2 -->
 <script>
 async function loadStats() {
     const since = new Date(Date.now() - 8*60*60*1000).toISOString();
@@ -1054,10 +1054,10 @@ async function loadStats() {
     document.getElementById("statAvg").textContent = `${avgMins} mins`;
 }
 </script>
-<!-- END D2 -->
+/* END D2 -->
 
 
-<!-- START D3 -->
+/* START D3 -->
 <script>
 async function searchVehicles() {
     const q = document.getElementById("searchInput").value.trim().toUpperCase();
@@ -1101,10 +1101,10 @@ async function searchVehicles() {
     box.innerHTML = html;
 }
 </script>
-<!-- END D3 -->
+/* END D3 -->
 
 
-<!-- START D4 -->
+/* START D4 -->
 <script>
 async function openModalEditor(id) {
     const { data: v } = await db
@@ -1171,10 +1171,10 @@ function closeModal() {
     document.getElementById("editModalOverlay").style.display = "none";
 }
 </script>
-<!-- END D4 -->
+/* END D4 -->
 
 
-<!-- START D5 -->
+/* START D5 -->
 <script>
 async function saveModalEditor(id) {
     const opId = localStorage.getItem("operator_id");
@@ -1208,13 +1208,13 @@ async function saveModalEditor(id) {
     loadStats();
 }
 </script>
-<!-- END D5 -->
+/* END D5 -->
 
-<!-- END SECTION D -->
+/* END SECTION D -->
 
-<!-- START SECTION E -->
+/* START SECTION E -->
 
-<!-- START E1 -->
+/* START E1 -->
 <script>
 function updateClock() {
     const clock = document.getElementById("clock");
@@ -1229,10 +1229,10 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 </script>
-<!-- END E1 -->
+/* END E1 -->
 
 
-<!-- START E2 -->
+/* START E2 -->
 <script>
 async function autoRefresh() {
     await loadQueue();
@@ -1241,10 +1241,10 @@ async function autoRefresh() {
 }
 setInterval(autoRefresh, 30000); // every 30 seconds
 </script>
-<!-- END E2 -->
+/* END E2 -->
 
 
-<!-- START E3 -->
+/* START E3 -->
 <script>
 window.onload = function() {
     updateClock();
@@ -1253,11 +1253,11 @@ window.onload = function() {
     loadStats();
 };
 </script>
-<!-- END E3 -->
+/* END E3 -->
 
-<!-- END SECTION E -->
-<!-- START END-OF-FILE -->
+/* END SECTION E -->
+/* START END-OF-FILE -->
 </body>
 </html>
-<!-- END END-OF-FILE -->
+/* END END-OF-FILE -->
 
