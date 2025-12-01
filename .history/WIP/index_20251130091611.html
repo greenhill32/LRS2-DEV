@@ -1,3 +1,6 @@
+<!-- ========================================== -->
+<!-- CHUNK A1: HEAD, VERSION & CSS VARS         -->
+<!-- ========================================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,40 +10,19 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
+document.getElementById("versionBanner").innerText = "v3.7.1 - UNCOMPRESSED";
 </script>
 
 <style>
-    /* 1. SHARED TOKENS (Colors that work on both modes) */
     :root {
+        --bg: #0e1420;
+        --card: #1f2937;
         --accent: #0ea5e9;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
         --success: #22c55e;
         --warn: #fbbf24;
         --danger: #ef4444;
-        --purple: #8b5cf6;
-    }
-
-    /* 2. LIGHT MODE CONFIG */
-    [data-theme="light"] {
-        --bg: #f1f5f9;
-        --card: #ffffff;
-        --text: #0f172a;
-        --muted: #64748b;
-        --border: #cbd5e1;
-    }
-
-    /* 3. DARK MODE CONFIG */
-    [data-theme="dark"] {
-        --bg: #0e1420;
-        --card: #1f2937;
-        --text: #e2e8f0;
-        --muted: #94a3b8;
-        --border: #334155;
-    }
-
-    /* 4. ANIMATIONS */
-    body, .tile, .queue, .details, header, input, select, textarea, .slide-panel, #editModal {
-        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
     /* Export load styling */
@@ -65,13 +47,16 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         background: var(--bg);
         color: var(--text);
     }
-    
+
+/* ========================================== */
+/* CHUNK A2: LAYOUT CSS (Header, Nav, Panel)  */
+/* ========================================== */
     header {
         background: var(--card);
         padding: 16px 24px;
         display: flex;
         align-items: center;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid #1e293b;
     }
 
     .header-left {
@@ -103,7 +88,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         height: 38px;
         border-radius: 50%;
         background: var(--bg);
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -118,13 +103,12 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         top: 48px;
         right: 0;
         background: var(--card);
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
         border-radius: 6px;
         min-width: 150px;
         padding: 4px 0;
         display: none;
         z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     #avatarMenu > div {
@@ -162,7 +146,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         margin: 80px auto;
         padding: 24px;
         border-radius: 8px;
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
     }
     
     #editModal label {
@@ -176,7 +160,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     #editModal textarea {
         width: 100%;
         padding: 10px;
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
         border-radius: 6px;
         background: var(--bg);
         color: var(--text);
@@ -214,6 +198,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         color: #000;
     }
 
+/* ========================================== */
+/* CHUNK A3: MAIN UI CSS (Stats, Grid, Tiles) */
+/* ========================================== */
     .stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -225,7 +212,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         background: var(--card);
         padding: 16px;
         border-radius: 8px;
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -251,7 +238,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         flex: 1;
         background: var(--card);
         border-radius: 8px;
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
         padding: 16px;
         min-height: 420px;
         overflow-y: auto;
@@ -264,8 +251,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     }
     
     .entry {
-        background: rgba(14,165,233,0.05); /* Slight tint for default entries */
-        border: 1px solid var(--border);
+        background: #1f2937;
         border-left: 22px solid var(--success);
         padding: 24px;
         margin-bottom: 12px;
@@ -302,7 +288,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     
     .activity-item {
         margin-bottom: 8px;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid #334155;
         padding-bottom: 4px;
         font-size: 14px;
     }
@@ -332,7 +318,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         transition: transform 0.4s ease;
         z-index: 1000;
         color: var(--text);
-        border-bottom: 1px solid var(--border);
     }
     
     .panel-visible {
@@ -357,7 +342,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     .slide-panel select {
         padding: 10px;
         flex: 1;
-        border: 1px solid var(--border);
+        border: 1px solid #334155;
         border-radius: 6px;
         font-size: 14px;
         background: var(--bg);
@@ -400,7 +385,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         display: flex;
         align-items: center;
         justify-content: center;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid #334155;
     }
     
     .main-nav a {
@@ -430,6 +415,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
 </style>
 </head>
 
+<!-- ========================================== -->
+<!-- CHUNK B1: SLIDE PANEL HTML                 -->
+<!-- ========================================== -->
 <body>
     <div id="addPanel" class="slide-panel">
         <div class="panel-title">Add New Lorry</div>
@@ -459,7 +447,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
             <textarea id="notesInput" placeholder="Notes" style="width:100%;height:80px;"></textarea>
         </div>
         <div class="form-row">
-            <label style="color:var(--text);">
+            <label style="color:#ccc;">
                 <input type="checkbox" id="addExport" style="margin-right:6px;">
                 Export Load
             </label>
@@ -467,6 +455,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         <div class="submit-btn" onclick="submitVehicle()">Submit</div>
     </div>
     
+<!-- ========================================== -->
+<!-- CHUNK B2: HEADER & NAV HTML                -->
+<!-- ========================================== -->
     <header>
         <div class="header-left">
             <span class="connection-status" id="connectionStatus" title="Realtime connection"></span>
@@ -478,22 +469,8 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
             <button id="refreshBtn" style="padding:8px 16px;font-size:14px;background:var(--accent);color:#fff;border:none;border-radius:4px;" onclick="manualRefresh()">Refresh</button>
             <div style="position: relative;">
                 <div id="avatarBtn">??</div>
-                
-                <!-- THEME SWITCHER MENU -->
                 <div id="avatarMenu">
-                    <div id="menuName" style="border-bottom:1px solid var(--border); margin-bottom:5px;">Loading</div>
-                    
-                    <div style="font-size:12px; color:var(--muted); padding: 4px 12px;">Appearance</div>
-                    <div onclick="setTheme('light')" style="display:flex; justify-content:space-between;">
-                        <span>&#9728; Light</span>
-                        <span id="check-light" style="display:none;">&#10003;</span>
-                    </div>
-                    <div onclick="setTheme('dark')" style="display:flex; justify-content:space-between;">
-                        <span>&#9790; Dark</span>
-                        <span id="check-dark" style="display:none;">&#10003;</span>
-                    </div>
-                    <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
-                    
+                    <div id="menuName">Loading</div>
                     <div onclick="logoutUser()">Logout</div>
                 </div>
             </div>
@@ -508,6 +485,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         <a href="supervisor.html">SUPERVISOR</a>
     </nav>
     
+<!-- ========================================== -->
+<!-- CHUNK B3: STATS, GRID & CHART HTML         -->
+<!-- ========================================== -->
     <div class="stats">
         <div class="tile">
             <div class="value" id="kpiTotalIn">0</div>
@@ -540,6 +520,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     
     <canvas id="chartTrend" style="max-width:600px;height:240px;max-height:240px;margin:0 auto 24px;display:block;"></canvas>
 
+<!-- ========================================== -->
+<!-- CHUNK C1: JS SETUP, AUTH & CLOCK           -->
+<!-- ========================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -564,6 +547,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         } catch (e) {}
     })();
 
+/* ========================================== */
+/* CHUNK C2: JS DATA FETCH & REALTIME         */
+/* ========================================== */
     // PARALLEL FETCH - ALL DATA LOADS SIMULTANEOUSLY
     async function fetchAllData() {
         const performanceStart = performance.now();
@@ -685,6 +671,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         }, 500);
     }
 
+/* ========================================== */
+/* CHUNK C3: JS RENDER (QUEUE, LOGS, CHART)   */
+/* ========================================== */
     function renderQueue() {
         const container = document.getElementById('queueList');
         container.innerHTML = '';
@@ -809,6 +798,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         });
     }
 
+/* ========================================== */
+/* CHUNK D1: JS ACTIONS (NOTIFY/RELEASE)      */
+/* ========================================== */
     async function notify(id) {
         const operator = localStorage.getItem('operator_id') || null;
         const now = new Date().toISOString();
@@ -891,6 +883,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         }
     }
 
+/* ========================================== */
+/* CHUNK D2: JS ADD VEHICLE LOGIC             */
+/* ========================================== */
     function togglePanel() {
         const panel = document.getElementById('addPanel');
         if (!panel) return;
@@ -1082,6 +1077,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         }
     })();
 
+/* ========================================== */
+/* CHUNK D3: JS EDIT MODAL & BOOKING CHECK    */
+/* ========================================== */
     let currentEditId = null;
     
     function openEditModal(id) {
@@ -1169,30 +1167,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         }
     }
 
-    // ============================================
-    // THEME SWITCHER LOGIC
-    // ============================================
-    function setTheme(themeName) {
-        // 1. Update the HTML tag
-        document.documentElement.setAttribute('data-theme', themeName);
-        
-        // 2. Save to LocalStorage (So it remembers next time)
-        localStorage.setItem('theme', themeName);
-        
-        // 3. Update the Menu Checks (Visual feedback)
-        const lightCheck = document.getElementById('check-light');
-        const darkCheck = document.getElementById('check-dark');
-        
-        if(lightCheck) lightCheck.style.display = (themeName === 'light') ? 'block' : 'none';
-        if(darkCheck) darkCheck.style.display = (themeName === 'dark') ? 'block' : 'none';
-    }
-
-    // 4. Run on Load (Apply saved theme instantly)
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark if nothing saved
-        setTheme(savedTheme);
-    })();
-
+/* ========================================== */
+/* CHUNK D4: JS INIT LOOP                     */
+/* ========================================== */
     (async function init() {
         updateClock();
         setInterval(updateClock, 1000);
@@ -1209,6 +1186,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     })();
     </script>
 
+/* ========================================== */
+/* CHUNK E1: FOOTER (MODAL HTML)              */
+/* ========================================== */
     <div id="editModalOverlay">
         <div id="editModal">
             <h3 style="margin-top:0; margin-bottom:8px; font-size:20px; color: var(--accent);">Edit Vehicle</h3>
