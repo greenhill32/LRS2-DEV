@@ -1,6 +1,3 @@
-which ever page you are on it will alsway be greyed out over arrivals.
-
-the page shows arrivals | queue | supervisor. the other pages do load but it only looks like it in arrivals grey shading.
 
 on arrivals page it feeds from json unitl an api is used.
  the whole days schedule should stay on the page. as we work thorugh the day we will get completions. these will still be visible in arrivals page NOT index page.
@@ -14,3 +11,5 @@ the lorry should show in the arrivals page all day (cleansed before the followin
 lorry should disappear from index (queue) once complete.
 
 in arrivals there is no login/out feature.someone must be logged in for audit who added lorry?
+
+in add lorry modal index.html there is no way to exit
