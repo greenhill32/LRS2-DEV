@@ -1,27 +1,18 @@
+In add lorry modal (index.html) there is no way to exit. Add and x to close
 
-on arrivals page it feeds from json unitl an api is used.
- the whole days schedule should stay on the page. as we work thorugh the day we will get completions. these will still be visible in arrivals page NOT index page.
+in the modal add lorry, it should be parsed from json
 
-so it should be lorry arrives (expected) gatehouse checks them in a qr code and sms simulation pop up.
-they get sent to lorry park (parked status)
-they get notified to move to loading area (notifed status)
-when complete they get markerd complete.
+Haulier <no data taken from JSON>
 
-the lorry should show in the arrivals page all day (cleansed before the following day)
-lorry should disappear from index (queue) once complete.
+*REFERENCE
+*Orders
+*Slot_start
+*slot_end
+*contains_meds
+*status
+*pallets
 
-in arrivals there is no login/out feature.someone must be logged in for audit who added lorry?
-
-in add lorry modal index.html there is no way to exit
-
-if add lorry manually from Index.html the sms triggers but if added from arrivals screen  (into add lorry modal) it does not trigger
-
-need to add manula pallet adjustment in arrivals.
-
-in arrivals remove customer it is not given.
-there are expected start / end times
-
-adjust to accomaodate this
+adjust to accommodate this
 
   "date": "2025-11-29",
   "bookings": [
@@ -42,7 +33,7 @@ adjust to accomaodate this
 
 //
 
-sort into tme order & show date at the top
+sort into time order earliest first & show date at the top
 
-in supervisor
-the ctrl+k does not work It pops up but no suggested commands /or sql
+QUESTION FOR SOMENONE
+IN BOOKING SCHEDULER THERE IS NO OPTION TO MARK AS EXPORT (WHO KNOWS)

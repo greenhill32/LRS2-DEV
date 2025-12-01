@@ -7,7 +7,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
+document.getElementById("versionBanner").innerText = "v4.3.1 - CLOSE BTN";
 </script>
 
 <style>
@@ -343,7 +343,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         font-size: 20px;
         color: var(--accent);
         font-weight: bold;
-        margin-bottom: 10px;
     }
     
     .form-row {
@@ -431,20 +430,22 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
 </head>
 
 <body>
+    <!-- ADD PANEL -->
     <div id="addPanel" class="slide-panel">
-        <div class="panel-title">Add New Lorry</div>
-        <div class="form-row">
-            <input type="text" id="haulierInput" placeholder="Haulier / Lorry Company" style="width:100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="panel-title">Add New Lorry</div>
+            <button onclick="togglePanel()" style="background: none; border: none; color: var(--text); font-size: 28px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
         </div>
+        
         <div class="form-row">
-            <select id="prebookSelect" onchange="applyPrebook()" style="width:100%;">
-                <option value="">-- Select Expected Load --</option>
-            </select>
-        </div>
-        <div class="form-row">
-            <input type="text" id="regInput" placeholder="Registration">
+            <input type="text" id="regInput" placeholder="Registration *">
             <input type="text" id="poInput" placeholder="PO / Reference">
         </div>
+        
+        <div class="form-row">
+            <input type="text" id="haulierInput" placeholder="Haulier / Account" style="width:100%;">
+        </div>
+        
         <div class="form-row">
             <input type="text" id="mobileInput" placeholder="Mobile Number">
             <select id="quotedInput">
@@ -553,8 +554,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     let logs = [];
     let chart;
     let refreshTimeout = null;
-    let prebookCache = [];
-    let prebookExportFlag = false;
     let vehicleCache = {};
 
     (function loadCachedOperators() {
@@ -566,8 +565,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
 
     // PARALLEL FETCH - ALL DATA LOADS SIMULTANEOUSLY
     async function fetchAllData() {
-        const performanceStart = performance.now();
-        
         // Execute all fetches in parallel using Promise.all
         const [statsResult, vehiclesResult, logsResult, operatorsResult] = await Promise.all([
             // 1. RPC for stats (single query)
@@ -591,9 +588,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
                 ? db.from('operators').select('id, name').eq('active', true)
                 : Promise.resolve({ data: operators, error: null })
         ]);
-
-        const performanceEnd = performance.now();
-        console.log(`Data fetch completed in ${Math.round(performanceEnd - performanceStart)}ms`);
 
         // Handle results
         if (statsResult.data) {
@@ -895,9 +889,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         const panel = document.getElementById('addPanel');
         if (!panel) return;
         panel.classList.toggle('panel-visible');
-        if (panel.classList.contains('panel-visible')) {
-            loadPrebooks();
-        }
     }
 
     async function submitVehicle() {
@@ -966,11 +957,6 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
                 timestamp: nowIso,
                 operator_id: operatorId
             });
-
-            const selectedPrebookId = document.getElementById('prebookSelect').value;
-            if (selectedPrebookId) {
-                await db.from('prebookings').update({ consumed: true }).eq('id', selectedPrebookId);
-            }
             
             await fetchAllData();
             
@@ -984,55 +970,10 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
             document.getElementById('notesInput').value = '';
             document.getElementById('quotedInput').value = '60';
             document.getElementById('addExport').checked = false;
-            const pbSel = document.getElementById('prebookSelect');
-            if (pbSel) pbSel.value = '';
-            prebookExportFlag = false;
         } finally {
             btn.style.pointerEvents = 'auto';
             btn.style.opacity = '1';
         }
-    }
-
-    async function loadPrebooks() {
-        const sel = document.getElementById('prebookSelect');
-        if (!sel) return;
-        sel.innerHTML = `<option value="">-- Select Expected Load --</option>`;
-        try {
-            const { data } = await db
-                .from('prebookings')
-                .select('*')
-                .eq('consumed', false)
-                .order('expected_date', { ascending: true })
-                .order('expected_time', { ascending: true });
-            if (!data) return;
-            prebookCache = data;
-            data.forEach(p => {
-                const label = `${p.po_ref || 'No PO'} - ${p.registration || 'No Reg'} - ${p.expected_date || ''} ${p.expected_time?.slice(0,5) || ''}${p.is_export ? ' - EXPORT' : ''}`;
-                sel.innerHTML += `<option value="${p.id}">${label}</option>`;
-            });
-        } catch (err) {
-            console.error('Failed to load prebooks', err);
-        }
-    }
-
-    function applyPrebook() {
-        const sel = document.getElementById('prebookSelect');
-        if (!sel) return;
-        const id = sel.value;
-        if (!id) return;
-        const pb = prebookCache.find(x => String(x.id) === String(id));
-        if (!pb) return;
-        const poInput = document.getElementById('poInput');
-        const regInput = document.getElementById('regInput');
-        const notesInput = document.getElementById('notesInput');
-        const haulierInput = document.getElementById('haulierInput');
-        if (poInput) poInput.value = pb.po_ref || '';
-        if (regInput) regInput.value = pb.registration || '';
-        if (notesInput) notesInput.value = pb.notes || '';
-        if (haulierInput) haulierInput.value = pb.haulier || '';
-        prebookExportFlag = pb.is_export === true;
-        const exportChk = document.getElementById('addExport');
-        if (exportChk) exportChk.checked = prebookExportFlag;
     }
 
     function manualRefresh() {
@@ -1142,6 +1083,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         }
     }
     
+    // ============================================
+    // INCOMING BOOKING (FROM ARRIVALS)
+    // ============================================
     function checkIncomingBooking() {
         const params = new URLSearchParams(window.location.search);
         
@@ -1149,11 +1093,13 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
             const panel = document.getElementById('addPanel');
             panel.classList.add('panel-visible');
             
+            // Map Incoming Params
             document.getElementById('poInput').value = params.get('ref');
             
             const haulierBox = document.getElementById('haulierInput');
             if (haulierBox) haulierBox.value = params.get('customer') || '';
             
+            // Build rich notes from params
             let notes = `Booking: #${params.get('ref')}`;
             if (params.get('orders')) notes += `\nOrders: ${params.get('orders')}`;
             if (params.get('pallets')) notes += `\nExpected Pallets: ${params.get('pallets')}`;
@@ -1161,10 +1107,12 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
             
             document.getElementById('notesInput').value = notes;
             
+            // Auto-focus on registration
             setTimeout(() => {
                 document.getElementById('regInput').focus();
             }, 500);
             
+            // Clear URL so refreshing doesn't re-open
             window.history.replaceState({}, document.title, "index.html");
         }
     }
@@ -1173,13 +1121,9 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     // THEME SWITCHER LOGIC
     // ============================================
     function setTheme(themeName) {
-        // 1. Update the HTML tag
         document.documentElement.setAttribute('data-theme', themeName);
-        
-        // 2. Save to LocalStorage (So it remembers next time)
         localStorage.setItem('theme', themeName);
         
-        // 3. Update the Menu Checks (Visual feedback)
         const lightCheck = document.getElementById('check-light');
         const darkCheck = document.getElementById('check-dark');
         
@@ -1187,9 +1131,8 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         if(darkCheck) darkCheck.style.display = (themeName === 'dark') ? 'block' : 'none';
     }
 
-    // 4. Run on Load (Apply saved theme instantly)
     (function() {
-        const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark if nothing saved
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         setTheme(savedTheme);
     })();
 
@@ -1198,9 +1141,7 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
         setInterval(updateClock, 1000);
         
         await fetchAllData();
-        
         checkIncomingBooking();
-        
         setupRealtime();
         
         setInterval(() => {
@@ -1212,14 +1153,16 @@ document.getElementById("versionBanner").innerText = "v4.0.0 - THEMED";
     <div id="editModalOverlay">
         <div id="editModal">
             <h3 style="margin-top:0; margin-bottom:8px; font-size:20px; color: var(--accent);">Edit Vehicle</h3>
-            <label for="editReg">Registration</label>
-            <input type="text" id="editReg">
-            <label for="editPO">PO / Reference</label>
-            <input type="text" id="editPO">
-            <label for="editMobile">Mobile Number</label>
-            <input type="text" id="editMobile">
-            <label for="editNotes">Notes</label>
-            <textarea id="editNotes"></textarea>
+            <div style="margin-bottom: 20px;">
+                <label for="editReg">Registration</label>
+                <input type="text" id="editReg">
+                <label for="editPO">PO / Reference</label>
+                <input type="text" id="editPO">
+                <label for="editMobile">Mobile Number</label>
+                <input type="text" id="editMobile">
+                <label for="editNotes">Notes</label>
+                <textarea id="editNotes"></textarea>
+            </div>
             <div class="modal-actions">
                 <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
                 <button class="save-btn" onclick="saveEditModal()">Save</button>
