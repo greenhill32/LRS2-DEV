@@ -8,39 +8,20 @@
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
     background: #8b5cf6; color: white; padding: 4px 12px;
     border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
-">v3.7.1 - THEMED</div>
+">v3.5.1 - LAUNCHER MODE</div>
 
 <style>
-    /* 1. SHARED COLORS (Colors that look good on both modes) */
     :root {
-        --accent: #0ea5e9;
-        --success: #22c55e;
-        --warn: #fbbf24;
-        --danger: #ef4444;
-        --purple: #8b5cf6;
-    }
-
-    /* 2. LIGHT MODE */
-    [data-theme="light"] {
-        --bg: #f1f5f9;         /* Light Grey Background */
-        --card: #ffffff;       /* Pure White Cards */
-        --text: #0f172a;       /* Very Dark Blue/Grey Text */
-        --muted: #64748b;      /* Muted Text */
-        --border: #cbd5e1;     /* Light Grey Borders */
-    }
-
-    /* 3. DARK MODE */
-    [data-theme="dark"] {
         --bg: #0e1420;
         --card: #1f2937;
+        --accent: #0ea5e9; /* Blue - Booked */
         --text: #e2e8f0;
         --muted: #94a3b8;
+        --success: #22c55e; /* Green - Released */
+        --warn: #fbbf24;
+        --danger: #ef4444;
+        --purple: #8b5cf6; /* Purple - In Queue */
         --border: #334155;
-    }
-
-    /* 4. ANIMATION (Smooth transition) */
-    body, .arrivals-panel, .booking-card, header, .stat-item {
-        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,7 +39,7 @@
         padding: 16px 24px;
         display: flex;
         align-items: center;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid #1e293b;
     }
 
     .header-left {
@@ -98,17 +79,16 @@
     /* Avatar */
     #avatarBtn {
         width: 38px; height: 38px; border-radius: 50%;
-        background: var(--bg); border: 1px solid var(--border);
+        background: var(--bg); border: 1px solid #334155;
         display: flex; align-items: center; justify-content: center;
         font-weight: bold; color: var(--accent);
         cursor: pointer; user-select: none;
     }
     #avatarMenu {
         position: absolute; top: 48px; right: 0;
-        background: var(--card); border: 1px solid var(--border);
+        background: var(--card); border: 1px solid #334155;
         border-radius: 6px; min-width: 150px;
         padding: 4px 0; display: none; z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     #avatarMenu > div { padding: 8px 12px; cursor: pointer; font-size: 14px; color: var(--text); }
     #avatarMenu > div:hover { background: var(--accent); color: #000; }
@@ -120,7 +100,7 @@
         border-bottom: 1px solid var(--border);
     }
     .main-nav a {
-        color: #e2e8f0; text-decoration: none;
+        color: var(--text); text-decoration: none;
         padding: 14px 24px; font-size: 14px; font-weight: 600;
         letter-spacing: 0.5px; transition: all 0.2s;
     }
@@ -164,7 +144,7 @@
     .time-slot { border-bottom: 1px solid var(--border); }
     .time-slot:last-child { border-bottom: none; }
     .slot-header {
-        padding: 10px 20px; background: rgba(125,125,125,0.05);
+        padding: 10px 20px; background: rgba(255,255,255,0.02);
         font-size: 13px; font-weight: 600; color: var(--muted);
         display: flex; justify-content: space-between;
     }
@@ -176,7 +156,7 @@
         display: flex; align-items: center; gap: 16px;
         cursor: pointer; transition: all 0.2s; position: relative;
     }
-    .booking-card:hover { background: rgba(125,125,125,0.05); }
+    .booking-card:hover { background: rgba(255,255,255,0.03); }
     .booking-card:last-child { border-bottom: none; }
     
     /* Status Bars */
@@ -202,7 +182,7 @@
     .booking-details { font-size: 13px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
     .booking-orders {
         font-size: 12px; color: var(--text); margin-top: 6px;
-        font-family: monospace; background: rgba(125,125,125,0.1);
+        font-family: monospace; background: rgba(0,0,0,0.2);
         padding: 4px 8px; border-radius: 4px; display: inline-block;
     }
 
@@ -233,23 +213,8 @@
     <div class="header-clock" id="clock">--:--</div>
     <div class="header-right">
         <div id="avatarBtn">??</div>
-        
-        <!-- THEME SWITCHER MENU -->
         <div id="avatarMenu">
-            <div id="menuName" style="border-bottom:1px solid var(--border); margin-bottom:5px;">Loading</div>
-            
-            <!-- Theme Switcher -->
-            <div style="font-size:12px; color:var(--muted); padding: 4px 12px;">Appearance</div>
-            <div onclick="setTheme('light')" style="display:flex; justify-content:space-between;">
-                <span>&#9728; Light</span>
-                <span id="check-light" style="display:none;">&#10003;</span>
-            </div>
-            <div onclick="setTheme('dark')" style="display:flex; justify-content:space-between;">
-                <span>&#9790; Dark</span>
-                <span id="check-dark" style="display:none;">&#10003;</span>
-            </div>
-            <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
-            
+            <div id="menuName">Loading...</div>
             <div onclick="logoutUser()">Logout</div>
         </div>
     </div>
@@ -295,6 +260,7 @@
             <div style="padding:40px; text-align:center; color:var(--muted);">Loading Schedule...</div>
         </div>
     </div>
+    <!-- CHECK-IN PANEL REMOVED -->
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -504,56 +470,10 @@ function selectForCheckin(ref) {
 }
 
 function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-
-function checkUser() { 
-    const opId = localStorage.getItem('operator_id');
-    if(!opId) window.location.href='login.html';
-    
-    // Avatar Logic
-    db.from("operators").select("name").eq("id", opId).single().then(({data}) => {
-        if(data) {
-            document.getElementById('menuName').textContent = data.name;
-            document.getElementById('avatarBtn').textContent = data.name.substring(0,2).toUpperCase();
-        }
-    });
-}
-
+function checkUser() { if(!localStorage.getItem('operator_id')) window.location.href='login.html'; }
 function logoutUser() { localStorage.removeItem('operator_id'); window.location.href='login.html'; }
 
-// Avatar Menu Toggle
-document.addEventListener('click', (e) => {
-    const btn = document.getElementById('avatarBtn');
-    const menu = document.getElementById('avatarMenu');
-    if (!btn || !menu) return;
-    if (btn.contains(e.target)) {
-        menu.style.display = (menu.style.display === 'block' ? 'none' : 'block');
-    } else if (!menu.contains(e.target)) {
-        menu.style.display = 'none';
-    }
-});
-
-// ============================================
-// THEME SWITCHER LOGIC
-// ============================================
-function setTheme(themeName) {
-    // 1. Update the HTML tag
-    document.documentElement.setAttribute('data-theme', themeName);
-    
-    // 2. Save to LocalStorage (So it remembers next time)
-    localStorage.setItem('theme', themeName);
-    
-    // 3. Update the Menu Checks (Visual feedback)
-    document.getElementById('check-light').style.display = (themeName === 'light') ? 'block' : 'none';
-    document.getElementById('check-dark').style.display = (themeName === 'dark') ? 'block' : 'none';
-}
-
-// 4. Run on Load (Apply saved theme instantly)
-(function() {
-    const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark if nothing saved
-    setTheme(savedTheme);
-})();
-
-// Run App
+// Run
 init();
 </script>
 </body>

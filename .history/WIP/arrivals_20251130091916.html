@@ -1,0 +1,771 @@
+<!-- ========================================== -->
+<!-- CHUNK A1: HEAD & CSS VARIABLES             -->
+<!-- ========================================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gatehouse - Expected Arrivals</title>
+
+<style>
+    :root {
+        --bg: #0e1420;
+        --card: #1f2937;
+        --accent: #0ea5e9;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --success: #22c55e;
+        --warn: #fbbf24;
+        --danger: #ef4444;
+        --purple: #8b5cf6;
+        --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+
+/* ========================================== */
+/* CHUNK A2: LAYOUT CSS (Header, Nav, Stats)  */
+/* ========================================== */
+    /* HEADER LAYOUT (Standardized) */
+    header {
+        background: var(--card);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #1e293b;
+    }
+
+    .header-left {
+        flex: 1;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .header-clock {
+        flex: 1;
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        color: var(--text);
+    }
+
+    .header-right {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .live-dot {
+        width: 10px; height: 10px; background: var(--success);
+        border-radius: 50%; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Avatar + menu */
+    #avatarBtn {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: var(--bg);
+        border: 1px solid #334155;
+        display: flex;
+        align-items: center; justify-content: center;
+        font-weight: bold; color: var(--accent);
+        cursor: pointer; user-select: none;
+    }
+    #avatarMenu {
+        position: absolute; top: 48px; right: 0;
+        background: var(--card);
+        border: 1px solid #334155;
+        border-radius: 6px; min-width: 150px;
+        padding: 4px 0; display: none; z-index: 10000;
+    }
+    #avatarMenu > div {
+        padding: 8px 12px; cursor: pointer; font-size: 14px; color: var(--text);
+    }
+    #avatarMenu > div:hover { background: var(--accent); color: #000; }
+
+    /* Navigation bar */
+    .main-nav {
+        background: #1e3a5f;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--border);
+    }
+    .main-nav a {
+        color: var(--text);
+        text-decoration: none;
+        padding: 14px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+    }
+    .main-nav a:hover { background: rgba(255,255,255,0.1); }
+    .main-nav a.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .nav-divider { color: #64748b; font-size: 18px; user-select: none; }
+
+    /* Stats bar */
+    .stats-bar {
+        display: flex; gap: 16px; padding: 20px 24px;
+        background: var(--card); margin: 20px 24px;
+        border-radius: 12px; border: 1px solid var(--border);
+    }
+    .stat-item { flex: 1; text-align: center; padding: 12px; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-value { font-size: 36px; font-weight: 700; color: var(--accent); }
+    .stat-value.warn { color: var(--warn); }
+    .stat-value.danger { color: var(--danger); }
+    .stat-value.success { color: var(--success); }
+    .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+/* ========================================== */
+/* CHUNK A3: ARRIVALS LIST CSS                */
+/* ========================================== */
+    /* Main layout */
+    .main-grid {
+        display: grid; grid-template-columns: 1fr 420px;
+        gap: 20px; padding: 0 24px 24px;
+    }
+
+    /* Arrivals timeline */
+    .arrivals-panel {
+        background: var(--card); border-radius: 12px;
+        border: 1px solid var(--border); overflow: hidden;
+    }
+    .panel-header {
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-title { font-size: 18px; font-weight: 600; color: var(--accent); }
+    .time-filter { display: flex; gap: 8px; }
+    .filter-btn {
+        padding: 6px 12px; background: transparent;
+        border: 1px solid var(--border); color: var(--muted);
+        border-radius: 4px; font-size: 12px; cursor: pointer;
+    }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .arrivals-list { max-height: 600px; overflow-y: auto; }
+    .time-slot { border-bottom: 1px solid var(--border); }
+    .time-slot:last-child { border-bottom: none; }
+    .slot-header {
+        padding: 10px 20px; background: rgba(255,255,255,0.02);
+        font-size: 13px; font-weight: 600; color: var(--muted);
+        display: flex; justify-content: space-between;
+    }
+    .slot-header.now { background: rgba(14, 165, 233, 0.1); color: var(--accent); }
+
+    /* Booking card */
+    .booking-card {
+        padding: 16px 20px; border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 16px;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .booking-card:hover { background: rgba(255,255,255,0.03); }
+    .booking-card:last-child { border-bottom: none; }
+    .booking-status { width: 8px; height: 60px; border-radius: 4px; flex-shrink: 0; }
+    .booking-status.booked { background: var(--accent); }
+    .booking-status.arrived { background: var(--purple); }
+    .booking-status.complete { background: var(--success); }
+    .booking-status.late { background: var(--danger); animation: pulse 1s infinite; }
+    .booking-main { flex: 1; }
+    .booking-ref { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .booking-ref span { font-weight: 400; color: var(--muted); font-size: 14px; margin-left: 8px; }
+    .booking-details { font-size: 13px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+    .booking-orders {
+        font-size: 12px; color: var(--text); margin-top: 6px;
+        font-family: monospace; background: rgba(0,0,0,0.2);
+        padding: 4px 8px; border-radius: 4px; display: inline-block;
+    }
+    .booking-meta { text-align: right; flex-shrink: 0; }
+    .booking-pallets { font-size: 24px; font-weight: 700; color: var(--text); }
+    .booking-pallets small { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .badge {
+        display: inline-block; padding: 3px 8px; border-radius: 4px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase; margin-left: 8px;
+    }
+    .badge-meds { background: var(--danger); color: white; }
+
+/* ========================================== */
+/* CHUNK A4: CHECK-IN PANEL CSS               */
+/* ========================================== */
+    /* Check-in panel */
+    .checkin-panel {
+        background: var(--card); border-radius: 12px;
+        border: 1px solid var(--border); padding: 20px;
+        height: fit-content;
+    }
+    .checkin-panel h2 { font-size: 18px; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
+    
+    .search-box { position: relative; margin-bottom: 20px; }
+    .search-box input {
+        width: 100%; padding: 14px 16px; background: var(--bg);
+        border: 1px solid var(--border); border-radius: 8px;
+        color: var(--text); font-size: 16px;
+    }
+    .search-box input:focus { outline: none; border-color: var(--accent); }
+    
+    .search-results {
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: 8px; margin-bottom: 20px;
+        max-height: 300px; overflow-y: auto;
+    }
+    .search-result-item {
+        padding: 14px 16px; border-bottom: 1px solid var(--border);
+        cursor: pointer; transition: all 0.2s;
+    }
+    .search-result-item:hover { background: rgba(14, 165, 233, 0.1); }
+    
+    /* Selected booking for check-in */
+    .selected-booking {
+        background: rgba(14, 165, 233, 0.1); border: 2px solid var(--accent);
+        border-radius: 8px; padding: 16px; margin-bottom: 20px;
+    }
+    .selected-booking h3 { font-size: 20px; margin-bottom: 12px; }
+    .selected-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
+    .selected-info span { color: var(--muted); }
+
+    /* Form Styles matching Index */
+    .form-row { margin-bottom: 12px; }
+    .checkin-form label {
+        display: block; font-size: 13px; color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .checkin-form input, .checkin-form select, .checkin-form textarea {
+        width: 100%; padding: 10px; background: var(--bg);
+        border: 1px solid var(--border); border-radius: 6px;
+        color: var(--text); font-size: 14px;
+    }
+    .checkin-form textarea { resize: vertical; height: 80px; }
+    .checkin-form input:focus, .checkin-form select:focus, .checkin-form textarea:focus {
+        outline: none; border-color: var(--accent);
+    }
+    
+    .checkin-btn {
+        width: 100%; padding: 14px; background: var(--success);
+        color: white; border: none; border-radius: 8px;
+        font-size: 16px; font-weight: 700; cursor: pointer;
+        margin-top: 12px; transition: all 0.2s;
+    }
+    .checkin-btn:hover { background: #16a34a; }
+
+    /* Version banner */
+    .version-banner {
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+        background: var(--purple); color: white; padding: 4px 12px;
+        border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
+    }
+</style>
+</head>
+
+<!-- ========================================== -->
+<!-- CHUNK B1: HEADER & NAV HTML                -->
+<!-- ========================================== -->
+<body>
+
+<div class="version-banner">BOOKING INTEGRATION - LIVE</div>
+
+<header>
+    <div class="header-left">
+        <div class="live-dot"></div>
+        <h1>Gatehouse - Arrivals</h1>
+    </div>
+    <div class="header-clock" id="clock">--:--</div>
+    <div class="header-right">
+        <!-- Avatar + dropdown -->
+        <div style="position: relative;">
+            <div id="avatarBtn">??</div>
+            <div id="avatarMenu">
+                <div id="menuName">Loading...</div>
+                <div onclick="logoutUser()">Logout</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+<nav class="main-nav">
+    <a href="arrivals.html" class="active">ARRIVALS</a>
+    <a href="index.html">QUEUE</a>
+    <span class="nav-divider">|</span>
+    <span class="nav-divider">|</span>
+    <a href="supervisor.html">SUPERVISOR</a>
+</nav>
+
+<!-- ========================================== -->
+<!-- CHUNK B2: STATS BAR HTML                   -->
+<!-- ========================================== -->
+<!-- Stats bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-value" id="statExpected">0</div>
+        <div class="stat-label">Expected Today</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value success" id="statArrived">0</div>
+        <div class="stat-label">Arrived</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="statRemaining">0</div>
+        <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value warn" id="statLate">0</div>
+        <div class="stat-label">Late / No Show</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="statPallets">0</div>
+        <div class="stat-label">Total Pallets</div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CHUNK B3: LEFT PANEL (ARRIVALS) HTML       -->
+<!-- ========================================== -->
+<!-- Main grid -->
+<div class="main-grid">
+
+    <!-- Arrivals timeline -->
+    <div class="arrivals-panel">
+        <div class="panel-header">
+            <div class="panel-title">Expected Arrivals</div>
+            <div class="time-filter">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Pending</button>
+                <button class="filter-btn">Arrived</button>
+            </div>
+        </div>
+
+        <div class="arrivals-list" id="arrivalsList">
+            <div style="text-align: center; padding: 40px; color: var(--muted);">
+                Loading bookings...
+            </div>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+<!-- CHUNK B4: RIGHT PANEL (CHECK-IN) HTML      -->
+<!-- ========================================== -->
+    <!-- Check-in panel -->
+    <div class="checkin-panel">
+        <h2>Booking Check-In</h2>
+
+        <!-- Search / Booking Selection -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search booking ref or order number..." oninput="searchBookings(this.value)">
+        </div>
+
+        <div class="search-results" id="searchResults" style="display: none;"></div>
+
+        <!-- Selected Booking Summary -->
+        <div class="selected-booking" id="selectedBooking" style="display: none;">
+            <h3 id="selectedRef">#------</h3>
+            <div class="selected-info">
+                <div><span>Customer:</span> <span id="selectedCustomer">-</span></div>
+                <div><span>Account:</span> <span id="selectedAccount">-</span></div>
+                <div><span>Orders:</span> <span id="selectedOrders">-</span></div>
+                <div><span>Pallets:</span> <span id="selectedPallets">-</span></div>
+            </div>
+        </div>
+
+        <!-- Entry Form (Matching Index + Pre-population) -->
+        <div class="checkin-form">
+            <div class="form-row">
+                <label>Registration *</label>
+                <input type="text" id="regInput" placeholder="e.g. AB12 CDE" oninput="this.value = this.value.toUpperCase().replace(/\s+/g, '')">
+            </div>
+
+            <div class="form-row">
+                <label>Haulier / Lorry Company</label>
+                <input type="text" id="haulierInput" placeholder="Company Name">
+            </div>
+
+            <div class="form-row">
+                <label>PO / Reference</label>
+                <input type="text" id="poInput" placeholder="Auto-populated from booking">
+            </div>
+
+            <div class="form-row">
+                <label>Driver Mobile</label>
+                <input type="text" id="mobileInput" placeholder="e.g. 07700 900123">
+            </div>
+
+            <div class="form-row" style="display:flex; gap:12px;">
+                <div style="flex:1;">
+                    <label>Quoted Wait</label>
+                    <select id="quotedInput">
+                        <option value="30">30 mins</option>
+                        <option value="45">45 mins</option>
+                        <option value="60" selected>60 mins</option>
+                        <option value="90">90 mins</option>
+                        <option value="120">120 mins</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>Notes</label>
+                <textarea id="notesInput" placeholder="Additional notes..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <label style="color:#ccc; display:flex; align-items:center; cursor:pointer;">
+                    <input type="checkbox" id="addExport" style="margin-right:8px; width:auto;">
+                    Export Load
+                </label>
+            </div>
+
+            <button class="checkin-btn" id="submitBtn" onclick="checkInDriver()">Check In Driver</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================================== -->
+<!-- CHUNK C1: JS INIT & AUTH                   -->
+<!-- ========================================== -->
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============================================================
+// SUPABASE CONNECTION
+// ============================================================
+const db = supabase.createClient(
+    "https://gtixdparpjdpyhhubsfz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+
+// ============================================================
+// AUTH & AVATAR
+// ============================================================
+function logoutUser() {
+    localStorage.removeItem('operator_id');
+    window.location.href = 'login.html';
+}
+
+// Avatar Menu Toggle
+document.addEventListener('click', (e) => {
+    const btn = document.getElementById('avatarBtn');
+    const menu = document.getElementById('avatarMenu');
+    if (!btn || !menu) return;
+    if (btn.contains(e.target)) {
+        menu.style.display = (menu.style.display === 'block' ? 'none' : 'block');
+    } else if (!menu.contains(e.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+// Load Operator Info
+(async function checkOperator() {
+    const opId = localStorage.getItem('operator_id');
+    if (!opId) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    try {
+        const { data: op } = await db.from('operators').select('name').eq('id', opId).single();
+        if (!op) { window.location.href = 'login.html'; return; }
+        
+        const menuName = document.getElementById('menuName');
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (menuName) menuName.textContent = op.name;
+        if (avatarBtn) {
+            const initials = op.name.split(' ').map(x => (x[0] || '').toUpperCase()).join('').slice(0, 2);
+            avatarBtn.textContent = initials || '??';
+        }
+    } catch (err) {
+        console.error('Operator check failed:', err);
+    }
+})();
+
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = 
+        now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ========================================== */
+/* CHUNK C2: JS BOOKING LOADER                */
+/* ========================================== */
+// ============================================================
+// BOOKINGS DATA HANDLING
+// ============================================================
+let bookingsData = [];
+let selectedBookingData = null;
+
+// Load bookings from mock JSON
+async function loadBookings() {
+    try {
+        const response = await fetch('mock_bookings.json');
+        const data = await response.json();
+        bookingsData = data.bookings || [];
+        renderBookings();
+        updateStats();
+    } catch (err) {
+        console.error('Failed to load bookings:', err);
+        document.getElementById('arrivalsList').innerHTML = 
+            '<div style="text-align:center;padding:40px;color:var(--danger);">Failed to load bookings (mock_bookings.json)</div>';
+    }
+}
+
+// Group/Render helpers
+function groupByHour(bookings) {
+    const groups = {};
+    bookings.forEach(b => {
+        const hour = b.slot_start.slice(0, 2) + ':00';
+        if (!groups[hour]) groups[hour] = [];
+        groups[hour].push(b);
+    });
+    return groups;
+}
+
+function updateStats() {
+    const total = bookingsData.length;
+    // In a real system, we'd query Supabase to see if these refs are already checked in
+    const arrived = 0; // Keeping simple for mock
+    const remaining = total - arrived;
+    const pallets = bookingsData.reduce((sum, b) => sum + (b.pallets || 0), 0);
+    
+    document.getElementById('statExpected').textContent = total;
+    document.getElementById('statArrived').textContent = arrived;
+    document.getElementById('statRemaining').textContent = remaining;
+    document.getElementById('statPallets').textContent = pallets;
+}
+
+/* ========================================== */
+/* CHUNK C3: JS RENDER LOGIC                  */
+/* ========================================== */
+function renderBookings() {
+    const container = document.getElementById('arrivalsList');
+    if (!bookingsData.length) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">No bookings for today</div>';
+        return;
+    }
+
+    const groups = groupByHour(bookingsData);
+    const sortedHours = Object.keys(groups).sort();
+    let html = '';
+    
+    sortedHours.forEach(hour => {
+        const bookings = groups[hour];
+        const totalPallets = bookings.reduce((sum, b) => sum + (b.pallets || 0), 0);
+        const nowHour = String(new Date().getHours()).padStart(2,'0') + ':00';
+        const isCurrent = hour === nowHour;
+        
+        html += '<div class="time-slot">';
+        html += `<div class="slot-header${isCurrent ? ' now' : ''}">`;
+        html += `<span>${hour} - ${String(parseInt(hour)+1).padStart(2,'0')}:00${isCurrent ? ' (NOW)' : ''}</span>`;
+        html += `<span>${bookings.length} booking(s) - ${totalPallets} plts</span>`;
+        html += '</div>';
+        
+        bookings.forEach(b => {
+            const statusClass = (b.status === 'arrived' || b.status === 'complete') ? 'complete' : (b.status === 'late' ? 'late' : 'booked');
+            const orders = Array.isArray(b.orders) ? b.orders.join(' | ') : b.orders;
+            
+            html += `<div class="booking-card" onclick="selectBooking(this)" 
+                     data-ref="${b.ref}" data-customer="${b.customer || ''}" 
+                     data-account="${b.account || ''}" data-orders="${orders}" 
+                     data-pallets="${b.pallets || 0}" data-meds="${b.contains_meds || false}">`;
+            
+            html += `<div class="booking-status ${statusClass}"></div>`;
+            html += `<div class="booking-main">
+                        <div class="booking-ref">#${b.ref} <span>${b.customer || ''}</span>
+                        ${b.contains_meds ? '<span class="badge badge-meds">MEDS</span>' : ''}</div>
+                        <div class="booking-details">
+                            <span>${b.account || ''}</span>
+                            <span>Slot: ${b.slot_start}-${b.slot_end}</span>
+                        </div>
+                        <div class="booking-orders">${orders}</div>
+                     </div>`;
+            html += `<div class="booking-meta"><div class="booking-pallets">${b.pallets || 0} <small>plts</small></div></div>`;
+            html += `</div>`;
+        });
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+/* ========================================== */
+/* CHUNK C4: JS INTERACTION (SELECT/SEARCH)   */
+/* ========================================== */
+// ============================================================
+// INTERACTION: SELECT & SEARCH
+// ============================================================
+function selectBooking(card) {
+    const data = {
+        ref: card.dataset.ref,
+        customer: card.dataset.customer,
+        account: card.dataset.account,
+        orders: card.dataset.orders,
+        pallets: card.dataset.pallets,
+        meds: card.dataset.meds === 'true'
+    };
+    populateForm(data);
+}
+
+function selectFromSearch(ref, customer, account, orders, pallets) {
+    const data = { ref, customer, account, orders, pallets, meds: false };
+    populateForm(data);
+}
+
+function populateForm(data) {
+    selectedBookingData = data;
+
+    // Show visual summary
+    document.getElementById('selectedRef').textContent = '#' + data.ref;
+    document.getElementById('selectedCustomer').textContent = data.customer;
+    document.getElementById('selectedAccount').textContent = data.account;
+    document.getElementById('selectedOrders').textContent = data.orders;
+    document.getElementById('selectedPallets').textContent = data.pallets;
+    document.getElementById('selectedBooking').style.display = 'block';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+
+    // PRE-POPULATE FORM FIELDS
+    document.getElementById('poInput').value = data.ref; // Map Ref to PO
+    document.getElementById('haulierInput').value = data.customer; // Map Customer to Haulier
+    
+    // Create rich notes from booking data
+    let autoNotes = `Booking: #${data.ref}\nAccount: ${data.account}\nPallets: ${data.pallets}\nOrders: ${data.orders}`;
+    if (data.meds) autoNotes += "\n*** CONTAINS MEDS ***";
+    
+    document.getElementById('notesInput').value = autoNotes;
+
+    // Focus Reg input for quick entry
+    document.getElementById('regInput').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function searchBookings(query) {
+    const results = document.getElementById('searchResults');
+    if (query.length < 2) { results.style.display = 'none'; return; }
+    query = query.toUpperCase();
+
+    const matches = bookingsData.filter(b => {
+        const ordersStr = Array.isArray(b.orders) ? b.orders.join(' ') : (b.orders || '');
+        return b.ref.toUpperCase().includes(query) || 
+               ordersStr.toUpperCase().includes(query) ||
+               (b.customer || '').toUpperCase().includes(query);
+    });
+
+    if (matches.length === 0) {
+        results.innerHTML = '<div class="search-result-item"><span style="color: var(--muted);">No matching bookings</span></div>';
+    } else {
+        results.innerHTML = matches.map(m => {
+            const orders = Array.isArray(m.orders) ? m.orders.join(' | ') : m.orders;
+            return `<div class="search-result-item" onclick="selectFromSearch('${m.ref}', '${m.customer||''}', '${m.account||''}', '${orders}', ${m.pallets||0})">
+                <div class="result-ref">#${m.ref}</div>
+                <div class="result-detail">${m.customer||''} - ${orders}</div>
+            </div>`;
+        }).join('');
+    }
+    results.style.display = 'block';
+}
+
+/* ========================================== */
+/* CHUNK C5: JS SUBMIT & FOOTER               */
+/* ========================================== */
+// ============================================================
+// CHECK-IN SUBMISSION (Matches Index Page Logic)
+// ============================================================
+async function checkInDriver() {
+    const btn = document.getElementById('submitBtn');
+    btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
+
+    try {
+        // 1. Get Values
+        const reg = document.getElementById('regInput').value.trim().toUpperCase().replace(/\s+/g, '');
+        const haulier = document.getElementById('haulierInput').value.trim();
+        const po = document.getElementById('poInput').value.trim();
+        const mobileRaw = document.getElementById('mobileInput').value.trim();
+        const mobile = mobileRaw === '' ? null : mobileRaw;
+        const quoted = parseInt(document.getElementById('quotedInput').value, 10);
+        const notes = document.getElementById('notesInput').value.trim();
+        const isExport = document.getElementById('addExport').checked;
+
+        // 2. Validate
+        if (!reg) { alert('Registration is required'); throw new Error('Validation failed'); }
+
+        const operatorId = localStorage.getItem('operator_id');
+        const nowIso = new Date().toISOString();
+        const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
+
+        // 3. Supabase Insert
+        const { data, error } = await db.from('vehicles').insert({
+            registration: reg,
+            po_ref: po || null,
+            haulier: haulier || null,
+            mobile_number: mobile,
+            notes: notes || null,
+            quoted_minutes: quoted,
+            check_in_time: nowIso,
+            due_time: dueIso,
+            status: 'parked',
+            operator_id: operatorId,
+            classification: isExport ? 'export' : 'normal'
+        }).select();
+
+        if (error) throw error;
+
+        const vehicleId = data[0].id;
+
+        // 4. Log Action
+        await db.from('actions_log').insert({
+            vehicle_id: vehicleId,
+            action: 'check_in',
+            timestamp: nowIso,
+            operator_id: operatorId
+        });
+
+        // 5. Open Windows (QR & SMS)
+        window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
+        
+        if (mobile) {
+            window.open(`sms_simulator.html?type=check_in&phone=${encodeURIComponent(mobile)}&po=${encodeURIComponent(po || 'N/A')}&quoted=${quoted}`, 
+            "_blank", "width=400,height=700");
+        }
+
+        // 6. Reset Form
+        document.getElementById('regInput').value = '';
+        document.getElementById('mobileInput').value = '';
+        document.getElementById('notesInput').value = '';
+        document.getElementById('selectedBooking').style.display = 'none';
+        
+        alert(`Checked in ${reg} successfully!`);
+
+    } catch (err) {
+        if(err.message !== 'Validation failed') alert('Error: ' + err.message);
+    } finally {
+        btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+    }
+}
+
+// Initial Load
+loadBookings();
+
+</script>
+
+</body>
+</html>
