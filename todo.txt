@@ -13,3 +13,36 @@ lorry should disappear from index (queue) once complete.
 in arrivals there is no login/out feature.someone must be logged in for audit who added lorry?
 
 in add lorry modal index.html there is no way to exit
+
+if add lorry manually from Index.html the sms triggers but if added from arrivals screen  (into add lorry modal) it does not trigger
+
+need to add manula pallet adjustment in arrivals.
+
+in arrivals remove customer it is not given.
+there are expected start / end times
+
+adjust to accomaodate this
+
+  "date": "2025-11-29",
+  "bookings": [
+    {
+      "ref": "819824",
+      "account": "PRO001",
+      "customer": null,
+      "orders": ["1000078975"],
+      "pop_ref": "POPS0000131886",
+      "slot_start": "06:00",
+      "slot_end": "06:30",
+      "pallets": 51,
+      "contains_meds": false,
+      "status": "booked",
+      "notes": null
+    },
+
+
+//
+
+sort into tme order & show date at the top
+
+in supervisor
+the ctrl+k does not work It pops up but no suggested commands /or sql
