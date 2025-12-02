@@ -10,15 +10,36 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
+    /* 1. SHARED TOKENS */
     :root {
-        --bg: #0a0e14;
-        --card: #151a23;
-        --text: #e6e8eb;
-        --muted: #6b7280;
-        --accent: #3b82f6;
-        --border: #1f2937;
-        --success: #10b981;
-        --warning: #f59e0b;
+        --accent: #0ea5e9;
+        --success: #22c55e;
+        --warn: #fbbf24;
+        --danger: #ef4444;
+        --purple: #8b5cf6;
+    }
+
+    /* 2. LIGHT MODE CONFIG */
+    [data-theme="light"] {
+        --bg: #f1f5f9;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #cbd5e1;
+    }
+
+    /* 3. DARK MODE CONFIG */
+    [data-theme="dark"] {
+        --bg: #0e1420;
+        --card: #1f2937;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --border: #334155;
+    }
+
+    /* 4. ANIMATIONS */
+    body, .filters, .report-table, header, input, select {
+        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,30 +47,132 @@
     body {
         background: var(--bg);
         color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        padding: 24px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+    }
+
+    header {
+        background: var(--card);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .header-left {
+        flex: 1;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--accent);
+    }
+
+    .header-right {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    #avatarBtn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: var(--accent);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #avatarMenu {
+        position: absolute;
+        top: 48px;
+        right: 0;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        min-width: 150px;
+        padding: 4px 0;
+        display: none;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    #avatarMenu > div {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text);
+    }
+
+    #avatarMenu > div:hover {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    /* Navigation */
+    .main-nav {
+        background: #1e3a5f;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .main-nav a {
+        color: #e2e8f0;
+        text-decoration: none;
+        padding: 14px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+    }
+
+    .main-nav a:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+    .main-nav a.active {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+
+    .nav-divider {
+        color: #64748b;
+        font-size: 18px;
+        user-select: none;
     }
 
     .container {
         max-width: 1400px;
         margin: 0 auto;
+        padding: 24px;
     }
 
-    .header {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 24px;
+    .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 24px;
     }
 
     h1 {
-        font-size: 24px;
-        font-weight: 600;
+        font-size: 28px;
+        font-weight: 700;
         color: var(--text);
+    }
+
+    .timestamp {
+        font-size: 14px;
+        color: var(--muted);
     }
 
     .filters {
@@ -88,6 +211,11 @@
         font-size: 14px;
     }
 
+    select:focus, input[type="date"]:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
     .btn-group {
         display: flex;
         gap: 12px;
@@ -110,7 +238,8 @@
     }
 
     .btn-primary:hover {
-        background: #2563eb;
+        background: #0284c7;
+        transform: translateY(-1px);
     }
 
     .btn-secondary {
@@ -119,7 +248,8 @@
     }
 
     .btn-secondary:hover {
-        background: #059669;
+        background: #16a34a;
+        transform: translateY(-1px);
     }
 
     .btn-outline {
@@ -148,7 +278,7 @@
     }
 
     .stat-value {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 700;
         color: var(--accent);
         margin-bottom: 4px;
@@ -174,7 +304,7 @@
     }
 
     thead {
-        background: rgba(59, 130, 246, 0.1);
+        background: rgba(14, 165, 233, 0.1);
     }
 
     th {
@@ -195,12 +325,12 @@
     }
 
     tbody tr:hover {
-        background: rgba(255,255,255,0.02);
+        background: rgba(14, 165, 233, 0.05);
     }
 
     .export-badge {
         display: inline-block;
-        background: #8b5cf6;
+        background: var(--purple);
         color: white;
         padding: 2px 8px;
         border-radius: 4px;
@@ -214,12 +344,12 @@
     }
 
     .duration-warning {
-        color: var(--warning);
+        color: var(--warn);
         font-weight: 600;
     }
 
     .duration-bad {
-        color: #ef4444;
+        color: var(--danger);
         font-weight: 600;
     }
 
@@ -235,16 +365,68 @@
         color: var(--muted);
         font-size: 16px;
     }
+
+    .back-link {
+        display: inline-block;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
 </style>
 </head>
 
 <body>
 
+<header>
+    <div class="header-left">Reports Dashboard</div>
+    <div class="header-right">
+        <div style="position: relative;">
+            <div id="avatarBtn">??</div>
+            
+            <div id="avatarMenu">
+                <div id="menuName" style="border-bottom:1px solid var(--border); margin-bottom:5px;">Loading...</div>
+                
+                <div style="font-size:12px; color:var(--muted); padding: 4px 12px;">Appearance</div>
+                <div onclick="setTheme('light')" style="display:flex; justify-content:space-between;">
+                    <span>&#9728; Light</span>
+                    <span id="check-light" style="display:none;">&#10003;</span>
+                </div>
+                <div onclick="setTheme('dark')" style="display:flex; justify-content:space-between;">
+                    <span>&#9790; Dark</span>
+                    <span id="check-dark" style="display:none;">&#10003;</span>
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
+                
+                <div onclick="logoutUser()">Logout</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+<!-- REPORT.HTML NAV (REPORTS is active) -->
+<nav class="main-nav">
+    <a href="arrivals.html">ARRIVALS</a>
+    <span class="nav-divider">|</span>
+    <a href="index.html">QUEUE</a>
+    <span class="nav-divider">|</span>
+    <a href="supervisor.html">SUPERVISOR</a>
+    <span class="nav-divider">|</span>
+    <a href="report.html" class="active">REPORTS</a>
+</nav>
+
 <div class="container">
     
-    <div class="header">
-        <h1>📊 Vehicle Movement Reports</h1>
-        <div style="font-size: 14px; color: var(--muted);" id="reportTimestamp"></div>
+    <div class="page-header">
+        <h1>Vehicle Movement Reports</h1>
+        <div class="timestamp" id="reportTimestamp"></div>
     </div>
 
     <div class="filters">
@@ -280,140 +462,213 @@
             </div>
 
             <div class="filter-group">
-                <label>Classification</label>
-                <select id="classFilter">
-                    <option value="all">All</option>
-                    <option value="export">Export Only</option>
-                    <option value="normal">Normal Only</option>
+                <label>Operator</label>
+                <select id="operatorFilter">
+                    <option value="all">All Operators</option>
                 </select>
             </div>
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="runReport()">🔍 Generate Report</button>
-            <button class="btn btn-secondary" onclick="downloadPDF()">📄 Download PDF</button>
-            <button class="btn btn-outline" onclick="downloadCSV()">📊 Download CSV</button>
+            <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+            <button class="btn btn-secondary" onclick="downloadPDF()">Download PDF</button>
+            <button class="btn btn-outline" onclick="downloadCSV()">Export CSV</button>
         </div>
     </div>
 
-    <div class="stats-row" id="statsRow" style="display:none;"></div>
+    <div id="statsRow" class="stats-row" style="display:none;"></div>
 
-    <div class="report-table">
-        <div id="reportContent" class="loading">Select filters and click Generate Report</div>
+    <div class="report-table" id="reportContainer">
+        <div class="empty-state">
+            <p style="font-size:18px; margin-bottom:8px;">No report generated yet</p>
+            <p style="font-size:14px;">Select your filters above and click Generate Report</p>
+        </div>
     </div>
 
 </div>
 
-<!--/* Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module">
+// ==================== IMPORTS ====================
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm";
 
-<script>
-// ==================== SUPABASE ====================
-const db = supabase.createClient(
-    "https://gtixdparpjdpyhhubsfz.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
-);
+const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let reportData = [];
-let operators = [];
+
+// ==================== THEME SYSTEM ====================
+function initTheme() {
+    const saved = localStorage.getItem("theme") || "dark";
+    document.documentElement.setAttribute("data-theme", saved);
+    updateThemeChecks(saved);
+}
+
+window.setTheme = function(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    updateThemeChecks(theme);
+};
+
+function updateThemeChecks(theme) {
+    document.getElementById("check-light").style.display = theme === "light" ? "inline" : "none";
+    document.getElementById("check-dark").style.display = theme === "dark" ? "inline" : "none";
+}
+
+// ==================== AVATAR MENU ====================
+document.getElementById("avatarBtn").onclick = function(e) {
+    e.stopPropagation();
+    const menu = document.getElementById("avatarMenu");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+};
+
+document.addEventListener("click", function() {
+    document.getElementById("avatarMenu").style.display = "none";
+});
+
+// ==================== USER SESSION ====================
+async function checkSession() {
+    const opId = localStorage.getItem("operator_id");
+    if (!opId) {
+        // Store current page so login can redirect back
+        sessionStorage.setItem("returnUrl", window.location.href);
+        window.location.href = "login.html";
+        return;
+    }
+
+    // Fetch operator details
+    const { data, error } = await supabase
+        .from("operators")
+        .select("name")
+        .eq("id", opId)
+        .single();
+
+    if (data) {
+        document.getElementById("menuName").textContent = data.name;
+        
+        const initials = data.name
+            .split(" ")
+            .map(n => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
+        document.getElementById("avatarBtn").textContent = initials;
+    }
+}
+
+window.logoutUser = function() {
+    localStorage.removeItem("operator_id");
+    window.location.href = "login.html";
+};
 
 // ==================== LOAD OPERATORS ====================
 async function loadOperators() {
-    const { data } = await db.from("operators").select("id, name");
-    operators = data || [];
-}
+    try {
+        const { data, error } = await supabase
+            .from("vehicles")
+            .select("operator_name")
+            .order("operator_name");
 
-// ==================== DATE HANDLING ====================
-function updateCustomDates() {
-    const range = document.getElementById("dateRange").value;
-    const customGroup = document.getElementById("customDatesGroup");
-    const customGroup2 = document.getElementById("customDatesGroup2");
-    
-    if (range === "custom") {
-        customGroup.style.display = "block";
-        customGroup2.style.display = "block";
+        if (error) throw error;
+
+        const uniqueOps = [...new Set(data.map(v => v.operator_name))];
+        const select = document.getElementById("operatorFilter");
         
-        // Set defaults
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById("dateTo").value = today;
-        
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        document.getElementById("dateFrom").value = weekAgo.toISOString().split('T')[0];
-    } else {
-        customGroup.style.display = "none";
-        customGroup2.style.display = "none";
+        uniqueOps.forEach(op => {
+            const opt = document.createElement("option");
+            opt.value = op;
+            opt.textContent = op;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Error loading operators:", err);
     }
 }
+
+// ==================== DATE HELPERS ====================
+window.updateCustomDates = function() {
+    const range = document.getElementById("dateRange").value;
+    const isCustom = range === "custom";
+    document.getElementById("customDatesGroup").style.display = isCustom ? "flex" : "none";
+    document.getElementById("customDatesGroup2").style.display = isCustom ? "flex" : "none";
+};
 
 function getDateRange() {
     const range = document.getElementById("dateRange").value;
     const now = new Date();
-    let fromDate, toDate;
+    let startDate, endDate;
 
     switch(range) {
         case "today":
-            fromDate = new Date(now.setHours(0,0,0,0));
-            toDate = new Date(now.setHours(23,59,59,999));
+            startDate = new Date(now.setHours(0,0,0,0));
+            endDate = new Date(now.setHours(23,59,59,999));
             break;
         case "yesterday":
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            fromDate = new Date(yesterday.setHours(0,0,0,0));
-            toDate = new Date(yesterday.setHours(23,59,59,999));
+            startDate = new Date(now.setDate(now.getDate() - 1));
+            startDate.setHours(0,0,0,0);
+            endDate = new Date(startDate);
+            endDate.setHours(23,59,59,999);
             break;
         case "last7":
-            toDate = new Date();
-            fromDate = new Date();
-            fromDate.setDate(fromDate.getDate() - 7);
-            fromDate.setHours(0,0,0,0);
+            endDate = new Date();
+            startDate = new Date(now.setDate(now.getDate() - 7));
+            startDate.setHours(0,0,0,0);
             break;
         case "last30":
-            toDate = new Date();
-            fromDate = new Date();
-            fromDate.setDate(fromDate.getDate() - 30);
-            fromDate.setHours(0,0,0,0);
+            endDate = new Date();
+            startDate = new Date(now.setDate(now.getDate() - 30));
+            startDate.setHours(0,0,0,0);
             break;
         case "custom":
-            fromDate = new Date(document.getElementById("dateFrom").value);
-            toDate = new Date(document.getElementById("dateTo").value);
-            toDate.setHours(23,59,59,999);
+            const fromVal = document.getElementById("dateFrom").value;
+            const toVal = document.getElementById("dateTo").value;
+            if (!fromVal || !toVal) {
+                alert("Please select both dates");
+                return null;
+            }
+            startDate = new Date(fromVal + "T00:00:00");
+            endDate = new Date(toVal + "T23:59:59");
             break;
+        default:
+            startDate = new Date(now.setHours(0,0,0,0));
+            endDate = new Date(now.setHours(23,59,59,999));
     }
 
-    return {
-        from: fromDate.toISOString(),
-        to: toDate.toISOString()
-    };
+    return { startDate, endDate };
 }
 
-// ==================== RUN REPORT ====================
-async function runReport() {
-    document.getElementById("reportContent").innerHTML = '<div class="loading">Loading report data...</div>';
-    
-    try {
-        const dateRange = getDateRange();
-        const statusFilter = document.getElementById("statusFilter").value;
-        const classFilter = document.getElementById("classFilter").value;
+// ==================== GENERATE REPORT ====================
+window.generateReport = async function() {
+    const container = document.getElementById("reportContainer");
+    container.innerHTML = '<div class="loading">Generating report...</div>';
 
-        // Build query
-        let query = db
+    const dates = getDateRange();
+    if (!dates) {
+        container.innerHTML = '<div class="empty-state">Invalid date range</div>';
+        return;
+    }
+
+    const { startDate, endDate } = dates;
+    const statusFilter = document.getElementById("statusFilter").value;
+    const operatorFilter = document.getElementById("operatorFilter").value;
+
+    try {
+        let query = supabase
             .from("vehicles")
             .select("*")
-            .gte("check_in_time", dateRange.from)
-            .lte("check_in_time", dateRange.to)
+            .gte("check_in_time", startDate.toISOString())
+            .lte("check_in_time", endDate.toISOString())
             .order("check_in_time", { ascending: false });
 
-        // Apply status filter
         if (statusFilter === "released") {
             query = query.eq("status", "released");
         } else if (statusFilter === "active") {
-            query = query.in("status", ["parked", "notified"]);
+            query = query.neq("status", "released");
         }
 
-        // Apply classification filter
-        if (classFilter !== "all") {
-            query = query.eq("classification", classFilter);
+        if (operatorFilter !== "all") {
+            query = query.eq("operator_name", operatorFilter);
         }
 
         const { data, error } = await query;
@@ -422,42 +677,31 @@ async function runReport() {
 
         reportData = data || [];
 
-        // Get operator names for all vehicles
-        for (let vehicle of reportData) {
-            if (vehicle.operator_id) {
-                const op = operators.find(o => o.id === vehicle.operator_id);
-                vehicle.operator_name = op?.name || "Unknown";
-            } else {
-                vehicle.operator_name = "Unknown";
-            }
+        if (reportData.length === 0) {
+            container.innerHTML = '<div class="empty-state">No vehicles found for the selected criteria</div>';
+            updateStats();
+            return;
         }
 
-        renderReport();
+        renderTable();
         updateStats();
         updateTimestamp();
 
-    } catch (error) {
-        console.error("Error generating report:", error);
-        document.getElementById("reportContent").innerHTML = 
-            '<div class="empty-state">❌ Error loading report. Please try again.</div>';
+    } catch (err) {
+        console.error("Report error:", err);
+        container.innerHTML = '<div class="empty-state">Error generating report</div>';
     }
-}
+};
 
-// ==================== RENDER REPORT ====================
-function renderReport() {
-    const container = document.getElementById("reportContent");
-
-    if (reportData.length === 0) {
-        container.innerHTML = '<div class="empty-state">📋 No vehicles found for selected filters</div>';
-        return;
-    }
-
+// ==================== RENDER TABLE ====================
+function renderTable() {
+    const container = document.getElementById("reportContainer");
+    
     const rows = reportData.map(v => {
         const checkIn = new Date(v.check_in_time);
         const notifyTime = v.notify_time ? new Date(v.notify_time) : null;
         const releaseTime = v.release_time ? new Date(v.release_time) : null;
 
-        // Calculate duration
         let duration = "-";
         let durationClass = "";
         
@@ -465,8 +709,7 @@ function renderReport() {
             const mins = Math.floor((releaseTime - checkIn) / 60000);
             duration = mins + "m";
             
-            const quoted = v.quoted_minutes || 60;
-            const variance = mins - quoted;
+            const variance = mins - (v.quoted_time || 60);
             
             if (variance <= 0) {
                 durationClass = "duration-good";
@@ -542,7 +785,6 @@ function updateStats() {
     const inProgress = total - released;
     const exports = reportData.filter(v => v.classification === "export").length;
 
-    // Calculate average duration for completed vehicles
     const completedVehicles = reportData.filter(v => v.release_time);
     let avgDuration = 0;
     
@@ -595,27 +837,24 @@ function updateTimestamp() {
 }
 
 // ==================== DOWNLOAD PDF ====================
-function downloadPDF() {
+window.downloadPDF = function() {
     if (reportData.length === 0) {
         alert("Please generate a report first");
         return;
     }
 
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // landscape
+    const doc = new jsPDF('l', 'mm', 'a4');
 
-    // Title
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
     doc.text("Vehicle Movement Report", 14, 15);
 
-    // Timestamp
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     const now = new Date().toLocaleString("en-GB");
     doc.text(`Generated: ${now}`, 14, 22);
 
-    // Date range
     const range = document.getElementById("dateRange").value;
     let rangeText = range.charAt(0).toUpperCase() + range.slice(1);
     if (range === "custom") {
@@ -625,7 +864,6 @@ function downloadPDF() {
     }
     doc.text(`Period: ${rangeText}`, 14, 27);
 
-    // Prepare table data
     const tableData = reportData.map(v => {
         const checkIn = new Date(v.check_in_time);
         const notifyTime = v.notify_time ? new Date(v.notify_time) : null;
@@ -663,29 +901,26 @@ function downloadPDF() {
         ];
     });
 
-    // Generate table
     doc.autoTable({
         startY: 32,
         head: [['Registration', 'PO Ref', 'Check-In', 'Notified', 'Released', 'Duration', 'Operator']],
         body: tableData,
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+        headStyles: { fillColor: [14, 165, 233], textColor: 255 },
         alternateRowStyles: { fillColor: [240, 240, 240] },
         margin: { top: 32 }
     });
 
-    // Footer note
     const finalY = doc.lastAutoTable.finalY + 5;
     doc.setFontSize(8);
     doc.text("* = Vehicle still in yard", 14, finalY);
 
-    // Save
     const filename = `vehicle-report-${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(filename);
-}
+};
 
 // ==================== DOWNLOAD CSV ====================
-function downloadCSV() {
+window.downloadCSV = function() {
     if (reportData.length === 0) {
         alert("Please generate a report first");
         return;
@@ -703,10 +938,8 @@ function downloadCSV() {
         });
     };
 
-    // CSV header
     let csv = "Registration,PO Reference,Classification,Check-In Time,Notified Time,Release Time,Duration (mins),Status,Operator\n";
 
-    // CSV rows
     reportData.forEach(v => {
         const checkIn = new Date(v.check_in_time);
         const releaseTime = v.release_time ? new Date(v.release_time) : null;
@@ -721,7 +954,6 @@ function downloadCSV() {
         csv += `"${v.registration}","${v.po_ref || ""}","${v.classification || "normal"}","${formatTime(v.check_in_time)}","${formatTime(v.notify_time)}","${formatTime(v.release_time)}","${durationMins}","${v.status}","${v.operator_name}"\n`;
     });
 
-    // Download
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -731,13 +963,14 @@ function downloadCSV() {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-}
+};
 
 // ==================== INIT ====================
 (async () => {
+    initTheme();
+    await checkSession();
     await loadOperators();
     
-    // Set default date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById("dateTo").value = today;
 })();
