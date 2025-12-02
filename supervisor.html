@@ -8,7 +8,7 @@
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
     background: #ef4444; color: white; padding: 4px 12px;
     border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
-">v3.8.0 - THEMED</div>
+">v4.0.0 - THEMED</div>
 
 <style>
     /* 1. SHARED TOKENS (Colors that work on both modes) */
@@ -203,6 +203,38 @@
 
     .export-badge { display: inline-block; background: var(--export); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 8px; }
     .empty-state { text-align: center; padding: 40px; color: var(--muted); }
+
+    /* EXPORT CARD DRAMATIC STYLING */
+    .intervention-card-export {
+        position: relative;
+        background: linear-gradient(
+            90deg,
+            rgba(14,165,233,0.25),
+            rgba(14,165,233,0.08)
+        ) !important;
+        border-left: 6px solid #0ea5e9 !important;
+        box-shadow: 0 0 20px rgba(14,165,233,0.6);
+        animation: exportPulse 2.4s infinite ease-in-out;
+    }
+    
+    @keyframes exportPulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(14,165,233,0.6); }
+        50% { box-shadow: 0 0 30px rgba(14,165,233,0.9); }
+    }
+    
+    .export-banner {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #0ea5e9;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        box-shadow: 0 2px 8px rgba(14,165,233,0.4);
+    }
 
     /* MODAL */
     #modalOverlay {
@@ -451,6 +483,7 @@
                     <div class="info-label">Status</div><div class="info-value" id="modalStatus">-</div>
                     <div class="info-label">PO / Ref</div><div class="info-value" id="modalPO">-</div>
                     <div class="info-label">Mobile</div><div class="info-value" id="modalMobile">-</div>
+                    <div class="info-label">Classification</div><div class="info-value" id="modalClassification">-</div>
                 </div>
             </div>
 
@@ -610,7 +643,12 @@ function renderList(id, list, isCritical) {
         const timeText = isCritical ? v.overdue + "m OVERDUE" : Math.abs(v.overdue) + "m left";
         const timeColor = isCritical ? 'var(--critical)' : 'var(--warning)';
         
-        return '<div class="intervention-card">' +
+        const isExport = v.classification === 'export';
+        const cardClass = isExport ? 'intervention-card intervention-card-export' : 'intervention-card';
+        const exportBanner = isExport ? '<div class="export-banner">EXPORT LOAD</div>' : '';
+        
+        return '<div class="' + cardClass + '">' +
+            exportBanner +
             '<div class="card-left">' +
                 '<div class="card-reg">' + v.registration + ' <span style="font-size:14px;color:' + timeColor + ';margin-left:10px;">' + timeText + '</span></div>' +
                 '<div class="card-meta">' +
@@ -641,6 +679,10 @@ async function openCaseModal(id) {
     document.getElementById("modalStatus").textContent = v.status;
     document.getElementById("modalPO").textContent = v.po_ref || '-';
     document.getElementById("modalMobile").textContent = v.mobile_number || '-';
+    const classText = v.classification === "export" ? "EXPORT" : (v.classification || "normal");
+    const classStyle = v.classification === "export" ? "color: #0ea5e9; font-weight: 700; text-transform: uppercase;" : "";
+    document.getElementById("modalClassification").textContent = classText;
+    document.getElementById("modalClassification").style.cssText = classStyle;
     document.getElementById("modalNotes").textContent = v.notes || 'No notes';
     
     document.getElementById("modalTotalWait").textContent = total + "m";
