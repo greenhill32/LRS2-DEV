@@ -1,39 +1,10 @@
-In add lorry modal (index.html) there is no way to exit. Add and x to close
 
-in the modal add lorry, it should be parsed from json
-
-Haulier <no data taken from JSON>
-
-*REFERENCE
-*Orders
-*Slot_start
-*slot_end
-*contains_meds
-*status
-*pallets
-
-adjust to accommodate this
-
-  "date": "2025-11-29",
-  "bookings": [
-    {
-      "ref": "819824",
-      "account": "PRO001",
-      "customer": null,
-      "orders": ["1000078975"],
-      "pop_ref": "POPS0000131886",
-      "slot_start": "06:00",
-      "slot_end": "06:30",
-      "pallets": 51,
-      "contains_meds": false,
-      "status": "booked",
-      "notes": null
-    },
-
-
-//
-
-sort into time order earliest first & show date at the top
 
 QUESTION FOR SOMENONE
 IN BOOKING SCHEDULER THERE IS NO OPTION TO MARK AS EXPORT (WHO KNOWS)
+
+export loads.
+in queue it is clearly visible blue pulse
+but in supervisor it is not obviously an export load even when opening modal for more info it does not state as export.
+we need to fix this.
+ 
