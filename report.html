@@ -409,9 +409,6 @@
     </div>
 </header>
 
-
-
-<!-- REPORT.HTML NAV (REPORTS is active) -->
 <nav class="main-nav">
     <a href="arrivals.html">ARRIVALS</a>
     <span class="nav-divider">|</span>
@@ -491,10 +488,10 @@
 // ==================== IMPORTS ====================
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm";
 
-const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+const SUPABASE_URL = "https://gtixdparpjdpyhhubsfz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let reportData = [];
 
@@ -538,7 +535,7 @@ async function checkSession() {
     }
 
     // Fetch operator details
-    const { data, error } = await supabase
+    const { data, error } = await db
         .from("operators")
         .select("name")
         .eq("id", opId)
@@ -549,11 +546,10 @@ async function checkSession() {
         
         const initials = data.name
             .split(" ")
-            .map(n => n[0])
+            .map(n => (n[0] || '').toUpperCase())
             .join("")
-            .toUpperCase()
             .slice(0, 2);
-        document.getElementById("avatarBtn").textContent = initials;
+        document.getElementById("avatarBtn").textContent = initials || '??';
     }
 }
 
@@ -565,7 +561,7 @@ window.logoutUser = function() {
 // ==================== LOAD OPERATORS ====================
 async function loadOperators() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from("vehicles")
             .select("operator_name")
             .order("operator_name");
@@ -654,7 +650,7 @@ window.generateReport = async function() {
     const operatorFilter = document.getElementById("operatorFilter").value;
 
     try {
-        let query = supabase
+        let query = db
             .from("vehicles")
             .select("*")
             .gte("check_in_time", startDate.toISOString())

@@ -575,7 +575,8 @@ function checkUser() {
     db.from("operators").select("name").eq("id", opId).single().then(({data}) => {
         if(data) {
             document.getElementById('menuName').textContent = data.name;
-            document.getElementById('avatarBtn').textContent = data.name.substring(0,2).toUpperCase();
+            const initials = data.name.split(" ").map(x => (x[0] || "")).join("").toUpperCase().slice(0, 2);
+            document.getElementById("avatarBtn").textContent = initials || "??";
         }
     });
 }

@@ -8,7 +8,7 @@
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
     background: #8b5cf6; color: white; padding: 4px 12px;
     border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 9999;
-">v4.1.0 - MEDS & SLOTS</div>
+">v4.0.0 - THEMED</div>
 
 <style>
     /* 1. SHARED COLORS (Colors that look good on both modes) */
@@ -141,9 +141,9 @@
     .stat-value.success { color: var(--success); }
     .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-    /* LAYOUT */
+    /* LAYOUT - UPDATED for Task 1 */
     .main-grid {
-        display: block; 
+        display: block; /* Removed Grid */
         max-width: 1200px;
         margin: 0 auto;
         padding: 0 24px 24px;
@@ -212,18 +212,7 @@
 
     /* Badges */
     .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-    
-    /* NEW: Meds Badge Styling */
-    .meds-badge {
-        background: var(--danger);
-        color: white;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 10px;
-        font-weight: 600;
-        margin-left: 8px;
-        letter-spacing: 0.5px;
-    }
+    .badge-meds { background: var(--danger); color: white; margin-left: 8px; }
     
     /* Status Badges */
     .state-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
@@ -266,6 +255,7 @@
     </div>
 </header>
 
+
 <!-- ARRIVALS.HTML NAV (ARRIVALS is active) -->
 <nav class="main-nav">
     <a href="arrivals.html" class="active">ARRIVALS</a>
@@ -276,7 +266,6 @@
     <span class="nav-divider">|</span>
     <a href="report.html">REPORTS</a>
 </nav>
-
 
 
 <!-- STATS -->
@@ -363,14 +352,13 @@ async function loadLiveVehicles() {
     }
 }
 
-// 4. Sync Logic (Updated with Sorting)
+// 4. Sync Logic
 function syncData() {
     if (!bookingsData || bookingsData.length === 0) {
         document.getElementById('arrivalsList').innerHTML = '<div style="padding:40px; text-align:center;">No Bookings Found</div>';
         return;
     }
 
-    // 4.1 Merge Data
     mergedData = bookingsData.map(b => {
         // Safe Copy
         const item = { ...b, syncStatus: 'booked', syncBadge: '', liveReg: null, actualPallets: null };
@@ -397,35 +385,20 @@ function syncData() {
         return item;
     });
 
-    // 4.2 Sort Chronologically (by slot_start or time)
-    mergedData.sort((a, b) => {
-        const timeA = a.slot_start || a.time || "23:59";
-        const timeB = b.slot_start || b.time || "23:59";
-        return timeA.localeCompare(timeB);
-    });
-
     renderBoard();
     updateStats();
 }
 
-// 5. Render (Updated with Date Header & Meds Badge)
+// 5. Render
 function renderBoard() {
     const container = document.getElementById('arrivalsList');
     container.innerHTML = '';
 
-    // 5.1 Date Header
-    if (mergedData.length > 0 && mergedData[0].date) {
-        const dateHeader = document.createElement('div');
-        dateHeader.style.cssText = 'padding: 16px 20px; font-size: 16px; font-weight: 700; color: var(--accent); background: var(--bg); border-bottom: 1px solid var(--border);';
-        dateHeader.textContent = `Schedule: ${mergedData[0].date}`;
-        container.appendChild(dateHeader);
-    }
-
     // Group by hour
     const groups = {};
     mergedData.forEach(item => {
-        // SAFETY CHECK: If time/slot is missing, default to 00:00
-        const timeStr = item.slot_start || item.time || "00:00";
+        // SAFETY CHECK: If time is missing, default to 00:00
+        const timeStr = item.time || "00:00";
         const h = timeStr.slice(0,2) + ':00';
         
         if (!groups[h]) groups[h] = [];
@@ -455,12 +428,6 @@ function renderBoard() {
             const statusClass = `status-${b.syncStatus}`;
             const displayPallets = b.actualPallets || b.pallets || 0;
             const palletLabel = b.actualPallets ? '(Actual)' : '(Est)';
-            
-            // New Indicators
-            const medsBadge = b.contains_meds ? '<span class="meds-badge">MEDS</span>' : '';
-            const slotDisplay = (b.slot_start && b.slot_end) 
-                ? `${b.slot_start} - ${b.slot_end}` 
-                : (b.time || "Unscheduled");
 
             html += `
             <div class="booking-card" onclick="selectForCheckin('${b.ref}')">
@@ -468,14 +435,13 @@ function renderBoard() {
                 <div class="booking-main">
                     <div class="booking-header">
                         <span class="booking-ref">#${b.ref}</span>
-                        ${medsBadge}
                         ${b.liveReg ? `<span class="reg-badge">${b.liveReg}</span>` : ''}
                         ${b.syncBadge}
+                        ${b.contains_meds ? '<span class="badge badge-meds">MEDS</span>' : ''}
                     </div>
                     <div class="booking-details">
                         <span>${b.customer || 'Unknown Customer'}</span>
                         <span>${b.account || ''}</span>
-                        <span>Slot: ${slotDisplay}</span>
                     </div>
                 </div>
                 <div class="booking-meta">
@@ -495,6 +461,7 @@ function updateStats() {
     const inQueue = mergedData.filter(x => x.syncStatus === 'waiting').length;
     const complete = mergedData.filter(x => x.syncStatus === 'complete').length;
     
+    // UPDATED LINE: Filter out 'complete' items before summing
     const pallets = mergedData
         .filter(x => x.syncStatus !== 'complete') // This removes the completed ones
         .reduce((sum, x) => sum + (x.actualPallets || x.pallets || 0), 0);
@@ -550,7 +517,8 @@ function checkUser() {
     db.from("operators").select("name").eq("id", opId).single().then(({data}) => {
         if(data) {
             document.getElementById('menuName').textContent = data.name;
-            document.getElementById('avatarBtn').textContent = data.name.substring(0,2).toUpperCase();
+            const initials = data.name.split(" ").map(x => (x[0] || "")).join("").toUpperCase().slice(0, 2);
+            document.getElementById("avatarBtn").textContent = initials || "??";
         }
     });
 }
