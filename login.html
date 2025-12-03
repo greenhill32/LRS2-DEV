@@ -12,6 +12,7 @@
         --accent: #1b8cff;
         --text: #e6e6e6;
         --muted: #999;
+        --danger: #ef4444;
     }
 
     body {
@@ -42,7 +43,7 @@
         color: var(--accent);
     }
 
-    select {
+    select, input {
         width: 100%;
         padding: 14px;
         font-size: 18px;
@@ -51,6 +52,11 @@
         background: #2a2a2a;
         color: var(--text);
         margin-top: 10px;
+        box-sizing: border-box;
+    }
+
+    input::placeholder {
+        color: var(--muted);
     }
 
     button {
@@ -70,10 +76,22 @@
         opacity: 0.85;
     }
 
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
     .footer {
         margin-top: 20px;
         font-size: 14px;
         color: var(--muted);
+    }
+
+    .error {
+        color: var(--danger);
+        margin-top: 15px;
+        font-size: 14px;
+        display: none;
     }
 </style>
 </head>
@@ -81,11 +99,17 @@
 <body>
 
 <div class="box">
-    <h2>Choose Operator</h2>
+    <h2>Operator Login</h2>
 
-    <select id="operatorSelect"></select>
+    <select id="operatorSelect">
+        <option value="">-- Loading --</option>
+    </select>
 
-    <button onclick="login()">Enter Dashboard</button>
+    <input type="password" id="pinInput" placeholder="Enter 6-digit PIN" maxlength="6" inputmode="numeric">
+
+    <div id="errorMsg" class="error"></div>
+
+    <button id="loginBtn" onclick="doLogin()">Enter Dashboard</button>
 
     <div class="footer">All actions are logged.</div>
 </div>
@@ -98,32 +122,84 @@ const db = supabase.createClient(
 );
 
 async function loadOperators() {
-    const { data } = await db
-        .from("operators")
-        .select("id, name")
-        .eq("active", true)
-        .order("name");
-
+    const { data, error } = await db.rpc('get_operators');
+    
     const sel = document.getElementById("operatorSelect");
-    sel.innerHTML = "<option value=''>-- Select User --</option>";
+    
+    if (error || !data) {
+        sel.innerHTML = "<option value=''>-- Error loading --</option>";
+        console.error(error);
+        return;
+    }
 
+    sel.innerHTML = "<option value=''>-- Select Operator --</option>";
     data.forEach(op => {
-        sel.innerHTML += `<option value="${op.id}">${op.name}</option>`;
+        sel.innerHTML += `<option value="${op.name}">${op.name}</option>`;
     });
 }
 
-function login() {
-    const op = document.getElementById("operatorSelect").value;
-    if (!op) return alert("Please select an operator");
+async function doLogin() {
+    const opName = document.getElementById("operatorSelect").value;
+    const pin = document.getElementById("pinInput").value;
+    const errorDiv = document.getElementById("errorMsg");
+    const btn = document.getElementById("loginBtn");
 
-    localStorage.setItem("operator_id", op);
-    window.location.href = "index.html"; // NEW MAIN FILE
+    errorDiv.style.display = "none";
+
+    if (!opName) {
+        errorDiv.textContent = "Please select an operator";
+        errorDiv.style.display = "block";
+        return;
+    }
+
+    if (!pin || pin.length < 4) {
+        errorDiv.textContent = "Please enter your PIN";
+        errorDiv.style.display = "block";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Checking...";
+
+    const { data, error } = await db.rpc('login', { 
+        op_name: opName, 
+        pin: pin 
+    });
+
+    if (error) {
+        errorDiv.textContent = "Connection error. Try again.";
+        errorDiv.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Enter Dashboard";
+        console.error(error);
+        return;
+    }
+
+    if (!data.success) {
+        errorDiv.textContent = "Invalid PIN. Try again.";
+        errorDiv.style.display = "block";
+        document.getElementById("pinInput").value = "";
+        btn.disabled = false;
+        btn.textContent = "Enter Dashboard";
+        return;
+    }
+
+    // Success - store session
+    localStorage.setItem("session_token", data.token);
+    localStorage.setItem("operator_id", data.operator_id);
+    localStorage.setItem("operator_name", data.operator_name);
+    localStorage.setItem("operator_role", data.role);
+
+    window.location.href = "index.html";
 }
+
+// Allow Enter key to submit
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doLogin();
+});
 
 loadOperators();
 </script>
 
 </body>
 </html>
-
-
