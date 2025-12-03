@@ -563,21 +563,19 @@ async function checkSession() {
 // ==================== LOAD OPERATORS ====================
 async function loadOperators() {
     try {
-        const { data, error } = await db.rpc("get_operators_secure", {
-            session_token: getToken()
-        });
+        const { data, error } = await db
+            .from('operators')
+            .select('id, name')
+            .eq('active', true)
+            .order('name');
 
         if (error) throw error;
-
-        const ops = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-        if (data && data.success === false) throw new Error(data.error || "Operators RPC failed");
-        const uniqueOps = [...new Set(ops.map(v => v.name))];
-        const select = document.getElementById("operatorFilter");
         
-        uniqueOps.forEach(op => {
+        const select = document.getElementById("operatorFilter");
+        (data || []).forEach(op => {
             const opt = document.createElement("option");
-            opt.value = op;
-            opt.textContent = op;
+            opt.value = op.id;
+            opt.textContent = op.name;
             select.appendChild(opt);
         });
     } catch (err) {
