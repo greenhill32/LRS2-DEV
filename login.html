@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
+<title>WAIT99 Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -55,8 +55,9 @@
         box-sizing: border-box;
     }
 
-    input::placeholder {
-        color: var(--muted);
+    input:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
     }
 
     button {
@@ -70,9 +71,10 @@
         border-radius: 10px;
         cursor: pointer;
         font-weight: bold;
+        transition: all 0.2s;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
         opacity: 0.85;
     }
 
@@ -89,9 +91,21 @@
 
     .error {
         color: var(--danger);
-        margin-top: 15px;
         font-size: 14px;
+        margin-top: 10px;
         display: none;
+    }
+
+    .error.show {
+        display: block;
+    }
+
+    .version {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        font-size: 12px;
+        color: var(--muted);
     }
 </style>
 </head>
@@ -99,20 +113,28 @@
 <body>
 
 <div class="box">
-    <h2>Operator Login</h2>
+    <h2>WAIT99 Login</h2>
 
     <select id="operatorSelect">
-        <option value="">-- Loading --</option>
+        <option value="">-- Select Operator --</option>
     </select>
 
-    <input type="password" id="pinInput" placeholder="Enter 6-digit PIN" maxlength="6" inputmode="numeric">
+    <input 
+        type="password" 
+        id="pinInput" 
+        placeholder="Enter PIN" 
+        maxlength="6"
+        autocomplete="off"
+    >
 
-    <div id="errorMsg" class="error"></div>
+    <div class="error" id="errorMsg"></div>
 
-    <button id="loginBtn" onclick="doLogin()">Enter Dashboard</button>
+    <button onclick="login()" id="loginBtn">Enter Dashboard</button>
 
-    <div class="footer">All actions are logged.</div>
+    <div class="footer">All actions are logged and audited.</div>
 </div>
+
+<div class="version">v4.0.0</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -121,83 +143,112 @@ const db = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
 );
 
+// Load operators on page load
 async function loadOperators() {
-    const { data, error } = await db.rpc('get_operators');
-    
-    const sel = document.getElementById("operatorSelect");
-    
-    if (error || !data) {
-        sel.innerHTML = "<option value=''>-- Error loading --</option>";
-        console.error(error);
-        return;
-    }
+    try {
+        const { data, error } = await db
+            .from("operators")
+            .select("id, name, role")
+            .eq("active", true)
+            .order("name");
 
-    sel.innerHTML = "<option value=''>-- Select Operator --</option>";
-    data.forEach(op => {
-        sel.innerHTML += `<option value="${op.name}">${op.name}</option>`;
-    });
+        if (error) throw error;
+
+        const sel = document.getElementById("operatorSelect");
+        sel.innerHTML = "<option value=''>-- Select Operator --</option>";
+
+        data.forEach(op => {
+            sel.innerHTML += `<option value="${op.id}" data-role="${op.role}">${op.name}</option>`;
+        });
+    } catch (err) {
+        showError("Failed to load operators: " + err.message);
+    }
 }
 
-async function doLogin() {
-    const opName = document.getElementById("operatorSelect").value;
-    const pin = document.getElementById("pinInput").value;
-    const errorDiv = document.getElementById("errorMsg");
-    const btn = document.getElementById("loginBtn");
+// Login function
+async function login() {
+    const operatorId = document.getElementById("operatorSelect").value;
+    const pin = document.getElementById("pinInput").value.trim();
+    const errorMsg = document.getElementById("errorMsg");
+    const loginBtn = document.getElementById("loginBtn");
 
-    errorDiv.style.display = "none";
+    // Clear previous error
+    errorMsg.classList.remove("show");
 
-    if (!opName) {
-        errorDiv.textContent = "Please select an operator";
-        errorDiv.style.display = "block";
+    // Validate inputs
+    if (!operatorId) {
+        showError("Please select an operator");
         return;
     }
 
-    if (!pin || pin.length < 4) {
-        errorDiv.textContent = "Please enter your PIN";
-        errorDiv.style.display = "block";
+    if (!pin) {
+        showError("Please enter your PIN");
         return;
     }
 
-    btn.disabled = true;
-    btn.textContent = "Checking...";
+    // Disable button during login
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Logging in...";
 
-    const { data, error } = await db.rpc('login', { 
-        op_name: opName, 
-        pin: pin 
-    });
+    try {
+        // Call login RPC function
+        const { data, error } = await db.rpc('login_operator', {
+            p_operator_id: operatorId,
+            p_pin_code: pin
+        });
 
-    if (error) {
-        errorDiv.textContent = "Connection error. Try again.";
-        errorDiv.style.display = "block";
-        btn.disabled = false;
-        btn.textContent = "Enter Dashboard";
-        console.error(error);
-        return;
+        if (error) throw error;
+
+        // Check if login was successful
+        if (!data.success) {
+            showError(data.error || "Login failed");
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Enter Dashboard";
+            return;
+        }
+
+        // Store session info in localStorage
+        localStorage.setItem('session_token', data.token);
+        localStorage.setItem('operator_id', data.operator_id);
+        localStorage.setItem('operator_name', data.name);
+        localStorage.setItem('operator_role', data.role);
+
+        // Redirect based on role
+        if (data.role === 'supervisor') {
+            window.location.href = 'supervisor.html';
+        } else {
+            window.location.href = 'index.html';
+        }
+
+    } catch (err) {
+        showError("Login error: " + err.message);
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Enter Dashboard";
     }
+}
 
-    if (!data.success) {
-        errorDiv.textContent = "Invalid PIN. Try again.";
-        errorDiv.style.display = "block";
-        document.getElementById("pinInput").value = "";
-        btn.disabled = false;
-        btn.textContent = "Enter Dashboard";
-        return;
-    }
-
-    // Success - store session
-    localStorage.setItem("session_token", data.token);
-    localStorage.setItem("operator_id", data.operator_id);
-    localStorage.setItem("operator_name", data.operator_name);
-    localStorage.setItem("operator_role", data.role);
-
-    window.location.href = "index.html";
+// Show error message
+function showError(message) {
+    const errorMsg = document.getElementById("errorMsg");
+    errorMsg.textContent = message;
+    errorMsg.classList.add("show");
 }
 
 // Allow Enter key to submit
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doLogin();
+document.getElementById("pinInput").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        login();
+    }
 });
 
+// Auto-focus PIN input when operator is selected
+document.getElementById("operatorSelect").addEventListener("change", function() {
+    if (this.value) {
+        document.getElementById("pinInput").focus();
+    }
+});
+
+// Load operators on page load
 loadOperators();
 </script>
 
