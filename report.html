@@ -494,6 +494,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let reportData = [];
+function getToken() { return localStorage.getItem("session_token"); }
+
+// Enforce session
+(function enforceSession() {
+    const token = getToken();
+    if (!token) window.location.href = "login.html";
+})();
 
 // ==================== THEME SYSTEM ====================
 function initTheme() {
@@ -520,31 +527,31 @@ document.getElementById("avatarBtn").onclick = function(e) {
     menu.style.display = menu.style.display === "block" ? "none" : "block";
 };
 
+window.logoutUser = function() {
+    localStorage.removeItem("session_token");
+    localStorage.removeItem("operator_id");
+    localStorage.removeItem("operator_name");
+    localStorage.removeItem("operator_role");
+    window.location.href = "login.html";
+};
+
 document.addEventListener("click", function() {
     document.getElementById("avatarMenu").style.display = "none";
 });
 
 // ==================== USER SESSION ====================
 async function checkSession() {
-    const opId = localStorage.getItem("operator_id");
-    if (!opId) {
-        // Store current page so login can redirect back
+    const token = getToken();
+    if (!token) {
         sessionStorage.setItem("returnUrl", window.location.href);
         window.location.href = "login.html";
         return;
     }
 
-    // Fetch operator details
-    const { data, error } = await db
-        .from("operators")
-        .select("name")
-        .eq("id", opId)
-        .single();
-
-    if (data) {
-        document.getElementById("menuName").textContent = data.name;
-        
-        const initials = data.name
+    const opName = localStorage.getItem("operator_name");
+    if (opName) {
+        document.getElementById("menuName").textContent = opName;
+        const initials = opName
             .split(" ")
             .map(n => (n[0] || '').toUpperCase())
             .join("")
@@ -553,22 +560,18 @@ async function checkSession() {
     }
 }
 
-window.logoutUser = function() {
-    localStorage.removeItem("operator_id");
-    window.location.href = "login.html";
-};
-
 // ==================== LOAD OPERATORS ====================
 async function loadOperators() {
     try {
-        const { data, error } = await db
-            .from("vehicles")
-            .select("operator_name")
-            .order("operator_name");
+        const { data, error } = await db.rpc("get_operators_secure", {
+            session_token: getToken()
+        });
 
         if (error) throw error;
 
-        const uniqueOps = [...new Set(data.map(v => v.operator_name))];
+        const ops = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+        if (data && data.success === false) throw new Error(data.error || "Operators RPC failed");
+        const uniqueOps = [...new Set(ops.map(v => v.name))];
         const select = document.getElementById("operatorFilter");
         
         uniqueOps.forEach(op => {
@@ -650,31 +653,35 @@ window.generateReport = async function() {
     const operatorFilter = document.getElementById("operatorFilter").value;
 
     try {
-        let query = db
-            .from("vehicles")
-            .select("*")
-            .gte("check_in_time", startDate.toISOString())
-            .lte("check_in_time", endDate.toISOString())
-            .order("check_in_time", { ascending: false });
+        const { data, error } = await db.rpc("get_report_data_secure", {
+            session_token: getToken(),
+            p_date_from: startDate.toISOString(),
+            p_date_to: endDate.toISOString(),
+            p_status_filter: statusFilter === 'all' ? null : statusFilter,
+            p_operator_filter: operatorFilter === 'all' ? null : operatorFilter
+        });
 
-        if (statusFilter === "released") {
-            query = query.eq("status", "released");
-        } else if (statusFilter === "active") {
-            query = query.neq("status", "released");
+        if (error) {
+            console.error("RPC error:", error);
+            container.innerHTML = '<div class="empty-state">Error loading report data</div>';
+            return;
         }
 
-        if (operatorFilter !== "all") {
-            query = query.eq("operator_name", operatorFilter);
+        if (data && data.success === false) {
+            console.error("Report error:", data.error);
+            if (data.error === 'Invalid session') {
+                logoutUser();
+                return;
+            }
+            container.innerHTML = '<div class="empty-state">Failed to load data</div>';
+            return;
         }
 
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        reportData = data || [];
+        reportData = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
 
         if (reportData.length === 0) {
             container.innerHTML = '<div class="empty-state">No vehicles found for the selected criteria</div>';
+            document.getElementById("statsRow").style.display = "none";
             updateStats();
             return;
         }

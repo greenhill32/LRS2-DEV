@@ -3,8 +3,8 @@
 QUESTION FOR SOMENONE
 IN BOOKING SCHEDULER THERE IS NO OPTION TO MARK AS EXPORT (WHO KNOWS)
 
-export loads.
-in queue it is clearly visible blue pulse
-but in supervisor it is not obviously an export load even when opening modal for more info it does not state as export.
-we need to fix this.
+
+on supervisor page modal we lost the ability to change status, this is essential if mistakes has been made to rectify.
+
+on reports page after running report the operator is undefined. this should be simple fix as in recent history (index.html0 they are there
  

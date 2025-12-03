@@ -7,7 +7,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v4.4.4 - report";
+document.getElementById("versionBanner").innerText = "v5.0.0 - SECURE";
 </script>
 
 <style>
@@ -264,7 +264,7 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
     }
     
     .entry {
-        background: rgba(14,165,233,0.05); /* Slight tint for default entries */
+        background: rgba(14,165,233,0.05);
         border: 1px solid var(--border);
         border-left: 22px solid var(--success);
         padding: 24px;
@@ -317,7 +317,6 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         cursor: pointer;
         margin-right: 8px;
     }
-    
 
     /* QR Search Modal Overlay */
     .qr-search-overlay {
@@ -548,6 +547,7 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         </div>
         <div class="submit-btn" onclick="submitVehicle()">Submit</div>
     </div>
+    
     <!-- QR Search Modal -->
     <div id="qrSearchOverlay" class="qr-search-overlay">
         <div class="qr-search-modal">
@@ -595,16 +595,16 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         </div>
     </header>
     
-<!-- INDEX.HTML NAV (QUEUE is active) -->
-<nav class="main-nav">
-    <a href="arrivals.html">ARRIVALS</a>
-    <span class="nav-divider">|</span>
-    <a href="index.html" class="active">QUEUE</a>
-    <span class="nav-divider">|</span>
-    <a href="supervisor.html">SUPERVISOR</a>
-    <span class="nav-divider">|</span>
-    <a href="report.html">REPORTS</a>
-</nav>
+    <!-- INDEX.HTML NAV (QUEUE is active) -->
+    <nav class="main-nav">
+        <a href="arrivals.html">ARRIVALS</a>
+        <span class="nav-divider">|</span>
+        <a href="index.html" class="active">QUEUE</a>
+        <span class="nav-divider">|</span>
+        <a href="supervisor.html">SUPERVISOR</a>
+        <span class="nav-divider">|</span>
+        <a href="report.html">REPORTS</a>
+    </nav>
     
     <div class="stats">
         <div class="tile">
@@ -641,6 +641,21 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+    // ============================================
+    // SESSION CHECK - Redirect if not logged in
+    // ============================================
+    (function checkSession() {
+        const token = localStorage.getItem('session_token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+    })();
+
+    // Helper to get session token
+    function getToken() {
+        return localStorage.getItem('session_token');
+    }
+
     const db = supabase.createClient(
         "https://gtixdparpjdpyhhubsfz.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
@@ -662,39 +677,47 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
 
     // PARALLEL FETCH - ALL DATA LOADS SIMULTANEOUSLY
     async function fetchAllData() {
+        const token = getToken();
+        
         // Execute all fetches in parallel using Promise.all
         const [statsResult, vehiclesResult, logsResult, operatorsResult] = await Promise.all([
-            // 1. RPC for stats (single query)
-            db.rpc('get_dashboard_stats'),
+            // 1. SECURE RPC for stats
+            db.rpc('get_dashboard_stats_secure', { session_token: token }),
             
-            // 2. Vehicles with logs prefetched
-            db.from('vehicles')
-                .select('*')
-                .in('status', ['parked', 'notified'])
-                .order('check_in_time', { ascending: true }),
+            // 2. SECURE RPC for vehicles
+            db.rpc('get_vehicles_secure', { session_token: token }),
             
-            // 3. Recent logs (24hr)
+            // 3. Recent logs (48hr) - still direct for now
             db.from('actions_log')
                 .select('*')
                 .gte('timestamp', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
                 .order('timestamp', { ascending: false })
                 .limit(20),
             
-            // 4. Operators (only if cache empty)
+            // 4. Operators (only if cache empty) - still direct for now
             operators.length === 0 
                 ? db.from('operators').select('id, name').eq('active', true)
                 : Promise.resolve({ data: operators, error: null })
         ]);
 
-        // Handle results
-        if (statsResult.data) {
+        // Handle stats result
+        if (statsResult.data && statsResult.data.success) {
             updateKPIsFromRPC(statsResult.data);
+        } else if (statsResult.error) {
+            console.error('Stats error:', statsResult.error);
+            if (statsResult.data && statsResult.data.error === 'Invalid session') {
+                logoutUser();
+                return;
+            }
         }
 
-        if (vehiclesResult.data) {
-            vehicles = vehiclesResult.data;
+        // Handle vehicles result
+        if (vehiclesResult.data && vehiclesResult.data.success) {
+            vehicles = vehiclesResult.data.data || [];
             renderQueue();
             loadChart();
+        } else if (vehiclesResult.error) {
+            console.error('Vehicles error:', vehiclesResult.error);
         }
 
         if (logsResult.data) {
@@ -780,7 +803,7 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         const container = document.getElementById('queueList');
         container.innerHTML = '';
         
-        if (vehicles.length === 0) {
+        if (!vehicles || vehicles.length === 0) {
             container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;">No vehicles in queue</div>';
             return;
         }
@@ -900,86 +923,108 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         });
     }
 
+    // SECURE NOTIFY using RPC
     async function notify(id) {
-        const operator = localStorage.getItem('operator_id') || null;
-        const now = new Date().toISOString();
+        const token = getToken();
         
-        const { error } = await db.from('vehicles')
-            .update({ status: 'notified', notify_time: now })
-            .eq('id', id);
+        // Get vehicle data first for SMS (from local cache)
+        const vehicle = vehicles.find(v => v.id === id);
+        const phone = vehicle?.mobile_number || 'N/A';
+        const po = vehicle?.po_ref || 'N/A';
         
-        if (!error) {
-            await db.from('actions_log').insert({ 
-                vehicle_id: id, 
-                action: 'notified', 
-                timestamp: now, 
-                operator_id: operator 
-            });
-
-            const { data: vehicle } = await db.from('vehicles').select('po_ref, mobile_number').eq('id', id).single();
-            const phone = vehicle?.mobile_number || 'N/A';
-            const po = vehicle?.po_ref || 'N/A';
-
-            if (phone && phone !== 'N/A') {
-                window.open(`sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}`,
-                    "_blank",
-                    "width=400,height=700");
-            }
-
-            fetchAllData();
+        // Use secure RPC
+        const { data, error } = await db.rpc('update_vehicle_status', {
+            session_token: token,
+            p_vehicle_id: id,
+            p_new_status: 'notified'
+        });
+        
+        if (error) {
+            console.error('Notify error:', error);
+            alert('Failed to notify: ' + error.message);
+            return;
         }
+        
+        if (data && !data.success) {
+            alert('Failed to notify: ' + data.error);
+            if (data.error === 'Invalid session') logoutUser();
+            return;
+        }
+
+        // Open SMS simulator if phone number exists
+        if (phone && phone !== 'N/A') {
+            window.open(`sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}`,
+                "_blank",
+                "width=400,height=700");
+        }
+
+        fetchAllData();
     }
 
+    // SECURE RELEASE using RPC
     async function release(id) {
-        const operator = localStorage.getItem('operator_id') || null;
-        const now = new Date().toISOString();
+        const token = getToken();
         
-        const { data: vehicle } = await db.from('vehicles').select('*').eq('id', id).single();
+        // Get vehicle data first for SMS (from local cache)
+        const vehicle = vehicles.find(v => v.id === id);
+        const phone = vehicle?.mobile_number || 'N/A';
+        const po = vehicle?.po_ref || 'N/A';
+        const checkIn = vehicle ? new Date(vehicle.check_in_time) : new Date();
+        const duration = Math.floor((Date.now() - checkIn) / 60000);
         
-        const { error } = await db.from('vehicles')
-            .update({ status: 'released', release_time: now })
-            .eq('id', id);
+        // Use secure RPC
+        const { data, error } = await db.rpc('update_vehicle_status', {
+            session_token: token,
+            p_vehicle_id: id,
+            p_new_status: 'released'
+        });
         
-        if (!error) {
-            await db.from('actions_log').insert({ 
-                vehicle_id: id, 
-                action: 'released', 
-                timestamp: now, 
-                operator_id: operator 
-            });
-
-            const checkIn = new Date(vehicle.check_in_time);
-            const duration = Math.floor((new Date(now) - checkIn) / 60000);
-            const phone = vehicle?.mobile_number || 'N/A';
-            const po = vehicle?.po_ref || 'N/A';
-
-            if (phone && phone !== 'N/A') {
-                window.open(`sms_simulator.html?type=released&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}&duration=${duration} mins`,
-                    "_blank",
-                    "width=400,height=700");
-            }
-
-            fetchAllData();
+        if (error) {
+            console.error('Release error:', error);
+            alert('Failed to release: ' + error.message);
+            return;
         }
+        
+        if (data && !data.success) {
+            alert('Failed to release: ' + data.error);
+            if (data.error === 'Invalid session') logoutUser();
+            return;
+        }
+
+        // Open SMS simulator if phone number exists
+        if (phone && phone !== 'N/A') {
+            window.open(`sms_simulator.html?type=released&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}&duration=${duration} mins`,
+                "_blank",
+                "width=400,height=700");
+        }
+
+        fetchAllData();
     }
 
+    // SECURE UNDO using RPC
     async function undo(id) {
-        const operator = localStorage.getItem('operator_id') || null;
-        const now = new Date().toISOString();
+        const token = getToken();
         
-        const { error } = await db.from('vehicles')
-            .update({ status: 'parked', notify_time: null })
-            .eq('id', id);
+        // Use secure RPC
+        const { data, error } = await db.rpc('update_vehicle_status', {
+            session_token: token,
+            p_vehicle_id: id,
+            p_new_status: 'parked'
+        });
         
-        if (!error) {
-            await db.from('actions_log').insert({ 
-                vehicle_id: id, 
-                action: 'undo', 
-                timestamp: now, 
-                operator_id: operator 
-            });
-            fetchAllData();
+        if (error) {
+            console.error('Undo error:', error);
+            alert('Failed to undo: ' + error.message);
+            return;
         }
+        
+        if (data && !data.success) {
+            alert('Failed to undo: ' + data.error);
+            if (data.error === 'Invalid session') logoutUser();
+            return;
+        }
+
+        fetchAllData();
     }
 
     function togglePanel() {
@@ -988,6 +1033,7 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         panel.classList.toggle('panel-visible');
     }
 
+    // SECURE CHECK-IN using RPC
     async function submitVehicle() {
         const btn = document.querySelector('#addPanel .submit-btn');
         if (!btn) return;
@@ -1010,25 +1056,21 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
             return;
         }
 
-        const operatorId = localStorage.getItem('operator_id') || null;
-        const nowIso = new Date().toISOString();
-        const dueIso = new Date(Date.now() + quoted * 60000).toISOString();
         const isExport = document.getElementById('addExport').checked;
+        const token = getToken();
 
         try {
-            const { data, error } = await db.from('vehicles').insert({
-                registration: reg,
-                po_ref: po || null,
-                haulier: haulier || null,
-                mobile_number: mobile,
-                notes: notes || null,
-                quoted_minutes: quoted,
-                check_in_time: nowIso,
-                due_time: dueIso,
-                status: 'parked',
-                operator_id: operatorId,
-                classification: isExport ? 'export' : 'normal'
-            }).select();
+            // Use secure RPC for check-in
+            const { data, error } = await db.rpc('checkin_vehicle', {
+                session_token: token,
+                p_registration: reg,
+                p_po_ref: po || null,
+                p_haulier: haulier || null,
+                p_mobile: mobile,
+                p_notes: notes || null,
+                p_quoted_minutes: quoted,
+                p_classification: isExport ? 'export' : 'normal'
+            });
             
             if (error) {
                 alert('Error: ' + error.message);
@@ -1037,7 +1079,15 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
                 return;
             }
             
-            const vehicleId = data && data[0] && data[0].id;
+            if (data && !data.success) {
+                alert('Error: ' + data.error);
+                if (data.error === 'Invalid session') logoutUser();
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+                return;
+            }
+            
+            const vehicleId = data.vehicle_id;
             window.open(`qr-screen.html?uid=${vehicleId}`, "_blank");
             
             if (mobile) {
@@ -1047,13 +1097,6 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
                     "width=400,height=700"
                 );
             }
-            
-            await db.from('actions_log').insert({
-                vehicle_id: vehicleId,
-                action: 'check_in',
-                timestamp: nowIso,
-                operator_id: operatorId
-            });
             
             await fetchAllData();
             
@@ -1083,10 +1126,16 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
     }
 
     function logoutUser() {
+        localStorage.removeItem('session_token');
         localStorage.removeItem('operator_id');
+        localStorage.removeItem('operator_name');
+        localStorage.removeItem('operator_role');
         window.location.href = 'login.html';
     }
 
+    // ============================================
+    // QR SEARCH FUNCTIONS
+    // ============================================
     function revealQR() {
         const overlay = document.getElementById('qrSearchOverlay');
         const input = document.getElementById('qrSearchInput');
@@ -1197,21 +1246,16 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         }
     });
 
-    (async () => {
-        const opId = localStorage.getItem('operator_id');
-        if (!opId) return;
-        try {
-            const { data: op } = await db.from('operators').select('name').eq('id', opId).single();
-            const opName = op?.name || 'Unknown';
-            const menuName = document.getElementById('menuName');
-            const avatarBtn = document.getElementById('avatarBtn');
-            if (menuName) menuName.textContent = opName;
-            if (avatarBtn) {
-                const initials = opName.split(' ').map(x => (x[0] || '').toUpperCase()).join('').slice(0, 2);
-                avatarBtn.textContent = initials || '??';
-            }
-        } catch (err) {
-            console.error('Failed to load operator:', err);
+    // Load operator name from localStorage (set during login)
+    (function loadOperatorDisplay() {
+        const opName = localStorage.getItem('operator_name') || 'Unknown';
+        const menuName = document.getElementById('menuName');
+        const avatarBtn = document.getElementById('avatarBtn');
+        
+        if (menuName) menuName.textContent = opName;
+        if (avatarBtn) {
+            const initials = opName.split(' ').map(x => (x[0] || '').toUpperCase()).join('').slice(0, 2);
+            avatarBtn.textContent = initials || '??';
         }
     })();
 
@@ -1235,6 +1279,7 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         currentEditId = null;
     }
 
+    // NOTE: Edit still uses direct query - will need secure RPC later
     async function saveEditModal() {
         if (!currentEditId) { closeEditModal(); return; }
         
@@ -1253,6 +1298,7 @@ document.getElementById("versionBanner").innerText = "v4.4.4 - report";
         };
         
         try {
+            // TODO: Replace with secure RPC once created
             const { error } = await db.from('vehicles').update(updates).eq('id', currentEditId);
             if (error) {
                 alert('Error updating record: ' + error.message);

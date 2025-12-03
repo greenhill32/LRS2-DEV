@@ -313,6 +313,8 @@ let bookingsData = []; // From JSON
 let liveVehicles = []; // From Supabase
 let mergedData = [];   // Combined
 
+function getToken() { return localStorage.getItem('session_token'); }
+
 // 1. Initial Load
 async function init() {
     updateClock(); setInterval(updateClock, 1000);
@@ -341,15 +343,26 @@ async function loadBookingsJSON() {
 
 // 3. Load Live Vehicles (Today)
 async function loadLiveVehicles() {
-    const today = new Date().toISOString().split('T')[0];
-    
-    const { data, error } = await db.from('vehicles')
-        .select('po_ref, status, registration, pallet_count, check_in_time')
-        .gte('check_in_time', today);
-        
-    if (!error && data) {
-        liveVehicles = data;
+    const token = getToken();
+    if (!token) return;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const { data: result, error } = await db.rpc('get_todays_vehicles_secure', {
+        session_token: token,
+        p_date: today.toISOString()
+    });
+
+    if (error) {
+        console.error("RPC get_todays_vehicles_secure failed", error);
+        return;
     }
+    if (result && result.success === false) {
+        console.error("RPC error", result.error);
+        if (result.error === 'Invalid session') logoutUser();
+        return;
+    }
+
+    const rows = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+    liveVehicles = rows;
 }
 
 // 4. Sync Logic
@@ -510,20 +523,24 @@ function selectForCheckin(ref) {
 function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 
 function checkUser() { 
-    const opId = localStorage.getItem('operator_id');
-    if(!opId) window.location.href='login.html';
-    
-    // Avatar Logic
-    db.from("operators").select("name").eq("id", opId).single().then(({data}) => {
-        if(data) {
-            document.getElementById('menuName').textContent = data.name;
-            const initials = data.name.split(" ").map(x => (x[0] || "")).join("").toUpperCase().slice(0, 2);
-            document.getElementById("avatarBtn").textContent = initials || "??";
-        }
-    });
+    const token = getToken();
+    if (!token) { window.location.href='login.html'; return; }
+
+    const opName = localStorage.getItem('operator_name');
+    if (opName) {
+        document.getElementById('menuName').textContent = opName;
+        const initials = opName.split(" ").map(x => (x[0] || "")).join("").toUpperCase().slice(0, 2);
+        document.getElementById("avatarBtn").textContent = initials || "??";
+    }
 }
 
-function logoutUser() { localStorage.removeItem('operator_id'); window.location.href='login.html'; }
+function logoutUser() { 
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('operator_id');
+    localStorage.removeItem('operator_name');
+    localStorage.removeItem('operator_role');
+    window.location.href='login.html'; 
+}
 
 // Avatar Menu Toggle
 document.addEventListener('click', (e) => {
