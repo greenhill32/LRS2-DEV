@@ -283,14 +283,13 @@
 
         async function fetchBayStatus() {
             try {
-                // FIXED: Sorting by 'check_in_time' instead of 'updated_at' 
-                // because your database doesn't have an updated_at column.
+                // Get most recently notified vehicle for this bay 
                 const { data, error } = await db
                     .from('vehicles')
                     .select('*')
                     .eq('status', 'notified')
                     .eq('bay', BAY_NUMBER)
-                    .order('check_in_time', { ascending: false }) 
+                    .order('notify_time', { ascending: false }) 
                     .limit(1);
 
                 if (error) {
