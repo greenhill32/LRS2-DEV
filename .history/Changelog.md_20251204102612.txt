@@ -1,0 +1,120 @@
+# Lorry Park Changelog
+Tracking major changes, fixes, and Vercel deployment snapshots.
+Each entry links code changes with a Vercel deployment ID for instant rollback.
+
+---
+
+## How to Use This File
+
+1. **After each stable deploy** → Add an entry with the Vercel deployment ID
+2. **If something breaks** → Find the last working entry → Instant Rollback in Vercel
+3. **Before big changes** → Deploy first, note the ID, then experiment safely
+
+---
+
+## Entries
+
+### v5.0.4 – Arrivals Status Badge Fix
+**Date:** 04/12/2025  
+**Summary:**  
+- Fixed: Status badges not showing for parked vehicles
+- Fixed: Swapped broken `get_todays_vehicles_secure` RPC to working `get_vehicles_secure` with client-side date filter
+- Fixed: Type-safe po_ref matching (String comparison for number/string mismatch)
+- Fixed: Time grouping now uses `slot_start` field from JSON (was looking for `time`)
+
+**Affected Pages:** arrivals.html  
+**Deployment:** Ao7J855fu
+
+Production
+  
+**Notes:** Root cause was broken RPC function in Supabase (GROUP BY error). Client-side fix applied. TODO: Fix the actual RPC function when time permits.
+
+---
+
+### v5.0.3 – Secure RPCs Live
+**Date:** {dd/mm/yyyy}  
+**Summary:**  
+- All database operations now use secure RPC functions
+- Session token validation on all pages
+- Operator authentication via localStorage
+
+**Affected Pages:** index.html, supervisor.html, arrivals.html  
+**Deployment:** `{ADD DEPLOYMENT ID}`  
+**Notes:** Major security milestone. Good rollback point.
+
+---
+
+### v5.0.0 – Index Dashboard Secure
+**Date:** {dd/mm/yyyy}  
+**Summary:**  
+- New secure check-in flow via `checkin_vehicle` RPC
+- Export load highlighting with pulse animation
+- Realtime subscriptions consolidated
+
+**Affected Pages:** index.html  
+**Deployment:** `{ADD DEPLOYMENT ID}`  
+**Notes:** Banner shows v5.0.0 - SECURE
+
+---
+
+### v4.0.0 – Arrivals Themed
+**Date:** {dd/mm/yyyy}  
+**Summary:**  
+- Light/dark theme support
+- Consistent styling with other dashboards
+- Booking modal with check-in flow
+
+**Affected Pages:** arrivals.html  
+**Deployment:** `{ADD DEPLOYMENT ID}`  
+**Notes:** Banner shows v4.0.0 - THEMED
+
+---
+
+## Template for New Entries
+
+```
+### vX.X.X – {Short Title}
+**Date:** {dd/mm/yyyy}  
+**Summary:**  
+- {What changed}
+- {Why}
+- {New features}
+
+**Affected Pages:** {index.html / supervisor.html / arrivals.html / etc}  
+**Deployment:** `{VercelDeploymentID}`  
+**Notes:** {Context for future you}
+```
+
+---
+
+## Quick Reference
+
+### Find Deployment ID
+Vercel → Project → Deployments → Copy ID (e.g., `Ao7J855fu`)
+
+### Instant Rollback
+1. Click the deployment
+2. Click ▼ next to "Visit"
+3. Click **Instant Rollback**
+4. Done (2-3 seconds)
+
+### Page Version Banners
+| Page | Current Version |
+|------|-----------------|
+| index.html | v5.0.0 - SECURE |
+| arrivals.html | v4.0.1 |
+| supervisor.html | {check banner} |
+| login.html | {check banner} |
+| report.html | {check banner} |
+
+---
+
+## Pre-Launch Checklist
+- [ ] Note deployment ID before showing to management
+- [ ] Test rollback process once (deploy, break something, rollback)
+- [ ] Confirm all pages load with valid session
+- [ ] Document Supabase/Vercel credentials somewhere safe
+
+---
+
+*Last updated: 04/12/2025*
