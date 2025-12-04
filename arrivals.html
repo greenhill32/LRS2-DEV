@@ -472,26 +472,33 @@ function syncData() {
     mergedData = bookingsData.map(b => {
         // Safe Copy
         const item = { ...b, syncStatus: 'booked', syncBadge: '', liveReg: null, actualPallets: null };
-        
+
         // Match logic
         const match = liveVehicles.find(v => v.po_ref === b.ref);
-        
+
         if (match) {
             item.liveReg = match.registration;
             item.actualPallets = match.pallet_count;
-            
-            if (match.status === 'parked') {
+
+            const status = (match.status || '').toLowerCase();
+            if (status === 'parked') {
                 item.syncStatus = 'waiting';
                 item.syncBadge = `<span class="state-badge badge-queue">IN QUEUE</span>`;
-            } else if (match.status === 'notified') {
+            } else if (status === 'notified') {
                 item.syncStatus = 'waiting';
                 item.syncBadge = `<span class="state-badge badge-notified">NOTIFIED</span>`;
-            } else if (match.status === 'released') {
+            } else if (status === 'released' || status === 'completed' || status === 'complete') {
                 item.syncStatus = 'complete';
                 item.syncBadge = `<span class="state-badge badge-released">RELEASED</span>`;
+            } else if (status === 'booked_in' || status === 'booked-in' || status === 'checked_in' || status === 'check_in') {
+                item.syncStatus = 'waiting';
+                item.syncBadge = `<span class="state-badge badge-queue">BOOKED IN</span>`;
+            } else {
+                const label = status ? status.toUpperCase() : 'LIVE';
+                item.syncBadge = `<span class="state-badge badge-queue">${label}</span>`;
             }
         }
-        
+
         return item;
     });
 
