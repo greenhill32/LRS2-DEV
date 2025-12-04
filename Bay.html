@@ -100,7 +100,8 @@
         .reg-box {
             background: #facc15;
             color: #000000;
-            font-size: clamp(72px, 10vw, 140px);
+            /*font-size: clamp(72px, 10vw, 140px); */
+            font-size: clamp(90px, 12vw, 180px);  /* Line 103 */
             font-weight: 800;
             padding: 26px 54px;
             border-radius: 18px;
@@ -283,13 +284,14 @@
 
         async function fetchBayStatus() {
             try {
-                // Get most recently notified vehicle for this bay 
+                // FIXED: Sorting by 'check_in_time' instead of 'updated_at' 
+                // because your database doesn't have an updated_at column.
                 const { data, error } = await db
                     .from('vehicles')
                     .select('*')
                     .eq('status', 'notified')
                     .eq('bay', BAY_NUMBER)
-                    .order('notify_time', { ascending: false }) 
+                    .order('check_in_time', { ascending: false }) 
                     .limit(1);
 
                 if (error) {
