@@ -7,7 +7,7 @@
 <div id="versionBanner"></div>
 
 <script>
-document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
+document.getElementById("versionBanner").innerText = "v5.0.0 - SECURE";
 </script>
 
 <style>
@@ -214,6 +214,86 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
         color: #000;
     }
 
+    /* BAY SELECTION MODAL */
+    #bayModalOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        z-index: 10001;
+    }
+    
+    #bayModal {
+        background: var(--card);
+        color: var(--text);
+        width: 480px;
+        margin: 120px auto;
+        padding: 32px;
+        border-radius: 12px;
+        border: 2px solid var(--accent);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    #bayModal h3 {
+        margin: 0 0 24px 0;
+        font-size: 24px;
+        color: var(--accent);
+        text-align: center;
+    }
+    
+    .bay-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .bay-btn {
+        padding: 32px 16px;
+        border: 2px solid var(--success);
+        background: var(--success);
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 20px;
+        transition: all 0.2s ease;
+    }
+    
+    .bay-btn:hover:not(:disabled) {
+        background: #16a34a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+    
+    .bay-btn:disabled {
+        background: #475569;
+        border-color: #475569;
+        color: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+    
+    .bay-cancel-btn {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #475569;
+        background: transparent;
+        color: var(--text);
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .bay-cancel-btn:hover {
+        background: #475569;
+        color: #fff;
+    }
+
     .stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -299,6 +379,17 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
     .entry .actions .notify { background: var(--warn); color: #000; }
     .entry .actions .release { background: var(--success); color: #000; }
     .entry .actions .undo { background: var(--danger); color: #fff; }
+    
+    .bay-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--success);
+        color: white;
+        margin-left: 6px;
+    }
     
     .activity-item {
         margin-bottom: 8px;
@@ -667,6 +758,8 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
     let chart;
     let refreshTimeout = null;
     let vehicleCache = {};
+    let currentNotifyVehicleId = null;
+    let occupiedBays = [];
 
     (function loadCachedOperators() {
         try {
@@ -687,15 +780,17 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
             // 2. SECURE RPC for vehicles
             db.rpc('get_vehicles_secure', { session_token: token }),
             
-            // 3. Recent logs (48hr)
+            // 3. Recent logs (48hr) - still direct for now
             db.from('actions_log')
                 .select('*')
                 .gte('timestamp', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
                 .order('timestamp', { ascending: false })
                 .limit(20),
             
-            // 4. Operators - ALWAYS fetch fresh (multi-user fix)
-            db.from('operators').select('id, name').eq('active', true)
+            // 4. Operators (only if cache empty) - still direct for now
+            operators.length === 0 
+                ? db.from('operators').select('id, name').eq('active', true)
+                : Promise.resolve({ data: operators, error: null })
         ]);
 
         // Handle stats result
@@ -712,6 +807,7 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
         // Handle vehicles result
         if (vehiclesResult.data && vehiclesResult.data.success) {
             vehicles = vehiclesResult.data.data || [];
+            updateOccupiedBays();  // Track which bays are occupied
             renderQueue();
             loadChart();
         } else if (vehiclesResult.error) {
@@ -742,8 +838,7 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
             renderActivity();
         }
 
-        // Always refresh operators (multi-user fix)
-        if (operatorsResult.data) {
+        if (operatorsResult.data && operators.length === 0) {
             operators = operatorsResult.data;
             try {
                 localStorage.setItem('operators_cache', JSON.stringify(operators));
@@ -822,7 +917,7 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
             
             li.innerHTML = `
                 <div class="info">
-                    <strong>${v.registration || '-'}</strong> - ${v.status}<br>
+                    <strong>${v.registration || '-'}</strong> - ${v.status}${v.bay ? `<span class="bay-badge">Bay ${v.bay}</span>` : ''}<br>
                     PO: ${v.po_ref || '-'} | Mobile: ${v.mobile_number || v.pager_number || '-'}<br>
                     In: ${new Date(v.check_in_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} | Due: ${v.due_time ? new Date(v.due_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '-'}
                 </div>
@@ -924,22 +1019,117 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
 
     // SECURE NOTIFY using RPC
     async function notify(id) {
-        const token = getToken();
+        // Instead of notifying immediately, open bay selection modal
+        openBayModal(id);
+    }
+
+    // ============================================
+    // BAY SELECTION MODAL FUNCTIONS
+    // ============================================
+    
+    function updateOccupiedBays() {
+        // Scan vehicles for which bays are currently occupied (status='notified' and bay is set)
+        console.log('=== UPDATE OCCUPIED BAYS ===');
+        console.log('Total vehicles:', vehicles.length);
+        console.log('Vehicles data:', vehicles.map(v => ({reg: v.registration, status: v.status, bay: v.bay})));
         
-        // Get vehicle data first for SMS (from local cache)
-        const vehicle = vehicles.find(v => v.id === id);
+        occupiedBays = vehicles
+            .filter(v => v.status === 'notified' && v.bay)
+            .map(v => parseInt(v.bay));  // Parse as INTEGER to match [1,2,3]
+        
+        console.log('Occupied bays:', occupiedBays);
+    }
+    
+    function openBayModal(vehicleId) {
+        currentNotifyVehicleId = vehicleId;
+        updateOccupiedBays();  // Ensure occupiedBays is current
+        renderAvailableBays();
+        document.getElementById('bayModalOverlay').style.display = 'block';
+    }
+    
+    function renderAvailableBays() {
+        const container = document.getElementById('bayButtonsContainer');
+        
+        console.log('=== RENDER AVAILABLE BAYS ===');
+        console.log('Occupied bays:', occupiedBays);
+        
+        // Find which bays are available (not occupied)
+        const availableBays = [1, 2, 3].filter(bayNum => !occupiedBays.includes(bayNum));
+        
+        console.log('Available bays:', availableBays);
+        
+        // Generate buttons for available bays only
+        container.innerHTML = availableBays.map(bayNum => 
+            `<button class="bay-btn" onclick="selectBay(${bayNum})">Bay ${bayNum}</button>`
+        ).join('');
+        
+        // If no bays available, show message
+        if (availableBays.length === 0) {
+            container.innerHTML = '<div style="color: var(--danger); text-align: center; padding: 24px;">All bays are currently occupied. Please release a vehicle first.</div>';
+        }
+    }
+    
+    async function selectBay(bayNumber) {
+        if (!currentNotifyVehicleId) return;
+        
+        const token = getToken();
+        const vehicleId = currentNotifyVehicleId;
+        
+        // Get vehicle data for SMS
+        const vehicle = vehicles.find(v => v.id === vehicleId);
         const phone = vehicle?.mobile_number || 'N/A';
         const po = vehicle?.po_ref || 'N/A';
         
-        // Use secure RPC
+        // ============================================
+        // RE-CHECK: Verify bay is still available
+        // ============================================
+        const { data: freshVehicles, error: fetchError } = await db.rpc('get_vehicles_secure', { 
+            session_token: token 
+        });
+        
+        if (fetchError || !freshVehicles?.success) {
+            alert('Failed to verify bay availability. Please try again.');
+            return;
+        }
+        
+        // Check if bay is now occupied
+        const currentlyOccupied = freshVehicles.data
+            .filter(v => v.status === 'notified' && v.bay)
+            .map(v => v.bay);
+        
+        if (currentlyOccupied.includes(bayNumber)) {
+            alert(`Bay ${bayNumber} was just assigned to another vehicle. Please select a different bay.`);
+            
+            // Update our local state and refresh modal
+            vehicles = freshVehicles.data;
+            updateOccupiedBays();
+            renderAvailableBays();
+            return;
+        }
+        
+        // ============================================
+        // Bay is available - proceed with assignment
+        // ============================================
         const { data, error } = await db.rpc('update_vehicle_status', {
             session_token: token,
-            p_vehicle_id: id,
-            p_new_status: 'notified'
+            p_vehicle_id: vehicleId,
+            p_new_status: 'notified',
+            p_bay: bayNumber
         });
         
         if (error) {
             console.error('Notify error:', error);
+            
+            // Check if it's a constraint violation (duplicate bay)
+            if (error.message && error.message.includes('idx_vehicles_bay_notified')) {
+                alert(`Bay ${bayNumber} is now occupied. Please select another bay.`);
+                
+                // Refresh data and modal
+                await fetchAllData();
+                renderAvailableBays();
+                return;
+            }
+            
             alert('Failed to notify: ' + error.message);
             return;
         }
@@ -949,15 +1139,28 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
             if (data.error === 'Invalid session') logoutUser();
             return;
         }
-
-        // Open SMS simulator if phone number exists
+        
+        // ============================================
+        // Success! Close modal and open SMS
+        // ============================================
+        closeBayModal();
+        
+        // Open SMS simulator with bay parameter
         if (phone && phone !== 'N/A') {
-            window.open(`sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}`,
+            window.open(
+                `sms_simulator.html?type=notified&phone=${encodeURIComponent(phone)}&po=${encodeURIComponent(po)}&bay=${bayNumber}`,
                 "_blank",
-                "width=400,height=700");
+                "width=400,height=700"
+            );
         }
-
+        
+        // Refresh data
         fetchAllData();
+    }
+    
+    function closeBayModal() {
+        document.getElementById('bayModalOverlay').style.display = 'none';
+        currentNotifyVehicleId = null;
     }
 
     // SECURE RELEASE using RPC
@@ -1374,6 +1577,12 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
     })();
 
     (async function init() {
+        // Check authentication before initializing
+        if (!getToken()) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
         updateClock();
         setInterval(updateClock, 1000);
         
@@ -1404,6 +1613,16 @@ document.getElementById("versionBanner").innerText = "v5.0.3 - MULTI-USER FIX";
                 <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
                 <button class="save-btn" onclick="saveEditModal()">Save</button>
             </div>
+        </div>
+    </div>
+
+    <div id="bayModalOverlay">
+        <div id="bayModal">
+            <h3>Select Bay</h3>
+            <div class="bay-buttons" id="bayButtonsContainer">
+                <!-- Buttons generated dynamically to show only available bays -->
+            </div>
+            <button class="bay-cancel-btn" onclick="closeBayModal()">Cancel</button>
         </div>
     </div>
 </body>

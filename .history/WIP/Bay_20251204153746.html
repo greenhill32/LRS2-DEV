@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bay Display</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #c8cdd3;
+            color: #1a1a1a;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bay-section {
+            height: 33vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bay-title {
+            font-size: 200px;
+            font-weight: 800;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .company-name {
+            font-size: 36px;
+            font-weight: 500;
+            letter-spacing: 6px;
+            color: #555;
+        }
+
+        .main-section {
+            flex: 1;
+            display: flex;
+            padding: 20px 60px 60px 60px;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .left-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lorry-icon {
+            height: 180px;
+            width: auto;
+        }
+
+        .lorry-icon svg {
+            height: 100%;
+            width: auto;
+            fill: #1a1a1a;
+        }
+
+        body.idle .lorry-icon svg {
+            fill: #888;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-card {
+            background: #e8ebef;
+            border-radius: 20px;
+            padding: 40px 50px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+            height: 180px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .reg-box {
+            background: #1a1a1a;
+            color: #fbbf24;
+            font-size: 56px;
+            font-weight: 800;
+            padding: 18px 32px;
+            border-radius: 12px;
+            letter-spacing: 5px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+        }
+
+        .info-middle {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .info-label {
+            font-size: 22px;
+            color: #666;
+        }
+
+        .info-ref {
+            font-size: 38px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .time-display {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .time-display .colon {
+            opacity: 0.4;
+            margin: 0 2px;
+        }
+
+        body.idle .info-card {
+            background: #dde0e5;
+        }
+
+        body.idle .reg-box {
+            background: #888;
+            color: #bbb;
+        }
+
+        body.idle .info-ref {
+            color: #888;
+        }
+
+        .footer-brand {
+            position: fixed;
+            bottom: 20px;
+            right: 40px;
+            font-size: 16px;
+            color: #999;
+            letter-spacing: 3px;
+        }
+
+        .status-dot {
+            position: fixed;
+            bottom: 24px;
+            left: 40px;
+            width: 12px;
+            height: 12px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body class="idle">
+
+    <div class="bay-section">
+        <div class="bay-title">Bay <span id="bayNumber">1</span></div>
+        <div class="company-name">DCS Logistics</div>
+    </div>
+
+    <div class="main-section">
+        <div class="left-panel">
+            <div class="lorry-icon">
+                <svg viewBox="0 0 100 55" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="65" y="12" width="30" height="28" rx="3"/>
+                    <rect x="70" y="15" width="20" height="11" rx="2" fill="#c8cdd3"/>
+                    <rect x="5" y="8" width="62" height="32" rx="2"/>
+                    <rect x="5" y="40" width="90" height="5"/>
+                    <circle cx="80" cy="48" r="7"/>
+                    <circle cx="80" cy="48" r="3.5" fill="#c8cdd3"/>
+                    <circle cx="25" cy="48" r="7"/>
+                    <circle cx="25" cy="48" r="3.5" fill="#c8cdd3"/>
+                    <circle cx="42" cy="48" r="7"/>
+                    <circle cx="42" cy="48" r="3.5" fill="#c8cdd3"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="info-card">
+                <div class="reg-box" id="regBox">-------</div>
+                <div class="info-middle">
+                    <div class="info-label">Reference</div>
+                    <div class="info-ref" id="refText">Awaiting vehicle</div>
+                </div>
+                <div class="time-display">
+                    <span id="timeHour">--</span><span class="colon">:</span><span id="timeMin">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-dot" id="statusDot"></div>
+    <div class="footer-brand">LORRY PARK</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        var db = supabase.createClient(
+            "https://gtixdparpjdpyhhubsfz.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+        );
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var BAY_NUMBER = parseInt(urlParams.get('bay')) || 1;
+
+        document.getElementById('bayNumber').textContent = BAY_NUMBER;
+        document.title = 'Bay ' + BAY_NUMBER + ' - DCS Logistics';
+
+        function updateClock() {
+            var now = new Date();
+            var hours = String(now.getHours()).padStart(2, '0');
+            var mins = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('timeHour').textContent = hours;
+            document.getElementById('timeMin').textContent = mins;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        function showVehicle(vehicle) {
+            document.body.classList.remove('idle');
+            var reg = vehicle.registration || '-------';
+            document.getElementById('regBox').textContent = reg.replace(/\s/g, '');
+            document.getElementById('refText').textContent = vehicle.po_ref || '--';
+        }
+
+        function showIdle() {
+            document.body.classList.add('idle');
+            document.getElementById('regBox').textContent = '-------';
+            document.getElementById('refText').textContent = 'Awaiting vehicle';
+        }
+
+        async function loadBayVehicle() {
+            try {
+                var result = await db
+                    .from('vehicles')
+                    .select('*')
+                    .eq('status', 'notified')
+                    .eq('bay', BAY_NUMBER)
+                    .limit(1)
+                    .single();
+
+                if (result.data) {
+                    showVehicle(result.data);
+                } else {
+                    showIdle();
+                }
+            } catch (err) {
+                console.error('Load error:', err);
+            }
+        }
+
+        function setupRealtime() {
+            db.channel('bay-' + BAY_NUMBER)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'vehicles' },
+                    function(payload) {
+                        loadBayVehicle();
+                    }
+                )
+                .subscribe(function(status) {
+                    var dot = document.getElementById('statusDot');
+                    if (status === 'SUBSCRIBED') {
+                        dot.classList.remove('disconnected');
+                    } else {
+                        dot.classList.add('disconnected');
+                    }
+                });
+        }
+
+        loadBayVehicle();
+        setupRealtime();
+        setInterval(loadBayVehicle, 30000);
+    </script>
+</body>
+</html>

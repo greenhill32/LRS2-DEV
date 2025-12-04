@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DEPARTURES - DCS Logistics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #0a0a0a;
+        color: #ffcc00;
+        font-family: 'Courier New', monospace;
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* HEADER */
+    .header {
+        background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+        padding: 20px 40px;
+        border-bottom: 3px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .icon {
+        font-size: 48px;
+        filter: drop-shadow(0 0 10px #ffcc00);
+    }
+
+    .title {
+        font-size: 42px;
+        font-weight: bold;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        text-shadow: 0 0 20px #ffcc00;
+    }
+
+    .header-right {
+        text-align: right;
+    }
+
+    .clock {
+        font-size: 56px;
+        font-weight: bold;
+        letter-spacing: 3px;
+        text-shadow: 0 0 20px #ffcc00;
+    }
+
+    .date {
+        font-size: 18px;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+
+    /* BOARD */
+    .board-container {
+        flex: 1;
+        padding: 30px 40px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .board-header {
+        display: grid;
+        grid-template-columns: 80px 150px 140px 80px 1fr;
+        gap: 20px;
+        padding: 16px 20px;
+        background: #1a1a1a;
+        border: 2px solid #333;
+        border-bottom: none;
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .board-body {
+        flex: 1;
+        background: #0f0f0f;
+        border: 2px solid #333;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .board-body::-webkit-scrollbar {
+        width: 8px;
+    }
+    .board-body::-webkit-scrollbar-track {
+        background: #0a0a0a;
+    }
+    .board-body::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 4px;
+    }
+
+    .board-row {
+        display: grid;
+        grid-template-columns: 80px 150px 140px 80px 1fr;
+        gap: 20px;
+        padding: 20px;
+        border-bottom: 1px solid #222;
+        font-size: 22px;
+        letter-spacing: 2px;
+        transition: background 0.3s;
+        animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .board-row:hover {
+        background: #1a1a1a;
+    }
+
+    .board-row.export {
+        background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+    }
+
+    /* STATUS COLORS */
+    .status-ready {
+        color: #22c55e;
+        font-weight: bold;
+    }
+
+    .status-waiting {
+        color: #ffcc00;
+    }
+
+    .status-approaching {
+        color: #f59e0b;
+        animation: pulse 2s infinite;
+    }
+
+    .status-overdue {
+        color: #ef4444;
+        font-weight: bold;
+        animation: pulse 1.5s infinite;
+    }
+
+    .status-critical {
+        color: #ef4444;
+        font-weight: bold;
+        animation: flash 1s infinite;
+        text-shadow: 0 0 10px #ef4444;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+
+    @keyframes flash {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    .export-icon {
+        color: #8b5cf6;
+        margin-left: 8px;
+        font-size: 20px;
+        text-shadow: 0 0 10px #8b5cf6;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #666;
+        font-size: 24px;
+    }
+
+    .empty-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    /* FOOTER STATUS */
+    .footer {
+        background: #0f0f0f;
+        border-top: 2px solid #333;
+        padding: 12px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #22c55e;
+        animation: pulse 2s infinite;
+    }
+
+    .sound-toggle {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #ffcc00;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        transition: 0.2s;
+    }
+
+    .sound-toggle:hover {
+        background: #252525;
+        border-color: #ffcc00;
+    }
+
+    /* SCAN LINE EFFECT */
+    .scan-line {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(255, 204, 0, 0.3);
+        animation: scan 4s linear infinite;
+        pointer-events: none;
+        z-index: 1000;
+    }
+
+    @keyframes scan {
+        from { transform: translateY(0); }
+        to { transform: translateY(100vh); }
+    }
+
+    /* STATS BAR */
+    .stats-bar {
+        display: flex;
+        gap: 40px;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        background: linear-gradient(90deg, #1a1a1a 0%, #0f0f0f 100%);
+        border: 2px solid #333;
+        border-radius: 4px;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stat-value {
+        font-size: 36px;
+        font-weight: bold;
+        text-shadow: 0 0 10px currentColor;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 4px;
+    }
+</style>
+</head>
+
+<body>
+
+/* SCAN LINE EFFECT -->
+<div class="scan-line"></div>
+
+/* HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="icon">🚛</div>
+        <div class="title">DEPARTURES</div>
+    </div>
+    <div class="header-right">
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="date" id="date">--</div>
+    </div>
+</div>
+
+/* MAIN BOARD -->
+<div class="board-container">
+    
+    /* STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">In Yard</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="statReady" style="color: #22c55e;">0</div>
+            <div class="stat-label">Ready</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="statWaiting" style="color: #ffcc00;">0</div>
+            <div class="stat-label">Waiting</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="statDelayed" style="color: #ef4444;">0</div>
+            <div class="stat-label">Delayed</div>
+        </div>
+    </div>
+
+    /* COLUMN HEADERS -->
+    <div class="board-header">
+        <div>DUE</div>
+        <div>REGISTRATION</div>
+        <div>REFERENCE</div>
+        <div>BAY</div>
+        <div>REMARKS</div>
+    </div>
+
+    /* BOARD ROWS -->
+    <div class="board-body" id="boardBody">
+        <div class="empty-state">
+            <div class="empty-icon">✈️</div>
+            <div>No active vehicles</div>
+        </div>
+    </div>
+</div>
+
+/* FOOTER -->
+<div class="footer">
+    <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>LIVE CONNECTION</span>
+    </div>
+    <div>
+        <span style="opacity: 0.6; margin-right: 16px;">DCS LOGISTICS</span>
+        <button class="sound-toggle" onclick="toggleSound()">
+            <span id="soundIcon">🔊</span> SOUND: <span id="soundStatus">ON</span>
+        </button>
+    </div>
+</div>
+
+/* SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ==================== CONFIG ====================
+const db = supabase.createClient(
+    "https://gtixdparpjdpyhhubsfz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
+);
+
+let soundEnabled = true;
+let vehicles = [];
+
+// ==================== CLOCK ====================
+function updateClock() {
+    const now = new Date();
+    
+    const timeStr = now.toLocaleTimeString('en-GB', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
+    
+    const dateStr = now.toLocaleDateString('en-GB', { 
+        weekday: 'long',
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+    });
+    
+    document.getElementById('clock').textContent = timeStr;
+    document.getElementById('date').textContent = dateStr.toUpperCase();
+}
+
+// ==================== LOAD VEHICLES ====================
+async function loadVehicles() {
+    try {
+        const { data, error } = await db
+            .from('vehicles')
+            .select('*')
+            .in('status', ['parked', 'notified'])
+            .order('due_time', { ascending: true });
+
+        if (error) {
+            console.error('Error loading vehicles:', error);
+            return;
+        }
+
+        vehicles = data || [];
+        renderBoard();
+        updateStats();
+
+    } catch (err) {
+        console.error('Load error:', err);
+    }
+}
+
+// ==================== RENDER BOARD ====================
+function renderBoard() {
+    const container = document.getElementById('boardBody');
+    
+    if (vehicles.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">✈️</div>
+                <div>No active vehicles</div>
+            </div>
+        `;
+        return;
+    }
+
+    const now = Date.now();
+    
+    container.innerHTML = vehicles.map(v => {
+        const dueTime = new Date(v.due_time);
+        const dueStr = dueTime.toLocaleTimeString('en-GB', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        const overdueMinutes = Math.floor((now - dueTime.getTime()) / 60000);
+        
+        // Determine status and class
+        let statusText = '';
+        let statusClass = '';
+        
+        if (v.status === 'notified') {
+            statusText = 'READY FOR LOADING';
+            statusClass = 'status-ready';
+        } else if (overdueMinutes >= 90) {
+            statusText = 'CRITICAL DELAY';
+            statusClass = 'status-critical';
+        } else if (overdueMinutes >= 30) {
+            statusText = 'DELAYED';
+            statusClass = 'status-overdue';
+        } else if (overdueMinutes >= -10) {
+            statusText = 'APPROACHING DUE';
+            statusClass = 'status-approaching';
+        } else {
+            statusText = 'ON TIME';
+            statusClass = 'status-waiting';
+        }
+        
+        const exportIcon = v.classification === 'export' ? '<span class="export-icon">✈️</span>' : '';
+        const exportClass = v.classification === 'export' ? 'export' : '';
+        const bay = v.bay || '--';
+        const poRef = v.po_ref || '--';
+        
+        return `
+            <div class="board-row ${exportClass}">
+                <div>${dueStr}</div>
+                <div>${v.registration}${exportIcon}</div>
+                <div>${poRef}</div>
+                <div>${bay}</div>
+                <div class="${statusClass}">${statusText}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== UPDATE STATS ====================
+function updateStats() {
+    const now = Date.now();
+    
+    let ready = 0;
+    let waiting = 0;
+    let delayed = 0;
+    
+    vehicles.forEach(v => {
+        if (v.status === 'notified') {
+            ready++;
+        } else {
+            const dueTime = new Date(v.due_time).getTime();
+            const overdueMinutes = Math.floor((now - dueTime) / 60000);
+            
+            if (overdueMinutes >= 30) {
+                delayed++;
+            } else {
+                waiting++;
+            }
+        }
+    });
+    
+    document.getElementById('statTotal').textContent = vehicles.length;
+    document.getElementById('statReady').textContent = ready;
+    document.getElementById('statWaiting').textContent = waiting;
+    document.getElementById('statDelayed').textContent = delayed;
+}
+
+// ==================== SOUND ====================
+function playSound() {
+    if (!soundEnabled) return;
+    
+    // Create a simple beep sound
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+    document.getElementById('soundStatus').textContent = soundEnabled ? 'ON' : 'OFF';
+}
+
+// ==================== REALTIME ====================
+function setupRealtime() {
+    const channel = db
+        .channel('departures-board')
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'vehicles' },
+            (payload) => {
+                console.log('Change detected:', payload.eventType);
+                playSound();
+                setTimeout(loadVehicles, 500); // Slight delay for animation effect
+            }
+        )
+        .subscribe();
+}
+
+// ==================== INIT ====================
+async function init() {
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    await loadVehicles();
+    setupRealtime();
+    
+    // Fallback refresh every 30 seconds
+    setInterval(loadVehicles, 30000);
+}
+
+init();
+</script>
+
+</body>
+</html>

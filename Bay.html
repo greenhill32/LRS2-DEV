@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bay Display</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <style>
+        /* 1. RESET & BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #cbd5e1; /* Slate-300 */
+            color: #1e293b;       /* Slate-800 */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.5s ease;
+        }
+
+        /* 2. HEADER SECTION */
+        .bay-section {
+            height: 30vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: rgba(255,255,255,0.1);
+            padding-top: 24px;
+        }
+
+        .bay-title {
+            font-size: clamp(80px, 18vw, 220px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1;
+            color: #0f172a;
+        }
+
+        /* 3. MAIN CONTENT */
+        .main-section {
+            flex: 1;
+            display: flex;
+            padding: 40px 60px;
+            gap: 40px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 4. LEFT ICON */
+        .left-panel {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lorry-icon {
+            width: clamp(150px, 20vw, 280px);
+            height: auto;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+        }
+
+        .lorry-icon svg {
+            width: 100%;
+            height: auto;
+            fill: #0f172a;
+            drop-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        /* 5. RIGHT CARD */
+        .right-panel {
+            flex: 1;
+            max-width: 1100px;
+            width: min(92vw, 1100px);
+        }
+
+        .info-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.5s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reg-box {
+            background: #facc15;
+            color: #000000;
+            font-size: clamp(72px, 10vw, 140px);
+            font-weight: 800;
+            padding: 26px 54px;
+            border-radius: 18px;
+            letter-spacing: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: nowrap;
+            min-width: clamp(320px, 60vw, 780px);
+            text-align: center;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .time-display {
+            font-size: clamp(40px, 5vw, 80px);
+            font-weight: 700;
+            color: #0f172a;
+            font-variant-numeric: tabular-nums;
+            padding-left: 20px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        /* 6. STATES */
+        
+        /* IDLE STATE (No truck) */
+        body.idle {
+            background: #e2e8f0;
+        }
+        
+        body.idle .lorry-icon {
+            opacity: 0.2;
+            transform: scale(0.9);
+            filter: grayscale(100%);
+        }
+
+        body.idle .info-card {
+            background: rgba(255,255,255,0.6);
+            box-shadow: none;
+            border-color: transparent;
+        }
+
+        body.idle .reg-box {
+            background: #94a3b8;
+            color: #e2e8f0;
+            box-shadow: none;
+        }
+
+        /* 7. FOOTER & STATUS */
+        .footer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #22c55e;
+            transition: background 0.3s;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .brand-text {
+            font-size: 18px;
+            font-weight: 800;
+            color: #cbd5e1;
+            letter-spacing: 4px;
+        }
+    </style>
+</head>
+<body class="idle">
+
+    <div class="bay-section">
+        <div class="bay-title">BAY <span id="bayNumber">--</span></div>
+    </div>
+
+    <div class="main-section">
+        <div class="left-panel">
+            <div class="lorry-icon">
+                <svg viewBox="0 0 100 55" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 40 L95 40" stroke="#0f172a" stroke-width="0" />
+                    <path d="M65 12 H92 A3 3 0 0 1 95 15 V40 H65 V12" fill="currentColor"/>
+                    <path d="M70 16 H90 A1 1 0 0 1 91 17 V26 H70 V16" fill="rgba(255,255,255,0.8)"/>
+                    <path d="M5 8 H63 A2 2 0 0 1 65 10 V40 H5 V10 A2 2 0 0 1 5 8" fill="currentColor"/>
+                    <circle cx="25" cy="48" r="7" fill="#0f172a"/>
+                    <circle cx="25" cy="48" r="3" fill="#64748b"/>
+                    <circle cx="45" cy="48" r="7" fill="#0f172a"/>
+                    <circle cx="45" cy="48" r="3" fill="#64748b"/>
+                    <circle cx="80" cy="48" r="7" fill="#0f172a"/>
+                    <circle cx="80" cy="48" r="3" fill="#64748b"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="info-card" id="infoCard">
+                <div class="reg-box" id="regBox">-------</div>
+                <div class="time-display">
+                    <span id="timeClock">--:--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bar">
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">LIVE</span>
+        </div>
+        <div class="brand-text">GATEHOUSE SYSTEM</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://gtixdparpjdpyhhubsfz.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0";
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const BAY_NUMBER = parseInt(urlParams.get('bay')) || 1;
+        
+        document.getElementById('bayNumber').textContent = BAY_NUMBER;
+        document.title = `Bay ${BAY_NUMBER} Display`;
+
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentVehicleId = null;
+        let refreshTimeout = null;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('timeClock').textContent = now.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function updateUI(vehicle) {
+            const body = document.body;
+            const regBox = document.getElementById('regBox');
+            
+            if (vehicle) {
+                if (body.classList.contains('idle') || currentVehicleId !== vehicle.id) {
+                    regBox.textContent = vehicle.registration.toUpperCase();
+                    body.classList.remove('idle');
+                    currentVehicleId = vehicle.id;
+                }
+            } else {
+                if (!body.classList.contains('idle')) {
+                    body.classList.add('idle');
+                    regBox.textContent = '-------';
+                    currentVehicleId = null;
+                }
+            }
+        }
+
+        async function fetchBayStatus() {
+            try {
+                // FIXED: Sorting by 'check_in_time' instead of 'updated_at' 
+                // because your database doesn't have an updated_at column.
+                const { data, error } = await db
+                    .from('vehicles')
+                    .select('*')
+                    .eq('status', 'notified')
+                    .eq('bay', BAY_NUMBER)
+                    .order('check_in_time', { ascending: false }) 
+                    .limit(1);
+
+                if (error) {
+                    console.error('Supabase Error:', error);
+                    setConnectionStatus(false);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    updateUI(data[0]);
+                } else {
+                    updateUI(null);
+                }
+                
+                setConnectionStatus(true);
+
+            } catch (err) {
+                console.error('Fetch error:', err);
+                setConnectionStatus(false);
+            }
+        }
+
+        function setConnectionStatus(connected) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (connected) {
+                dot.classList.remove('disconnected');
+                text.textContent = "LIVE";
+            } else {
+                dot.classList.add('disconnected');
+                text.textContent = "RECONNECTING...";
+            }
+        }
+
+        function setupRealtime() {
+            const channel = db.channel(`bay-${BAY_NUMBER}-monitor`)
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'vehicles' },
+                    (payload) => {
+                        if (refreshTimeout) clearTimeout(refreshTimeout);
+                        refreshTimeout = setTimeout(() => {
+                            fetchBayStatus();
+                        }, 500);
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') setConnectionStatus(true);
+                    else setConnectionStatus(false);
+                });
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+        fetchBayStatus();
+        setupRealtime();
+        setInterval(fetchBayStatus, 30000);
+        setTimeout(() => window.location.reload(), 3600000);
+    </script>
+</body>
+</html>

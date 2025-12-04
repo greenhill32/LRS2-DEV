@@ -205,11 +205,6 @@
         font-family: monospace; background: rgba(125,125,125,0.1);
         padding: 4px 8px; border-radius: 4px; display: inline-block;
     }
-    .booking-notes {
-        margin-top: 8px; font-size: 12px; color: var(--warn);
-        background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.4);
-        padding: 6px 8px; border-radius: 6px; line-height: 1.4;
-    }
 
     .booking-meta { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .booking-pallets { font-size: 24px; font-weight: 700; color: var(--text); }
@@ -224,40 +219,6 @@
     .badge-queue { background: rgba(139, 92, 246, 0.2); color: var(--purple); border: 1px solid var(--purple); }
     .badge-notified { background: var(--purple); color: white; }
     .badge-released { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
-
-    /* Booking Modal */
-    .modal-overlay {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-        display: none; align-items: center; justify-content: center; z-index: 10000;
-        padding: 20px;
-    }
-    .modal-card {
-        background: var(--card); border: 1px solid var(--border);
-        border-radius: 12px; padding: 20px; max-width: 540px; width: 100%;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.35); position: relative;
-    }
-    .modal-close {
-        position: absolute; top: 12px; right: 12px; background: none; border: none;
-        color: var(--muted); font-size: 18px; cursor: pointer;
-    }
-    .modal-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .modal-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-    .modal-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
-    .modal-value { font-size: 14px; color: var(--text); margin-top: 2px; }
-    .modal-note {
-        margin-top: 6px; font-size: 13px; color: var(--text); line-height: 1.5;
-        background: rgba(251,191,36,0.08); border: 1px dashed rgba(251,191,36,0.5);
-        padding: 10px 12px; border-radius: 8px;
-    }
-    .modal-note.empty { color: var(--muted); background: rgba(125,125,125,0.05); border-color: var(--border); }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
-    .modal-btn {
-        padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border);
-        background: var(--card); color: var(--text); cursor: pointer; font-weight: 600;
-    }
-    .modal-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
-    .modal-btn:hover { opacity: 0.9; }
 
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
@@ -340,47 +301,6 @@
     </div>
 </div>
 
-<!-- Booking Detail Modal -->
-<div id="bookingModal" class="modal-overlay" onclick="closeBookingModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-        <button class="modal-close" onclick="closeBookingModal()" aria-label="Close modal">&#10005;</button>
-        <div class="modal-title" id="modalRef">#000000</div>
-        <div class="modal-subtitle" id="modalState">Booking detail</div>
-        <div class="modal-grid">
-            <div>
-                <div class="modal-label">Customer</div>
-                <div class="modal-value" id="modalCustomer">Unknown Customer</div>
-            </div>
-            <div>
-                <div class="modal-label">Account</div>
-                <div class="modal-value" id="modalAccount">-</div>
-            </div>
-            <div>
-                <div class="modal-label">Orders</div>
-                <div class="modal-value" id="modalOrders">-</div>
-            </div>
-            <div>
-                <div class="modal-label">Pallets</div>
-                <div class="modal-value" id="modalPallets">0</div>
-            </div>
-            <div>
-                <div class="modal-label">Registration</div>
-                <div class="modal-value" id="modalReg">-</div>
-            </div>
-            <div>
-                <div class="modal-label">Slot</div>
-                <div class="modal-value" id="modalSlot">-</div>
-            </div>
-        </div>
-        <div class="modal-label">Notes</div>
-        <div class="modal-note empty" id="modalNotes">No notes</div>
-        <div class="modal-actions">
-            <button class="modal-btn" onclick="closeBookingModal()">Close</button>
-            <button class="modal-btn primary" onclick="proceedToCheckin()">Check In</button>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const db = supabase.createClient(
@@ -392,7 +312,6 @@ const db = supabase.createClient(
 let bookingsData = []; // From JSON
 let liveVehicles = []; // From Supabase
 let mergedData = [];   // Combined
-let activeBookingRef = null; // For modal actions
 
 function getToken() { return localStorage.getItem('session_token'); }
 
@@ -404,22 +323,6 @@ async function init() {
     await Promise.all([ loadBookingsJSON(), loadLiveVehicles() ]);
     syncData();
     setupRealtime();
-}
-
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-function truncateText(str, limit = 120) {
-    const clean = (str || '').trim();
-    if (clean.length <= limit) return clean;
-    return clean.slice(0, limit - 3) + '...';
 }
 
 // 2. Load Mock Bookings
@@ -438,17 +341,18 @@ async function loadBookingsJSON() {
     }
 }
 
-// 3. Load Live Vehicles (Today) - Uses get_vehicles_secure with client-side date filter
+// 3. Load Live Vehicles (Today)
 async function loadLiveVehicles() {
     const token = getToken();
     if (!token) return;
-    
-    const { data: result, error } = await db.rpc('get_vehicles_secure', {
-        session_token: token
+    const today = new Date(); today.setHours(0,0,0,0);
+    const { data: result, error } = await db.rpc('get_todays_vehicles_secure', {
+        session_token: token,
+        p_date: today.toISOString()
     });
 
     if (error) {
-        console.error("RPC get_vehicles_secure failed", error);
+        console.error("RPC get_todays_vehicles_secure failed", error);
         return;
     }
     if (result && result.success === false) {
@@ -458,17 +362,7 @@ async function loadLiveVehicles() {
     }
 
     const rows = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
-    
-    // Filter to today's vehicles client-side
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    liveVehicles = rows.filter(v => {
-        const checkIn = new Date(v.check_in_time);
-        return checkIn >= today && checkIn < tomorrow;
-    });
+    liveVehicles = rows;
 }
 
 // 4. Sync Logic
@@ -481,33 +375,26 @@ function syncData() {
     mergedData = bookingsData.map(b => {
         // Safe Copy
         const item = { ...b, syncStatus: 'booked', syncBadge: '', liveReg: null, actualPallets: null };
-
-        // Match logic (use String() to handle number/string type mismatches)
-        const match = liveVehicles.find(v => v.po_ref && String(v.po_ref) === String(b.ref));
-
+        
+        // Match logic
+        const match = liveVehicles.find(v => v.po_ref === b.ref);
+        
         if (match) {
             item.liveReg = match.registration;
             item.actualPallets = match.pallet_count;
-
-            const status = (match.status || '').toLowerCase();
-            if (status === 'parked') {
+            
+            if (match.status === 'parked') {
                 item.syncStatus = 'waiting';
                 item.syncBadge = `<span class="state-badge badge-queue">IN QUEUE</span>`;
-            } else if (status === 'notified') {
+            } else if (match.status === 'notified') {
                 item.syncStatus = 'waiting';
                 item.syncBadge = `<span class="state-badge badge-notified">NOTIFIED</span>`;
-            } else if (status === 'released' || status === 'completed' || status === 'complete') {
+            } else if (match.status === 'released') {
                 item.syncStatus = 'complete';
                 item.syncBadge = `<span class="state-badge badge-released">RELEASED</span>`;
-            } else if (status === 'booked_in' || status === 'booked-in' || status === 'checked_in' || status === 'check_in') {
-                item.syncStatus = 'waiting';
-                item.syncBadge = `<span class="state-badge badge-queue">BOOKED IN</span>`;
-            } else {
-                const label = status ? status.toUpperCase() : 'LIVE';
-                item.syncBadge = `<span class="state-badge badge-queue">${label}</span>`;
             }
         }
-
+        
         return item;
     });
 
@@ -523,8 +410,8 @@ function renderBoard() {
     // Group by hour
     const groups = {};
     mergedData.forEach(item => {
-        // Use slot_start first, fall back to time, then default to 00:00
-        const timeStr = item.slot_start || item.time || "00:00";
+        // SAFETY CHECK: If time is missing, default to 00:00
+        const timeStr = item.time || "00:00";
         const h = timeStr.slice(0,2) + ':00';
         
         if (!groups[h]) groups[h] = [];
@@ -554,11 +441,9 @@ function renderBoard() {
             const statusClass = `status-${b.syncStatus}`;
             const displayPallets = b.actualPallets || b.pallets || 0;
             const palletLabel = b.actualPallets ? '(Actual)' : '(Est)';
-            const noteText = (b.notes || '').trim();
-            const noteSnippet = noteText ? `<div class="booking-notes" title="${escapeHtml(noteText)}">${escapeHtml(truncateText(noteText, 120))}</div>` : '';
 
             html += `
-            <div class="booking-card" onclick="openBookingModal('${b.ref}')">
+            <div class="booking-card" onclick="selectForCheckin('${b.ref}')">
                 <div class="booking-status ${statusClass}"></div>
                 <div class="booking-main">
                     <div class="booking-header">
@@ -571,7 +456,6 @@ function renderBoard() {
                         <span>${b.customer || 'Unknown Customer'}</span>
                         <span>${b.account || ''}</span>
                     </div>
-                    ${noteSnippet}
                 </div>
                 <div class="booking-meta">
                     <div class="booking-pallets">${displayPallets}</div>
@@ -599,48 +483,6 @@ function updateStats() {
     document.getElementById('statInQueue').textContent = inQueue;
     document.getElementById('statComplete').textContent = complete;
     document.getElementById('statPallets').textContent = pallets;
-}
-
-function openBookingModal(ref) {
-    const booking = mergedData.find(x => x.ref === ref);
-    if (!booking) return;
-
-    activeBookingRef = ref;
-
-    document.getElementById('modalRef').textContent = `#${booking.ref}`;
-    document.getElementById('modalState').textContent = booking.syncStatus ? booking.syncStatus.toUpperCase() : 'BOOKED';
-    document.getElementById('modalCustomer').textContent = booking.customer || 'Unknown Customer';
-    document.getElementById('modalAccount').textContent = booking.account || '-';
-    document.getElementById('modalOrders').textContent = Array.isArray(booking.orders) ? booking.orders.join(', ') : (booking.orders || '-');
-    document.getElementById('modalPallets').textContent = booking.actualPallets || booking.pallets || 0;
-    document.getElementById('modalReg').textContent = booking.liveReg || 'Not checked in';
-    document.getElementById('modalSlot').textContent = (booking.slot_start && booking.slot_end) ? `${booking.slot_start} - ${booking.slot_end}` : (booking.time || '-');
-
-    const noteBox = document.getElementById('modalNotes');
-    const noteText = (booking.notes || '').trim();
-    if (noteText) {
-        noteBox.textContent = noteText;
-        noteBox.classList.remove('empty');
-    } else {
-        noteBox.textContent = 'No notes';
-        noteBox.classList.add('empty');
-    }
-
-    document.getElementById('bookingModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-function closeBookingModal(evt) {
-    if (evt && evt.target && evt.currentTarget && evt.target !== evt.currentTarget) return;
-    document.getElementById('bookingModal').style.display = 'none';
-    document.body.style.overflow = '';
-    activeBookingRef = null;
-}
-
-function proceedToCheckin() {
-    const ref = activeBookingRef;
-    closeBookingModal();
-    if (ref) selectForCheckin(ref);
 }
 
 // 6. Realtime

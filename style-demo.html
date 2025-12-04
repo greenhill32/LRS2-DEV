@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Style Demo</title>
+  <style>
+    /* Shared Tokens */
+    :root {
+      --accent: #0ea5e9; --success: #22c55e; --warn: #fbbf24;
+      --danger: #ef4444; --purple: #8b5cf6;
+    }
+    /* Light Theme */
+    [data-theme="light"] {
+      --bg: #f1f5f9; --card: #ffffff; --text: #0f172a;
+      --muted: #64748b; --border: #cbd5e1;
+    }
+    /* Dark Theme (default) */
+    [data-theme="dark"] {
+      --bg: #0e1420; --card: #1f2937; --text: #e2e8f0;
+      --muted: #94a3b8; --border: #334155;
+    }
+    /* Animated transitions */
+    body, .tile, header, nav, .card, input, select, textarea {
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+    .header-left, .header-clock, .header-right { flex: 1; }
+    .header-left h1 { margin: 0; font-size: 20px; color: var(--accent); }
+    .header-clock {
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .header-right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    #avatarBtn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: var(--accent);
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg);
+    }
+    #avatarMenu {
+      position: absolute;
+      top: 48px; right: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      min-width: 170px;
+      padding: 6px 0;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    #avatarMenu > div {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #avatarMenu > div:hover {
+      background: var(--accent);
+      color: #000;
+    }
+    nav.main-nav {
+      background: #1e3a5f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    nav.main-nav a {
+      color: #e2e8f0;
+      text-decoration: none;
+      padding: 14px 18px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    nav.main-nav a.active {
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: #fff;
+    }
+    .nav-divider {
+      color: #64748b;
+      font-size: 18px;
+      user-select: none;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card h3 { margin: 0 0 8px 0; color: var(--accent); }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      margin-right: 8px;
+      font-size: 12px;
+      background: rgba(14,165,233,0.08);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left"><h1>Style Demo</h1></div>
+    <div class="header-clock" id="clock">--:--</div>
+    <div class="header-right">
+      <div id="avatarBtn">??</div>
+      <div id="avatarMenu">
+        <div style="font-size:12px; color:var(--muted); cursor:default;">Appearance</div>
+        <div onclick="setTheme('light')"><span>Light</span><span id="check-light" style="display:none;">&#10003;</span></div>
+        <div onclick="setTheme('dark')"><span>Dark</span><span id="check-dark" style="display:none;">&#10003;</span></div>
+      </div>
+    </div>
+  </header>
+  <nav class="main-nav">
+    <a href="arrivals.html">ARRIVALS</a><span class="nav-divider">|</span>
+    <a href="index.html">QUEUE</a><span class="nav-divider">|</span>
+    <a href="supervisor.html">SUPERVISOR</a>
+  </nav>
+  <div class="page">
+    <div class="grid">
+      <div class="card">
+        <h3>Theme Tokens</h3>
+        <div class="pill">Accent</div>
+        <div class="pill" style="color:var(--success); background:rgba(34,197,94,0.12);">Success</div>
+        <div class="pill" style="color:var(--warn); background:rgba(251,191,36,0.15);">Warn</div>
+        <div class="pill" style="color:var(--danger); background:rgba(239,68,68,0.12);">Danger</div>
+      </div>
+      <div class="card">
+        <h3>Layout Rules</h3>
+        <p style="margin:0 0 6px 0; color:var(--muted);">3-column header with centered clock.</p>
+        <p style="margin:0 0 6px 0; color:var(--muted);">Navigation: ARRIVALS | QUEUE | SUPERVISOR.</p>
+        <p style="margin:0; color:var(--muted);">Theme switcher stored in localStorage.</p>
+      </div>
+      <div class="card">
+        <h3>State</h3>
+        <p style="margin:0; color:var(--muted);" id="stateLine">Theme: dark</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    const avatarBtn = document.getElementById('avatarBtn');
+    const avatarMenu = document.getElementById('avatarMenu');
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      document.getElementById('check-light').style.display = theme === 'light' ? 'inline' : 'none';
+      document.getElementById('check-dark').style.display = theme === 'dark' ? 'inline' : 'none';
+      document.getElementById('stateLine').innerText = `Theme: ${theme}`;
+    }
+
+    (function initTheme() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      setTheme(saved);
+    })();
+
+    avatarBtn.addEventListener('click', () => {
+      avatarMenu.style.display = avatarMenu.style.display === 'block' ? 'none' : 'block';
+    });
+    document.addEventListener('click', (e) => {
+      if (!avatarMenu.contains(e.target) && !avatarBtn.contains(e.target)) {
+        avatarMenu.style.display = 'none';
+      }
+    });
+
+    setInterval(() => {
+      document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>WAIT99 Login</title>
+<title>Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -12,7 +12,6 @@
         --accent: #1b8cff;
         --text: #e6e6e6;
         --muted: #999;
-        --danger: #ef4444;
     }
 
     body {
@@ -43,98 +42,98 @@
         color: var(--accent);
     }
 
-    select, input {
+    select {
         width: 100%;
         padding: 14px;
         font-size: 18px;
         border-radius: 10px;
         border: 1px solid #444;
-        background: #2a2a2a;
+        background: #111;
         color: var(--text);
-        margin-top: 10px;
-        box-sizing: border-box;
+        cursor: pointer;
+        margin-bottom: 8px;
     }
 
-    input:focus, select:focus {
-        outline: none;
-        border-color: var(--accent);
+    select:focus {
+        outline: 2px solid var(--accent);
+    }
+
+    input[type="password"] {
+        width: 100%;
+        padding: 14px;
+        font-size: 18px;
+        border-radius: 10px;
+        border: 1px solid #444;
+        background: #111;
+        color: #e6e6e6;
+        margin-top: 16px;
+        text-align: center;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+
+    input[type="password"]:focus {
+        outline: 2px solid var(--accent);
     }
 
     button {
         width: 100%;
-        padding: 16px;
-        margin-top: 30px;
-        font-size: 20px;
-        border: none;
-        background: var(--accent);
+        padding: 14px;
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
         color: white;
+        background: var(--accent);
+        border: none;
         border-radius: 10px;
         cursor: pointer;
-        font-weight: bold;
-        transition: all 0.2s;
+        transition: background 0.2s;
     }
 
-    button:hover:not(:disabled) {
-        opacity: 0.85;
+    button:hover {
+        background: #0d6ebd;
     }
 
     button:disabled {
-        opacity: 0.5;
+        background: #555;
         cursor: not-allowed;
+    }
+
+    #errorMsg {
+        color: #ff4444;
+        margin-top: 12px;
+        font-size: 14px;
+        display: none;
+        min-height: 20px;
     }
 
     .footer {
         margin-top: 20px;
-        font-size: 14px;
-        color: var(--muted);
-    }
-
-    .error {
-        color: var(--danger);
-        font-size: 14px;
-        margin-top: 10px;
-        display: none;
-    }
-
-    .error.show {
-        display: block;
-    }
-
-    .version {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        font-size: 12px;
+        font-size: 13px;
         color: var(--muted);
     }
 </style>
+
 </head>
 
 <body>
 
 <div class="box">
-    <h2>Lorry Park Login</h2>
+    <h2>Operator Login</h2>
 
-    <select id="operatorSelect">
-        <option value="">-- Select Operator --</option>
-    </select>
+    <select id="operatorSelect"></select>
 
-    <input 
-        type="password" 
-        id="pinInput" 
-        placeholder="Enter PIN" 
-        maxlength="6"
-        autocomplete="off"
-    >
+    <input type="password" 
+           id="pinInput" 
+           placeholder="Enter your PIN" 
+           maxlength="8">
 
-    <div class="error" id="errorMsg"></div>
+    <button id="loginBtn" onclick="login()">Enter Dashboard</button>
+    
+    <div id="errorMsg"></div>
 
-    <button onclick="login()" id="loginBtn">Enter Dashboard</button>
-
-    <div class="footer">All actions are logged and audited.</div>
+    <div class="footer">All actions are logged.</div>
 </div>
-
-<div class="version">v4.0.0</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -143,112 +142,99 @@ const db = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aXhkcGFycGpkcHloaHVic2Z6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDUxNDksImV4cCI6MjA3ODk4MTE0OX0.jQdd18hGPESpDi7IvXWBZK0_bDy4-DKoSGHtZZpxAP0"
 );
 
-// Load operators on page load
 async function loadOperators() {
-    try {
-        const { data, error } = await db
-            .from("operators")
-            .select("id, name, role")
-            .eq("active", true)
-            .order("name");
+    const { data } = await db
+        .from("operators")
+        .select("id, name")
+        .eq("active", true)
+        .order("name");
 
-        if (error) throw error;
+    const sel = document.getElementById("operatorSelect");
+    sel.innerHTML = "<option value=''>-- Select User --</option>";
 
-        const sel = document.getElementById("operatorSelect");
-        sel.innerHTML = "<option value=''>-- Select Operator --</option>";
-
-        data.forEach(op => {
-            sel.innerHTML += `<option value="${op.id}" data-role="${op.role}">${op.name}</option>`;
-        });
-    } catch (err) {
-        showError("Failed to load operators: " + err.message);
-    }
+    data.forEach(op => {
+        sel.innerHTML += `<option value="${op.id}">${op.name}</option>`;
+    });
 }
 
-// Login function
 async function login() {
     const operatorId = document.getElementById("operatorSelect").value;
-    const pin = document.getElementById("pinInput").value.trim();
+    const pin = document.getElementById("pinInput").value;
     const errorMsg = document.getElementById("errorMsg");
     const loginBtn = document.getElementById("loginBtn");
-
+    
     // Clear previous error
-    errorMsg.classList.remove("show");
-
+    errorMsg.style.display = 'none';
+    errorMsg.textContent = '';
+    
     // Validate inputs
     if (!operatorId) {
-        showError("Please select an operator");
+        errorMsg.textContent = 'Please select an operator';
+        errorMsg.style.display = 'block';
         return;
     }
-
-    if (!pin) {
-        showError("Please enter your PIN");
+    
+    if (!pin || pin.length < 4) {
+        errorMsg.textContent = 'Please enter your PIN';
+        errorMsg.style.display = 'block';
         return;
     }
-
+    
     // Disable button during login
     loginBtn.disabled = true;
-    loginBtn.textContent = "Logging in...";
-
+    loginBtn.textContent = 'Logging in...';
+    
     try {
-        // Call login RPC function
+        // Call login RPC
         const { data, error } = await db.rpc('login_operator', {
             p_operator_id: operatorId,
             p_pin_code: pin
         });
-
-        if (error) throw error;
-
-        // Check if login was successful
-        if (!data.success) {
-            showError(data.error || "Login failed");
+        
+        if (error) {
+            console.error('Login RPC error:', error);
+            errorMsg.textContent = 'Login failed: ' + error.message;
+            errorMsg.style.display = 'block';
             loginBtn.disabled = false;
-            loginBtn.textContent = "Enter Dashboard";
+            loginBtn.textContent = 'Enter Dashboard';
             return;
         }
-
-        // Store session info in localStorage
+        
+        if (!data.success) {
+            errorMsg.textContent = data.error || 'Invalid credentials';
+            errorMsg.style.display = 'block';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Enter Dashboard';
+            return;
+        }
+        
+        // Success! Store session token and operator info
         localStorage.setItem('session_token', data.token);
         localStorage.setItem('operator_id', data.operator_id);
         localStorage.setItem('operator_name', data.name);
-        localStorage.setItem('operator_role', data.role);
-
-        // Redirect based on role
-        if (data.role === 'supervisor') {
-            window.location.href = 'supervisor.html';
-        } else {
-            window.location.href = 'index.html';
-        }
-
+        
+        // Redirect to dashboard
+        window.location.href = "index.html";
+        
     } catch (err) {
-        showError("Login error: " + err.message);
+        console.error('Login error:', err);
+        errorMsg.textContent = 'Login failed: ' + err.message;
+        errorMsg.style.display = 'block';
         loginBtn.disabled = false;
-        loginBtn.textContent = "Enter Dashboard";
+        loginBtn.textContent = 'Enter Dashboard';
     }
-}
-
-// Show error message
-function showError(message) {
-    const errorMsg = document.getElementById("errorMsg");
-    errorMsg.textContent = message;
-    errorMsg.classList.add("show");
 }
 
 // Allow Enter key to submit
-document.getElementById("pinInput").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        login();
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const pinInput = document.getElementById('pinInput');
+    pinInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            login();
+        }
+    });
 });
 
-// Auto-focus PIN input when operator is selected
-document.getElementById("operatorSelect").addEventListener("change", function() {
-    if (this.value) {
-        document.getElementById("pinInput").focus();
-    }
-});
-
-// Load operators on page load
 loadOperators();
 </script>
 

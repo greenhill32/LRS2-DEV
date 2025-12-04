@@ -191,9 +191,9 @@
     
     <div class="screen">
         <div class="status-bar">
-            <span>âš¡ 5G</span>
+            <span> 5G</span>
             <span id="time">--:--</span>
-            <span>100% ðŸ”‹</span>
+            <span>100% </span>
         </div>
 
         <div class="message-header">
@@ -225,7 +225,7 @@ You have been successfully checked in at the Gatehouse.
 
 Your mobile number: <span class="highlight">{phone}</span>
 
-Please keep your phone nearby â€” we will contact you when it's time to proceed.
+Please keep your phone nearby  we will contact you when it's time to proceed.
 
 Reference: <span class="highlight">{po}</span>
 Estimated wait: <span class="highlight">{quoted} minutes</span>
@@ -237,11 +237,11 @@ Thank you for your patience.`
         title: "Loading Bay Ready",
         content: `<span class="highlight">ACTION REQUIRED</span>
 
-Please proceed immediately to:
+Please proceed immediately to the loading area.
 
-<span class="highlight" style="font-size:24px;">BAY {bay}</span>
+Bay Assignment: <span class="highlight">TBC on arrival</span>
 
-Ensure your paperwork is ready.
+Ensure your paperwork is ready and follow instructions from Goods-Out staff.
 
 Reference: <span class="highlight">{po}</span>
 
@@ -270,8 +270,7 @@ const vehicleData = {
     phone: params.get('phone') || '+44 7XXX XXXXXX',
     po: params.get('po') || 'PO-12345',
     quoted: params.get('quoted') || '60',
-    duration: params.get('duration') || '45 mins',
-    bay: params.get('bay') || '-'
+    duration: params.get('duration') || '45 mins'
 };
 
 // Update time
@@ -308,7 +307,7 @@ function loadMessage() {
 
     // Show delivery status
     setTimeout(() => {
-        document.getElementById('deliveryStatus').textContent = 'âœ“ Delivered';
+        document.getElementById('deliveryStatus').textContent = ' Delivered';
     }, 800);
 
     // Log to localStorage

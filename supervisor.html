@@ -476,6 +476,17 @@
     .status-notified { background: #3b82f6; color: white; }
     .status-released { background: #10b981; color: white; }
 
+    .bay-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--success);
+        color: white;
+        margin-left: 6px;
+    }
+
     /* STATUS CHANGE BUTTONS (From secure version) */
     .status-buttons { display: flex; gap: 8px; margin-bottom: 16px; }
     .status-btn {
@@ -762,6 +773,9 @@
                     <div class="info-label">Mobile Number</div>
                     <div class="info-value" id="modalMobile">-</div>
                     
+                    <div class="info-label">Bay</div>
+                    <div class="info-value" id="modalBay">-</div>
+                    
                     <div class="info-label">Classification</div>
                     <div class="info-value" id="modalClassification">-</div>
                 </div>
@@ -991,6 +1005,7 @@ function renderCriticalList(vehicles) {
                         <span>&#128203; PO: ${v.po_ref || "-"}</span>
                         <span>&#128241; ${mobile}</span>
                         <span>&#10003; ${v.status === "parked" ? "Parked" : "Notified"}</span>
+                        ${v.bay ? `<span class="bay-badge">Bay ${v.bay}</span>` : ''}
                     </div>
                 </div>
                 <div class="card-right">
@@ -1019,6 +1034,7 @@ function renderWatchList(vehicles) {
                         <span>&#128203; PO: ${v.po_ref || "-"}</span>
                         <span>&#128241; ${mobile}</span>
                         <span>&#10003; ${v.status === "parked" ? "Parked" : "Notified"}</span>
+                        ${v.bay ? `<span class="bay-badge">Bay ${v.bay}</span>` : ''}
                     </div>
                 </div>
                 <div class="card-right">
@@ -1082,6 +1098,7 @@ async function openCaseModal(vehicleId) {
         document.getElementById("modalStatus").innerHTML = `<span class="status-badge ${statusClass}">${vehicle.status}</span>`;
         document.getElementById("modalPO").textContent = vehicle.po_ref || "-";
         document.getElementById("modalMobile").textContent = vehicle.mobile_number || vehicle.pager_number || "-";
+        document.getElementById("modalBay").innerHTML = vehicle.bay ? `<span class="bay-badge">Bay ${vehicle.bay}</span>` : "-";
         document.getElementById("modalClassification").textContent = vehicle.classification === "export" ? " EXPORT" : "Normal";
 
         // Update buttons state
@@ -1293,7 +1310,7 @@ document.getElementById("superSearch").addEventListener("input", async (e) => {
     if (!results.length) { box.innerHTML = `<div style="color:var(--muted); padding:12px;">No matches</div>`; return; }
     box.innerHTML = results.map(v => `
         <div onclick="openCaseModal('${v.id}')" style="padding:14px; margin-bottom:10px; background:var(--card); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition: all 0.2s;">
-            <strong style="font-size:16px;">${v.registration}</strong> <span class="status-badge status-${v.status}" style="margin-left:8px;">${v.status}</span><br>
+            <strong style="font-size:16px;">${v.registration}</strong> <span class="status-badge status-${v.status}" style="margin-left:8px;">${v.status}</span>${v.bay ? `<span class="bay-badge">Bay ${v.bay}</span>` : ''}<br>
             <span style="font-size:13px; color:var(--muted);">PO: ${v.po_ref || "-"} | Mobile: ${v.mobile_number || v.pager_number || "-"}</span>
         </div>`).join("");
 });
