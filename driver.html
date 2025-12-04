@@ -183,7 +183,7 @@ async function loadVehicle() {
 
     document.getElementById("reg").textContent = data.registration;
     document.getElementById("poValue").textContent = data.po_ref || "-";
-    document.getElementById("pagerValue").textContent = data.pager_number || "-";
+    document.getElementById("pagerValue").textContent = data.mobile_number || data.pager_number || "-";
 
     currentStatus = data.status;
     setLang(currentLang);
